@@ -64,13 +64,19 @@ export const getJobById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Job not found.' });
     }
 
-    // Employer details
+    // Public job details do not reveal private employer contact information.
     const employerProfile = findOne('employerProfiles', ep => ep.userId === job.employerId || ep._id === job.employerProfileId);
+    const publicEmployerProfile = employerProfile ? {
+      ...employerProfile,
+      phone: undefined,
+      email: undefined,
+      address: { ...employerProfile.address, coordinates: undefined }
+    } : null;
 
     res.status(200).json({
       success: true,
       job: (({ employerContact, ...publicJob }) => publicJob)(job),
-      employerProfile
+      employerProfile: publicEmployerProfile
     });
   } catch (error) {
     console.error('getJobById error:', error);
@@ -277,7 +283,22 @@ export const updateJob = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized to edit this job.' });
     }
 
-    const updatedJob = update('jobs', id, req.body);
+    const editableFields = [
+      'title', 'category', 'requiredSkills', 'description', 'requiredExperience',
+      'vacancies', 'offeredWage', 'wageType', 'workDuration', 'paymentFrequency',
+      'paymentTerms', 'deductions', 'overtimeTerms', 'location', 'startDate',
+      'workTimings', 'hiringRadiusKm'
+    ];
+    const safeUpdates = Object.fromEntries(
+      editableFields.filter(field => req.body?.[field] !== undefined).map(field => [field, req.body[field]])
+    );
+    if (safeUpdates.offeredWage !== undefined && (!Number.isFinite(Number(safeUpdates.offeredWage)) || Number(safeUpdates.offeredWage) <= 0)) {
+      return res.status(400).json({ success: false, message: 'Enter a valid positive wage.' });
+    }
+    if (safeUpdates.hiringRadiusKm !== undefined) {
+      safeUpdates.hiringRadiusKm = Math.min(100, Math.max(1, Number(safeUpdates.hiringRadiusKm) || 10));
+    }
+    const updatedJob = update('jobs', id, safeUpdates);
     res.status(200).json({ success: true, message: 'Job updated successfully.', job: updatedJob });
   } catch (error) {
     console.error('updateJob error:', error);
