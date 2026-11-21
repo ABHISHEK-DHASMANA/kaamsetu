@@ -1,0 +1,14 @@
+{
+  "name": "kaamsetu",
+  "version": "1.0.0",
+  "description": "KAAMSETU - India's Hyperlocal Employment & Verified Skill Network",
+  "private": true,
+  "scripts": {
+    "build": "cd client && npm run build",
+    "start": "node server/src/server.js",
+    "seed": "node server/src/seeds/seedData.js"
+  },
+  "dependencies": {
+    "serverless-http": "^3.2.0"
+  }
+}
