@@ -260,7 +260,7 @@ export const apiSubmitReport = async (payload: {
 
 // Direct employer-to-worker payment tracking
 export const apiGetMyPayments = async () => {
-  return request<{ success: boolean; payments: any[]; summary: { paidTotal: number; onlineTotal: number; offlineTotal: number; pendingTotal: number; paidCount: number } }>('/payments/me');
+  return request<{ success: boolean; payments: any[]; summary: { paidTotal: number; directUpiTotal: number; cashTotal: number; pendingTotal: number; paidCount: number } }>('/payments/me');
 };
 
 export const apiCreatePayment = async (payload: { applicationId: string; amount: number; method: 'cash' | 'direct_upi'; transactionReference?: string; note?: string }) => {
