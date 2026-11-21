@@ -105,6 +105,8 @@ export interface EmployerProfile {
   activeJobsCount: number;
   hiredWorkersCount: number;
   aboutCompany: string;
+  avatar?: string;
+  maxHiringDistanceKm?: number;
 }
 
 export interface Job {
@@ -157,6 +159,7 @@ export interface Job {
     availabilityScore: number;
   };
   distanceKm?: number;
+  hiringRadiusKm?: number;
   matchExplanations?: string[];
   hasApplied?: boolean;
   applicationStatus?: string | null;
