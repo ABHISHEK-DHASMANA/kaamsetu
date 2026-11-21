@@ -6,6 +6,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { WorkerProfile } from '../../types';
 import { User, Phone, MapPin, IndianRupee, Save, CheckCircle2, Camera } from 'lucide-react';
 import { uploadProfileImage } from '../../services/imageUpload';
+import { LocationPicker } from '../../components/maps/LocationPicker';
 
 export const WorkerProfilePage: React.FC = () => {
   const { user, updateLocalProfile } = useAuth();
@@ -21,6 +22,7 @@ export const WorkerProfilePage: React.FC = () => {
   const [dailyWage, setDailyWage] = useState(800);
   const [avatar, setAvatar] = useState('');
   const [maxDistanceKm, setMaxDistanceKm] = useState(8);
+  const [coordinates, setCoordinates] = useState({ lat: 28.6280, lng: 77.3649 });
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -40,6 +42,7 @@ export const WorkerProfilePage: React.FC = () => {
           setDailyWage(wp.preferences?.expectedDailyWage || 800);
           setAvatar(wp.avatar || user?.avatar || '');
           setMaxDistanceKm(wp.preferences?.maxDistanceKm || 8);
+          if (wp.location?.coordinates) setCoordinates(wp.location.coordinates);
         }
       } catch (err) {
         console.error(err);
@@ -64,7 +67,7 @@ export const WorkerProfilePage: React.FC = () => {
           city,
           area,
           pincode: profile?.location?.pincode || '201309',
-          coordinates: profile?.location?.coordinates || { lat: 28.6280, lng: 77.3649 }
+          coordinates
         },
         preferences: {
           expectedDailyWage: Number(dailyWage),
@@ -129,6 +132,7 @@ export const WorkerProfilePage: React.FC = () => {
             />
           </div>
 
+          <LocationPicker coordinates={coordinates} onChange={setCoordinates} title="Your work location" />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-brand-dark block mb-1">Area / Sector</label>
