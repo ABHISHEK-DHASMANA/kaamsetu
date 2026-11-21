@@ -98,7 +98,8 @@ export const getWorkerApplications = async (req, res) => {
         employer: employer
           ? {
               ...employer,
-              phone: app.status === 'Accepted' ? (employer.phone || employerUser?.phone) : undefined
+              phone: app.status === 'Accepted' ? (employer.phone || employerUser?.phone) : undefined,
+              email: app.status === 'Accepted' ? employer.email : undefined
             }
           : {
               companyName: 'Employer',
@@ -145,7 +146,15 @@ export const getEmployerApplications = async (req, res) => {
       return {
         ...app,
         workerProfile: workerProfile
-          ? { ...workerProfile, phone: app.status === 'Accepted' ? (workerProfile.phone || workerUser?.phone) : undefined, upiId: ['Accepted', 'Completed'].includes(app.status) ? workerProfile.upiId : undefined }
+          ? {
+              ...workerProfile,
+              phone: app.status === 'Accepted' ? (workerProfile.phone || workerUser?.phone) : undefined,
+              email: undefined,
+              upiId: ['Accepted', 'Completed'].includes(app.status) ? workerProfile.upiId : undefined,
+              location: ['Accepted', 'Completed'].includes(app.status)
+                ? workerProfile.location
+                : { ...workerProfile.location, coordinates: undefined }
+            }
           : { fullName: workerUser?.name || 'Worker', skills: [] },
         workerUser: {
           name: workerUser?.name,
