@@ -41,5 +41,8 @@ export const sendMessage = async (req, res) => {
   const validImage = typeof imageDataUrl === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(imageDataUrl) && imageDataUrl.length <= 5_000_000;
   if (!messageText && !validImage) return res.status(400).json({ success:false, message:'Write a message or attach a supported image (PNG, JPG, WEBP; max 3.7 MB).' });
   const message = insert('messages', { applicationId: application._id, senderId: userId, text: messageText, imageDataUrl: validImage ? imageDataUrl : null, readBy: [userId] });
+  const recipientId = application.workerId === userId ? application.employerId : application.workerId;
+  const sender = findOne('users', u => u._id === userId || u.id === userId);
+  insert('notifications', { userId: recipientId, title: 'New KaamSetu message', message: `${sender?.name || 'Someone'} sent you a message.`, type: 'info', actionUrl: '/chats', isRead: false });
   res.status(201).json({ success:true, message });
 };
