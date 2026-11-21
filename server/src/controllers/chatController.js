@@ -1,8 +1,14 @@
 import { find, findOne, insert } from '../services/storage.js';
 
-const canAccess = (application, userId) =>
-  application && ['Accepted', 'Completed'].includes(application.status) &&
-  (application.workerId === userId || application.employerId === userId);
+const canAccess = (application, userId) => {
+  if (!application || !['Accepted', 'Completed'].includes(application.status) ||
+      (application.workerId !== userId && application.employerId !== userId)) return false;
+  const otherId = application.workerId === userId ? application.employerId : application.workerId;
+  return !findOne('userBlocks', b =>
+    (b.blockerId === userId && b.blockedId === otherId) ||
+    (b.blockerId === otherId && b.blockedId === userId)
+  );
+};
 
 export const listChats = async (req, res) => {
   const userId = req.user._id || req.user.id;
