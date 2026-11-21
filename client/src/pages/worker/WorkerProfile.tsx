@@ -4,7 +4,8 @@ import { apiGetWorkerProfile, apiUpdateWorkerProfile } from '../../services/api'
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { WorkerProfile } from '../../types';
-import { User, Phone, MapPin, IndianRupee, Save, CheckCircle2 } from 'lucide-react';
+import { User, Phone, MapPin, IndianRupee, Save, CheckCircle2, Camera } from 'lucide-react';
+import { uploadProfileImage } from '../../services/imageUpload';
 
 export const WorkerProfilePage: React.FC = () => {
   const { user, updateLocalProfile } = useAuth();
@@ -18,6 +19,9 @@ export const WorkerProfilePage: React.FC = () => {
   const [area, setArea] = useState('');
   const [city, setCity] = useState('');
   const [dailyWage, setDailyWage] = useState(800);
+  const [avatar, setAvatar] = useState('');
+  const [maxDistanceKm, setMaxDistanceKm] = useState(8);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -34,6 +38,8 @@ export const WorkerProfilePage: React.FC = () => {
           setArea(wp.location?.area || '');
           setCity(wp.location?.city || '');
           setDailyWage(wp.preferences?.expectedDailyWage || 800);
+          setAvatar(wp.avatar || user?.avatar || '');
+          setMaxDistanceKm(wp.preferences?.maxDistanceKm || 8);
         }
       } catch (err) {
         console.error(err);
@@ -50,6 +56,7 @@ export const WorkerProfilePage: React.FC = () => {
       const res = await apiUpdateWorkerProfile({
         fullName,
         phone,
+        avatar,
         primarySkill,
         bio,
         location: {
@@ -64,7 +71,7 @@ export const WorkerProfilePage: React.FC = () => {
           expectedMonthlyWage: Number(dailyWage) * 26,
           jobType: profile?.preferences?.jobType || 'Daily Wage',
           availableDates: profile?.preferences?.availableDates || 'Immediate',
-          maxDistanceKm: profile?.preferences?.maxDistanceKm || 10
+          maxDistanceKm: Number(maxDistanceKm)
         }
       });
 
@@ -85,6 +92,12 @@ export const WorkerProfilePage: React.FC = () => {
       subtitle="Manage your primary skills, daily wage baseline, and contact details"
     >
       <div className="max-w-2xl bg-white rounded-3xl border border-brand-border shadow-sm p-6 sm:p-8 space-y-6">
+        <div className="flex items-center gap-4">
+          <img src={avatar || "https://ui-avatars.com/api/?name=Worker"} alt="Worker profile" className="w-20 h-20 rounded-full object-cover border" />
+          <div className="space-y-2"><label className="text-xs font-bold">Profile photo</label>
+            <input type="file" accept="image/*" disabled={isUploading} onChange={async e => { const file=e.target.files?.[0]; if(!file)return; setIsUploading(true); try { setAvatar(await uploadProfileImage(file)); showToast("Photo uploaded. Save your profile to keep it.", "success"); } catch(err:any) { showToast(err.message || "Upload failed.", "error"); } finally { setIsUploading(false); e.currentTarget.value=""; } }} className="text-xs max-w-full" />
+            <p className="text-[11px] text-brand-muted">{isUploading ? "Uploading..." : "Image up to 5 MB"}</p></div>
+        </div>
         <form onSubmit={handleSave} className="space-y-4">
           <div>
             <label className="text-xs font-semibold text-brand-dark block mb-1">Full Name</label>
@@ -147,6 +160,11 @@ export const WorkerProfilePage: React.FC = () => {
             />
           </div>
 
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between mb-2"><label className="text-xs font-bold">Maximum work distance</label><span className="text-sm font-black text-brand-primary">{maxDistanceKm} km</span></div>
+            <input type="range" min="1" max="50" value={maxDistanceKm} onChange={e => setMaxDistanceKm(Number(e.target.value))} className="w-full accent-brand-primary" />
+            <p className="text-[11px] text-brand-muted">Recommend jobs within this distance of your saved location.</p>
+          </div>
           <div>
             <label className="text-xs font-semibold text-brand-dark block mb-1">Artisan Bio / Introduction</label>
             <textarea
