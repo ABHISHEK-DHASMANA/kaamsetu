@@ -15,6 +15,8 @@ import adminRoutes from './routes/adminRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
+import socialRoutes from './routes/socialRoutes.js';
 
 dotenv.config();
 
@@ -59,6 +61,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/chats', chatRoutes);
+app.use('/api/social', socialRoutes);
 
 // 404 handler
 app.use('/api/*', (req, res) => {
