@@ -3,6 +3,9 @@
   publish = "client/dist"
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+
 [build.environment]
   NODE_VERSION = "20"
   DEMO_MODE = "false"
