@@ -6,6 +6,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { EmployerProfile } from '../../types';
 import { Building2, Phone, Mail, MapPin, ShieldCheck, Save, Award, Camera } from 'lucide-react';
 import { uploadProfileImage } from '../../services/imageUpload';
+import { LocationPicker } from '../../components/maps/LocationPicker';
 
 export const EmployerProfilePage: React.FC = () => {
   const { user, profile, updateLocalProfile } = useAuth();
@@ -23,6 +24,7 @@ export const EmployerProfilePage: React.FC = () => {
   const [avatar, setAvatar] = useState('');
   const [maxHiringDistanceKm, setMaxHiringDistanceKm] = useState(10);
   const [isUploading, setIsUploading] = useState(false);
+  const [coordinates, setCoordinates] = useState({ lat: 28.6271, lng: 77.3820 });
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -42,6 +44,7 @@ export const EmployerProfilePage: React.FC = () => {
           setAboutCompany(ep.aboutCompany || '');
           setAvatar(ep.avatar || user?.avatar || '');
           setMaxHiringDistanceKm(ep.maxHiringDistanceKm || 10);
+          if (ep.address?.coordinates) setCoordinates(ep.address.coordinates);
         }
       } catch (err) {
         console.error(err);
@@ -70,7 +73,7 @@ export const EmployerProfilePage: React.FC = () => {
           city,
           area,
           pincode: '201301',
-          coordinates: { lat: 28.6271, lng: 77.3820 }
+          coordinates
         }
       });
 
@@ -129,6 +132,7 @@ export const EmployerProfilePage: React.FC = () => {
             />
           </div>
 
+          <LocationPicker coordinates={coordinates} onChange={setCoordinates} title="Business location" />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-brand-dark block mb-1">Contact Person</label>
