@@ -1,0 +1,11 @@
+import express from 'express';
+import { protect } from '../middleware/auth.js';
+import { getSavedJobs, toggleSavedJob, getBlocks, blockUser, unblockUser } from '../controllers/socialController.js';
+const router=express.Router();
+router.use(protect);
+router.get('/saved-jobs',getSavedJobs);
+router.put('/saved-jobs/:jobId',toggleSavedJob);
+router.get('/blocks',getBlocks);
+router.post('/blocks/:userId',blockUser);
+router.delete('/blocks/:userId',unblockUser);
+export default router;
