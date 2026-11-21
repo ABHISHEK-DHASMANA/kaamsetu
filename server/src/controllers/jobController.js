@@ -117,8 +117,12 @@ export const getMatchingJobsForWorker = async (req, res) => {
     const workerRadius = Number(effectiveProfile.preferences?.maxDistanceKm || 10);
     const scoredJobs = activeJobs.map(job => {
       const matchResult = calculateJobMatch(effectiveProfile, job);
+      const employerUser = findOne('users', user => user._id === job.employerId || user.id === job.employerId);
+      const employerProfile = findOne('employerProfiles', profile => profile.userId === job.employerId);
       return {
         ...job,
+        employerVerificationStatus: employerUser?.verificationStatus || 'Registered',
+        employerRating: Number.isFinite(Number(employerProfile?.rating)) ? Number(employerProfile.rating) : null,
         matchScore: matchResult.matchScore,
         matchBreakdown: matchResult.breakdown,
         distanceKm: matchResult.distanceKm,
@@ -183,7 +187,7 @@ export const createJob = async (req, res) => {
     // Fair Wage Transparency automated checks
     const wageWarnings = [];
     if (offeredWage < 600 && wageType === 'daily') {
-      wageWarnings.push('Offered wage is below standard daily living guideline (₹600).');
+      wageWarnings.push('Offered wage is below KaamSetu's illustrative daily-wage reference (₹600); this is not a statutory minimum.');
     }
     if (!paymentTerms || paymentTerms.trim().length < 5) {
       wageWarnings.push('Payment terms are not transparently specified.');
