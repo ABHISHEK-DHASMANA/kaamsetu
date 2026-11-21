@@ -17,12 +17,36 @@ import {
   CheckCircle2,
   AlertTriangle,
   SlidersHorizontal,
-  Sparkles
+  Sparkles,
+  Bookmark
 } from 'lucide-react';
 
 export const WorkerFindJobs: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { showToast } = useNotifications();
+  const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadSaved = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/social/saved-jobs`, { headers: { Authorization: `Bearer ${sessionStorage.getItem('kaamsetu_token') || ''}` } });
+        const data = await response.json();
+        if (response.ok) setSavedJobIds((data.jobs || []).map((job: Job) => job._id || job.id || '').filter(Boolean));
+      } catch (error) { console.warn('Saved jobs could not be loaded.', error); }
+    };
+    loadSaved();
+  }, []);
+
+  const toggleSaved = async (job: Job) => {
+    const id = job._id || job.id || '';
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/social/saved-jobs/${id}`, { method: 'PUT', headers: { Authorization: `Bearer ${sessionStorage.getItem('kaamsetu_token') || ''}` } });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Could not save job.');
+      setSavedJobIds(current => data.saved ? [...current, id] : current.filter(savedId => savedId !== id));
+      showToast(data.saved ? 'Job saved.' : 'Job removed from saved jobs.', 'success');
+    } catch (error: any) { showToast(error.message || 'Could not update saved job.', 'error'); }
+  };
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -223,7 +247,8 @@ export const WorkerFindJobs: React.FC = () => {
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="pt-3 border-t border-brand-border flex items-center justify-between">
+                <div className="pt-3 border-t border-brand-border flex items-center justify-between gap-2">
+                  <button onClick={() => toggleSaved(job)} className={`p-2 rounded-xl border text-xs font-semibold ${savedJobIds.includes(job._id || job.id || '') ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-brand-muted border-brand-border hover:bg-slate-50'}`} title={savedJobIds.includes(job._id || job.id || '') ? 'Remove saved job' : 'Save job'}><Bookmark className="w-4 h-4" fill={savedJobIds.includes(job._id || job.id || '') ? 'currentColor' : 'none'} /></button>
                   {job.hasApplied ? (
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
                       <CheckCircle2 className="w-3.5 h-3.5" />
