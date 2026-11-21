@@ -13,7 +13,7 @@ const generateToken = (user) => {
 
 export const register = async (req, res) => {
   try {
-    const { name, phone, email, password, role, preferredLanguage, skills, experienceLevel, location, preferences } = req.body;
+    const { name, phone, email, password, role, preferredLanguage, skills, experienceLevel, location, preferences, avatar } = req.body;
 
     if (!name || !phone || !password) {
       return res.status(400).json({ success: false, message: 'Please provide full name, phone number, and password.' });
@@ -35,7 +35,7 @@ export const register = async (req, res) => {
       password: passwordHash,
       role: role || 'worker',
       verificationStatus: 'Contact Verified', // Phone verified upon registration
-      avatar: `https://images.unsplash.com/photo-${1507003211169}?w=150`,
+      avatar: avatar || '',
       isActive: true
     });
 
