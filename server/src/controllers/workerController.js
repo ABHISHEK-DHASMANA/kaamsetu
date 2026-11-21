@@ -14,11 +14,13 @@ export const getWorkerProfile = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      workerProfile: req.params.userId ? { ...workerProfile, location: { ...workerProfile.location, coordinates: undefined } } : workerProfile,
+      workerProfile: req.params.userId
+        ? { ...workerProfile, phone: undefined, email: undefined, upiId: undefined, location: { ...workerProfile.location, coordinates: undefined } }
+        : workerProfile,
       user: {
         name: user?.name,
-        phone: user?.phone,
-        email: user?.email,
+        phone: req.params.userId ? undefined : user?.phone,
+        email: req.params.userId ? undefined : user?.email,
         verificationStatus: user?.verificationStatus,
         createdAt: user?.createdAt
       },
@@ -171,7 +173,32 @@ export const getAllWorkers = async (req, res) => {
     res.status(200).json({
       success: true,
       count: workers.length,
-      workers
+      workers: workers.map(profile => ({
+        _id: profile._id,
+        userId: profile.userId,
+        fullName: profile.fullName,
+        avatar: profile.avatar,
+        primarySkill: profile.primarySkill,
+        experienceLevel: profile.experienceLevel,
+        experienceYearsNum: profile.experienceYearsNum,
+        skills: profile.skills,
+        location: {
+          state: profile.location?.state,
+          city: profile.location?.city,
+          area: profile.location?.area
+        },
+        skillPassport: profile.skillPassport ? {
+          passportId: profile.skillPassport.passportId,
+          verifiedSkillsCount: profile.skillPassport.verifiedSkillsCount,
+          trustScore: profile.skillPassport.trustScore,
+          completedJobsCount: profile.skillPassport.completedJobsCount,
+          rating: profile.skillPassport.rating,
+          reviewsCount: profile.skillPassport.reviewsCount,
+          badges: profile.skillPassport.badges
+        } : undefined,
+        bio: profile.bio,
+        isProfileComplete: profile.isProfileComplete
+      }))
     });
   } catch (error) {
     console.error('getAllWorkers error:', error);
