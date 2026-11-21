@@ -114,6 +114,7 @@ export const getMatchingJobsForWorker = async (req, res) => {
     const existingApplications = find('applications', a => a.workerId === workerUserId);
     const appliedJobIds = new Set(existingApplications.map(a => a.jobId));
 
+    const workerRadius = Number(effectiveProfile.preferences?.maxDistanceKm || 10);
     const scoredJobs = activeJobs.map(job => {
       const matchResult = calculateJobMatch(effectiveProfile, job);
       return {
@@ -127,14 +128,21 @@ export const getMatchingJobsForWorker = async (req, res) => {
       };
     });
 
+    // Respect both sides' distance preferences. Distances are straight-line estimates from saved map coordinates.
+    const withinBothDistancePreferences = scoredJobs.filter(job => {
+      if (job.distanceKm === null || job.distanceKm === undefined) return true;
+      const employerRadius = Number(job.hiringRadiusKm || 10);
+      return job.distanceKm <= workerRadius && job.distanceKm <= employerRadius;
+    });
+
     // Sort by match score descending
-    scoredJobs.sort((a, b) => b.matchScore - a.matchScore);
+    withinBothDistancePreferences.sort((a, b) => b.matchScore - a.matchScore);
 
     res.status(200).json({
       success: true,
-      count: scoredJobs.length,
+      count: withinBothDistancePreferences.length,
       workerLocation: workerProfile.location,
-      jobs: scoredJobs
+      jobs: withinBothDistancePreferences
     });
   } catch (error) {
     console.error('getMatchingJobsForWorker error:', error);
@@ -164,7 +172,8 @@ export const createJob = async (req, res) => {
       location,
       startDate,
       workTimings,
-      employerContact
+      employerContact,
+      hiringRadiusKm
     } = req.body;
 
     if (!title || !offeredWage || !description) {
@@ -202,6 +211,7 @@ export const createJob = async (req, res) => {
       deductions: deductions || 'None. 100% agreed wage.',
       overtimeTerms: overtimeTerms || '₹120/hr overtime.',
       wageTransparencyWarnings: wageWarnings,
+      hiringRadiusKm: Math.min(100, Math.max(1, Number(hiringRadiusKm ?? employerProfile?.maxHiringDistanceKm ?? 10))),
       location: location || employerProfile?.address || {
         address: 'Sector 63',
         area: 'Sector 63',
