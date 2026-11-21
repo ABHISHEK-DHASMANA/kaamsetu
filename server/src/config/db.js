@@ -5,7 +5,7 @@ let isMongooseConnected = false;
 
 export const connectDB = async () => {
   // If explicitly DEMO_MODE or MongoDB not available, quickly use local persistent storage
-  if (process.env.DEMO_MODE === 'true' && !process.env.FORCE_MONGO) {
+  if (process.env.DEMO_MODE === 'true' && process.env.NODE_ENV !== 'production' && !process.env.FORCE_MONGO) {
     console.log(`[Database] DEMO_MODE is active. Initializing persistent local database.`);
     await initializeStorage();
     return false;
