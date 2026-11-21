@@ -194,7 +194,7 @@ export const createJob = async (req, res) => {
     // Fair Wage Transparency automated checks
     const wageWarnings = [];
     if (offeredWage < 600 && wageType === 'daily') {
-      wageWarnings.push('Offered wage is below KaamSetu's illustrative daily-wage reference (₹600); this is not a statutory minimum.');
+      wageWarnings.push("Offered wage is below KaamSetu's illustrative daily-wage reference (₹600); this is not a statutory minimum.");
     }
     if (!paymentTerms || paymentTerms.trim().length < 5) {
       wageWarnings.push('Payment terms are not transparently specified.');
