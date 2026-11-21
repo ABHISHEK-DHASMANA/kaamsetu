@@ -4,7 +4,8 @@ import { apiGetEmployerProfile, apiUpdateEmployerProfile } from '../../services/
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { EmployerProfile } from '../../types';
-import { Building2, Phone, Mail, MapPin, ShieldCheck, Save, Award } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, ShieldCheck, Save, Award, Camera } from 'lucide-react';
+import { uploadProfileImage } from '../../services/imageUpload';
 
 export const EmployerProfilePage: React.FC = () => {
   const { user, profile, updateLocalProfile } = useAuth();
@@ -19,6 +20,9 @@ export const EmployerProfilePage: React.FC = () => {
   const [area, setArea] = useState('');
   const [city, setCity] = useState('');
   const [aboutCompany, setAboutCompany] = useState('');
+  const [avatar, setAvatar] = useState('');
+  const [maxHiringDistanceKm, setMaxHiringDistanceKm] = useState(10);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -36,6 +40,8 @@ export const EmployerProfilePage: React.FC = () => {
           setArea(ep.address?.area || 'Sector 63');
           setCity(ep.address?.city || 'Noida');
           setAboutCompany(ep.aboutCompany || '');
+          setAvatar(ep.avatar || user?.avatar || '');
+          setMaxHiringDistanceKm(ep.maxHiringDistanceKm || 10);
         }
       } catch (err) {
         console.error(err);
@@ -52,6 +58,8 @@ export const EmployerProfilePage: React.FC = () => {
       const res = await apiUpdateEmployerProfile({
         companyName,
         contactPerson,
+        avatar,
+        maxHiringDistanceKm: Number(maxHiringDistanceKm),
         phone,
         industry,
         businessType,
@@ -83,6 +91,12 @@ export const EmployerProfilePage: React.FC = () => {
       subtitle="Manage your business verification and contact details"
     >
       <div className="max-w-2xl bg-white rounded-3xl border border-brand-border shadow-sm p-6 sm:p-8 space-y-6">
+        <div className="flex items-center gap-4">
+          <img src={avatar || "https://ui-avatars.com/api/?name=Employer"} alt="Employer profile" className="w-20 h-20 rounded-full object-cover border" />
+          <div className="space-y-2"><label className="text-xs font-bold">Employer / company photo</label>
+            <input type="file" accept="image/*" disabled={isUploading} onChange={async e => { const file=e.target.files?.[0]; if(!file)return; setIsUploading(true); try { setAvatar(await uploadProfileImage(file)); showToast("Photo uploaded. Save your profile to keep it.", "success"); } catch(err:any) { showToast(err.message || "Upload failed.", "error"); } finally { setIsUploading(false); e.currentTarget.value=""; } }} className="text-xs max-w-full" />
+            <p className="text-[11px] text-brand-muted">{isUploading ? "Uploading..." : "Image up to 5 MB"}</p></div>
+        </div>
         <div className="flex items-center justify-between pb-4 border-b border-brand-border">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-brand-primary-light flex items-center justify-center text-brand-primary font-bold text-lg">
@@ -100,6 +114,11 @@ export const EmployerProfilePage: React.FC = () => {
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between mb-2"><label className="text-xs font-bold">Maximum hiring distance</label><span className="text-sm font-black text-brand-primary">{maxHiringDistanceKm} km</span></div>
+            <input type="range" min="1" max="50" value={maxHiringDistanceKm} onChange={e => setMaxHiringDistanceKm(Number(e.target.value))} className="w-full accent-brand-primary" />
+            <p className="text-[11px] text-brand-muted">Nearby candidate recommendations will use this radius.</p>
+          </div>
           <div>
             <label className="text-xs font-semibold text-brand-dark block mb-1">Company / Firm Name</label>
             <input
