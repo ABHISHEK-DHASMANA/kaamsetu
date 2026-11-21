@@ -278,3 +278,23 @@ export const apiDisputePayment = async (id: string, reason: string) => {
     method: 'POST', body: JSON.stringify({ reason })
   });
 };
+
+
+// PhonePe PG V2 checkout and server-side status verification
+export const apiGetPhonePeAvailability = async () => {
+  return request<{ success: boolean; available: boolean; environment: string; message: string }>('/phonepe/availability');
+};
+
+export const apiCreatePhonePeCheckout = async (payload: { applicationId: string; amount: number }) => {
+  return request<{ success: boolean; message: string; checkoutUrl: string; payment: any }>('/phonepe/checkout', {
+    method: 'POST', body: JSON.stringify(payload)
+  });
+};
+
+export const apiGetPhonePePaymentStatus = async (merchantOrderId: string) => {
+  return request<{ success: boolean; payment: any }>(`/phonepe/${encodeURIComponent(merchantOrderId)}/status`);
+};
+
+export const apiGetMyPhonePePayments = async () => {
+  return request<{ success: boolean; payments: any[] }>('/phonepe/me');
+};
