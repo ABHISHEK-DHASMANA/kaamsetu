@@ -219,10 +219,16 @@ export const calculateJobMatch = (workerProfile, job) => {
     job?.location || {},
     workerProfile?.preferences?.maxDistanceKm || 15
   );
+  const wageType = job?.wageType || 'daily';
+  const expectedWage = wageType === 'monthly'
+    ? workerProfile?.preferences?.expectedMonthlyWage
+    : wageType === 'daily'
+      ? workerProfile?.preferences?.expectedDailyWage
+      : 0;
   const wageRes = calculateWageScore(
-    workerProfile?.preferences?.expectedDailyWage || 800,
-    job?.offeredWage || 850,
-    job?.wageType || 'daily'
+    expectedWage || 0,
+    job?.offeredWage || 0,
+    wageType
   );
   const availRes = calculateAvailabilityScore(workerProfile?.preferences || {}, job || {});
 
