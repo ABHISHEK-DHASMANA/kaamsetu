@@ -112,14 +112,15 @@ export const getMatchingJobsForWorker = async (req, res) => {
       }
     };
 
-    if (location && location !== 'Nearby') {
-      effectiveProfile.location = {
-        ...effectiveProfile.location,
-        area: location
-      };
-    }
-
-    const activeJobs = find('jobs', j => j.status === 'active');
+    const allActiveJobs = find('jobs', j => j.status === 'active');
+    const requestedLocation = String(location || '').trim().toLowerCase();
+    const activeJobs = requestedLocation && requestedLocation !== 'nearby'
+      ? allActiveJobs.filter(job => {
+          const area = String(job.location?.area || '').toLowerCase();
+          const city = String(job.location?.city || '').toLowerCase();
+          return area.includes(requestedLocation) || city.includes(requestedLocation);
+        })
+      : allActiveJobs;
     
     // Check which jobs worker already applied to
     const existingApplications = find('applications', a => a.workerId === workerUserId);
