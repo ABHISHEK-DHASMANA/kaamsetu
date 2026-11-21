@@ -66,7 +66,7 @@ export const createPhonePeCheckout = async ({ merchantOrderId, amountPaisa, redi
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `O-Bearer ${token}'
+      Authorization: `O-Bearer ${token}`
     },
     body: JSON.stringify({
       merchantOrderId,
