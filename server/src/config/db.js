@@ -11,8 +11,12 @@ export const connectDB = async () => {
     return false;
   }
 
-  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/kaamsetu';
   try {
+    const uri = process.env.MONGODB_URI || (process.env.NODE_ENV === 'production' ? '' : 'mongodb://localhost:27017/kaamsetu');
+    if (!uri) {
+      throw new Error('MONGODB_URI is required in production. Add it to your Netlify environment variables.');
+    }
+
     const conn = await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 1500,
     });
@@ -20,8 +24,13 @@ export const connectDB = async () => {
     console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
     return true;
   } catch (error) {
-    console.warn(`[Database] MongoDB connection failed (${error.message}).`);
-    console.log(`[Database] Falling back to persistent local storage (Demo Mode).`);
+    console.error('[Database] MongoDB connection failed:', error.message);
+
+    if (process.env.NODE_ENV === 'production') {
+      throw error;
+    }
+
+    console.warn('[Database] Using local demo storage.');
     isMongooseConnected = false;
     await initializeStorage();
     return false;
@@ -30,6 +39,6 @@ export const connectDB = async () => {
 
 export const getDbStatus = () => ({
   mode: isMongooseConnected ? 'mongodb' : 'local_storage_demo',
-  connected: true,
+  connected: isMongooseConnected,
   provider: isMongooseConnected ? 'MongoDB / Mongoose' : 'Local JSON Persistent Store'
 });
