@@ -109,7 +109,7 @@ export const WorkerFindJobs: React.FC = () => {
         showToast('Application sent! Status updated in real time.', 'success');
         setJobs(prev =>
           prev.map(j =>
-            j._id === job._id || j.id === job._id
+            (j._id || j.id) === (job._id || job.id)
               ? { ...j, hasApplied: true, applicationStatus: 'Applied' }
               : j
           )
