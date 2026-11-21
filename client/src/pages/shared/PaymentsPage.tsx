@@ -1,0 +1,143 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
+import { apiCreatePayment, apiGetEmployerApplications, apiGetMyPayments, apiGetWorkerApplications, apiConfirmPaymentReceived, apiDisputePayment } from '../../services/api';
+import { Banknote, CheckCircle2, Clock3, IndianRupee, QrCode, ShieldAlert, Smartphone, Wallet } from 'lucide-react';
+
+type Payment = {
+  _id: string; amount: number; method: 'cash' | 'direct_upi' | 'online';
+  status: string; jobTitle: string; workerName: string; employerName: string;
+  transactionReference?: string; createdAt: string; note?: string;
+};
+type ApplicationOption = { _id: string; status: string; workerProfile?: { fullName?: string }; job?: { title?: string; offeredWage?: number } };
+
+const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value || 0);
+
+export const PaymentsPage: React.FC = () => {
+  const { user } = useAuth();
+  const isWorker = user?.role === 'worker';
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [applications, setApplications] = useState<ApplicationOption[]>([]);
+  const [summary, setSummary] = useState({ paidTotal: 0, onlineTotal: 0, offlineTotal: 0, pendingTotal: 0, paidCount: 0 });
+  const [applicationId, setApplicationId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState<'cash' | 'direct_upi'>('cash');
+  const [reference, setReference] = useState('');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const refresh = async () => {
+    const data = await apiGetMyPayments();
+    setPayments(data.payments || []);
+    setSummary(data.summary || { paidTotal: 0, onlineTotal: 0, offlineTotal: 0, pendingTotal: 0, paidCount: 0 });
+  };
+
+  useEffect(() => {
+    refresh().catch(e => setError(e.message || 'Unable to load payments.'));
+    if (!isWorker) {
+      apiGetEmployerApplications().then(data => setApplications((data.applications || []).filter((a: ApplicationOption) => a.status === 'Completed')))
+        .catch(e => setError(e.message || 'Unable to load completed jobs.'));
+    } else {
+      apiGetWorkerApplications().then(data => setApplications((data.applications || []).filter((a: any) => a.status === 'Completed')))
+        .catch(() => undefined);
+    }
+  }, [isWorker]);
+
+  const pending = useMemo(() => payments.filter(p => p.status === 'awaiting_worker_confirmation'), [payments]);
+
+  const submitPayment = async (event: React.FormEvent) => {
+    event.preventDefault(); setBusy(true); setError(''); setMessage('');
+    try {
+      const result = await apiCreatePayment({ applicationId, amount: Number(amount), method, transactionReference: reference, note });
+      setMessage(result.message); setApplicationId(''); setAmount(''); setReference(''); setNote('');
+      await refresh();
+      apiGetEmployerApplications().then(data => setApplications((data.applications || []).filter((a: ApplicationOption) => a.status === 'Completed'))).catch(() => undefined);
+    } catch (e: any) { setError(e.message || 'Could not record payment.'); }
+    finally { setBusy(false); }
+  };
+
+  const confirm = async (id: string) => {
+    setBusy(true); setError(''); setMessage('');
+    try { const result = await apiConfirmPaymentReceived(id); setMessage(result.message); await refresh(); }
+    catch (e: any) { setError(e.message || 'Could not confirm payment.'); }
+    finally { setBusy(false); }
+  };
+
+  const dispute = async (id: string) => {
+    const reason = window.prompt('Briefly explain why this payment is incorrect or not received:');
+    if (!reason) return;
+    setBusy(true); setError(''); setMessage('');
+    try { const result = await apiDisputePayment(id, reason); setMessage(result.message); await refresh(); }
+    catch (e: any) { setError(e.message || 'Could not dispute payment.'); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <DashboardLayout title={isWorker ? 'My Earnings' : 'Payments'} subtitle={isWorker ? 'Track money received directly from employers' : 'Record and track direct payments to your workers'}>
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Confirmed {isWorker ? 'earnings' : 'payments'}</div><div className="text-xl font-black text-emerald-600 mt-1">{money(summary.paidTotal)}</div></div>
+          <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Pending</div><div className="text-xl font-black text-amber-600 mt-1">{money(summary.pendingTotal)}</div></div>
+          <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Online</div><div className="text-xl font-black text-brand-dark mt-1">{money(summary.onlineTotal)}</div></div>
+          <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Offline</div><div className="text-xl font-black text-brand-dark mt-1">{money(summary.offlineTotal)}</div></div>
+        </div>
+
+        {message && <div className="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 text-sm">{message}</div>}
+        {error && <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 p-3 text-sm">{error}</div>}
+
+        {!isWorker && (
+          <form onSubmit={submitPayment} className="bg-white rounded-2xl border border-brand-border p-5 space-y-4">
+            <div><h2 className="font-bold text-brand-dark">Record a worker payment</h2><p className="text-xs text-brand-muted mt-1">Only completed applications are eligible. The worker must confirm receipt before earnings count as paid.</p></div>
+            <div className="grid md:grid-cols-2 gap-3">
+              <label className="text-xs font-semibold text-brand-muted">Completed job / worker
+                <select required value={applicationId} onChange={e => setApplicationId(e.target.value)} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">
+                  <option value="">Select completed job</option>
+                  {applications.map(a => <option key={a._id} value={a._id}>{a.workerProfile?.fullName || 'Worker'} — {a.job?.title || 'Completed job'}</option>)}
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-brand-muted">Total amount (₹)
+                <input required type="number" min="1" max="1000000" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 800" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
+              </label>
+            </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              <label className="text-xs font-semibold text-brand-muted">Payment method
+                <select value={method} onChange={e => setMethod(e.target.value as 'cash' | 'direct_upi')} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">
+                  <option value="cash">Cash</option><option value="direct_upi">Direct UPI (PhonePe / GPay / Paytm)</option>
+                </select>
+              </label>
+              {method === 'direct_upi' && <label className="text-xs font-semibold text-brand-muted">UPI transaction reference (optional)
+                <input value={reference} onChange={e => setReference(e.target.value)} maxLength={100} placeholder="UTR / transaction ID" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
+              </label>}
+            </div>
+            <label className="block text-xs font-semibold text-brand-muted">Note (optional)
+              <input value={note} onChange={e => setNote(e.target.value)} maxLength={300} placeholder="Payment details" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
+            </label>
+            <button disabled={busy || !applicationId || !amount} className="inline-flex items-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50"><Wallet className="w-4 h-4" />{busy ? 'Saving...' : 'Record payment'}</button>
+          </form>
+        )}
+
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
+          <ShieldAlert className="w-5 h-5 text-blue-700 shrink-0" />
+          <div className="text-xs text-blue-900"><strong>Payment safety:</strong> Cash and direct UPI records become confirmed earnings only after the worker confirms receipt. A UPI reference is supporting information, not automatic bank verification. Live online checkout is not enabled in this version.</div>
+        </div>
+
+        <section className="bg-white rounded-2xl border border-brand-border overflow-hidden">
+          <div className="p-5 border-b border-brand-border"><h2 className="font-bold text-brand-dark">{isWorker ? 'Payment history' : 'Payments to workers'}</h2><p className="text-xs text-brand-muted mt-1">{payments.length} record(s)</p></div>
+          {payments.length === 0 ? <div className="p-10 text-center text-sm text-brand-muted">No payment records yet.</div> : <div className="divide-y divide-brand-border">
+            {payments.map(payment => <div key={payment._id} className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-start gap-3"><div className="w-10 h-10 rounded-xl bg-brand-primary-light text-brand-primary flex items-center justify-center">{payment.method === 'cash' ? <Banknote className="w-5 h-5" /> : payment.method === 'online' ? <Smartphone className="w-5 h-5" /> : <QrCode className="w-5 h-5" />}</div><div><div className="font-bold text-sm text-brand-dark">{payment.jobTitle}</div><div className="text-xs text-brand-muted mt-1">{isWorker ? payment.employerName : payment.workerName} · {payment.method === 'direct_upi' ? 'Direct UPI' : payment.method === 'cash' ? 'Cash' : 'Online'}</div>{payment.transactionReference && <div className="text-[11px] text-brand-muted mt-1">Ref: {payment.transactionReference}</div>}<div className="text-[11px] text-brand-muted mt-1">{new Date(payment.createdAt).toLocaleString('en-IN')}</div></div></div>
+              <div className="flex flex-wrap items-center gap-3"><div className="font-black text-brand-dark">{money(payment.amount)}</div><span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${payment.status === 'paid' ? 'bg-emerald-50 text-emerald-700' : payment.status === 'disputed' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>{payment.status === 'paid' ? 'Paid · Confirmed' : payment.status === 'disputed' ? 'Disputed' : 'Awaiting worker confirmation'}</span>
+                {isWorker && payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => confirm(payment._id)} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold disabled:opacity-50"><CheckCircle2 className="w-3.5 h-3.5 inline mr-1" />Confirm received</button>}
+                {payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => dispute(payment._id)} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs font-bold disabled:opacity-50">Dispute</button>}
+              </div>
+            </div>)}
+          </div>}
+        </section>
+        {isWorker && <div className="text-xs text-brand-muted flex items-center gap-2"><Clock3 className="w-4 h-4" /> {pending.length} payment(s) waiting for your confirmation. Confirm only after checking that you received the money.</div>}
+        <div className="text-[11px] text-brand-muted flex items-center gap-2"><IndianRupee className="w-3.5 h-3.5" /> KaamSetu records payments between employers and workers; it does not hold funds or deduct a platform commission.</div>
+      </div>
+    </DashboardLayout>
+  );
+};
