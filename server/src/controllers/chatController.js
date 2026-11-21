@@ -1,4 +1,4 @@
-import { find, findOne, insert } from '../services/storage.js';
+import { find, findOne, insert, update } from '../services/storage.js';
 
 const canAccess = (application, userId) => {
   if (!application || !['Accepted', 'Completed'].includes(application.status) ||
@@ -29,7 +29,12 @@ export const getMessages = async (req, res) => {
   const application = findOne('applications', a => a._id === req.params.applicationId || a.id === req.params.applicationId);
   if (!canAccess(application, userId)) return res.status(403).json({ success:false, message:'Chat is available only to the accepted parties.' });
   const messages = find('messages', m => m.applicationId === application._id).sort((a,b) => new Date(a.createdAt)-new Date(b.createdAt));
-  res.json({ success:true, messages });
+  messages.forEach(message => {
+    if (message.senderId !== userId && !(message.readBy || []).includes(userId)) {
+      update('messages', message._id, { readBy: [...(message.readBy || []), userId] });
+    }
+  });
+  res.json({ success:true, messages: messages.map(message => ({ ...message, readBy: message.senderId === userId ? (findOne('messages', m => m._id === message._id)?.readBy || []) : [...(message.readBy || []), userId] })) });
 };
 
 export const sendMessage = async (req, res) => {
