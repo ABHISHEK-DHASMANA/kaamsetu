@@ -14,7 +14,7 @@ export const getWorkerProfile = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      workerProfile,
+      workerProfile: req.params.userId ? { ...workerProfile, location: { ...workerProfile.location, coordinates: undefined } } : workerProfile,
       user: {
         name: user?.name,
         phone: user?.phone,
