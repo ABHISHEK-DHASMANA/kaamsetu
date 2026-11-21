@@ -43,7 +43,7 @@ export const updateEmployerProfile = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Employer profile not found.' });
     }
 
-    const { companyName, contactPerson, phone, email, industry, businessType, address, aboutCompany } = req.body;
+    const { companyName, contactPerson, phone, email, industry, businessType, address, aboutCompany, avatar, maxHiringDistanceKm } = req.body;
 
     const updates = {};
     if (companyName) updates.companyName = companyName;
@@ -54,6 +54,9 @@ export const updateEmployerProfile = async (req, res) => {
     if (businessType) updates.businessType = businessType;
     if (address) updates.address = address;
     if (aboutCompany) updates.aboutCompany = aboutCompany;
+    if (avatar) updates.avatar = avatar;
+    if (maxHiringDistanceKm !== undefined) updates.maxHiringDistanceKm = Math.min(100, Math.max(1, Number(maxHiringDistanceKm) || 10));
+    if (avatar) update('users', employerUserId, { avatar });
 
     const updated = update('employerProfiles', profile._id, updates);
 
