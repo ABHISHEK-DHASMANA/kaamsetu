@@ -1,5 +1,5 @@
 [build]
-  command = "cd client && npm install && npm run build && cd ../server && npm install"
+  command = "cd client && npm install --include=dev && npm run build && cd ../server && npm install"
   publish = "client/dist"
   functions = "netlify/functions"
 
