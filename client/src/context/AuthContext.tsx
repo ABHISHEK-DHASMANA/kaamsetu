@@ -83,6 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateLocalProfile = (newProfile: any) => {
     setProfile(newProfile);
+    if (newProfile?.avatar) setUser(current => current ? { ...current, avatar: newProfile.avatar } : current);
   };
 
   return (
