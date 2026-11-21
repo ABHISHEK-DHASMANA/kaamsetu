@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
 import { MessageCircle, Send, ImagePlus, RefreshCw, ShieldBan } from 'lucide-react';
 
 type Chat = { applicationId:string; jobTitle:string; otherUser:{id:string;name:string}; lastMessage?:{text?:string;createdAt:string}|null };
@@ -9,6 +10,7 @@ const API = import.meta.env.VITE_API_BASE_URL || '/api';
 const auth = () => ({'Content-Type':'application/json',Authorization:`Bearer ${sessionStorage.getItem('kaamsetu_token') || ''}`});
 
 export const ChatPage:React.FC = () => {
+  const { user } = useAuth();
   const [chats,setChats]=useState<Chat[]>([]);
   const [active,setActive]=useState<Chat|null>(null);
   const [messages,setMessages]=useState<Message[]>([]);
@@ -31,7 +33,7 @@ export const ChatPage:React.FC = () => {
       </section>
       <section className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden">
         {active?<><header className="p-4 border-b flex items-center justify-between"><div><div className="font-bold">{active.otherUser.name}</div><div className="text-xs text-slate-500">{active.jobTitle}</div></div><button onClick={block} className="text-xs text-red-600 flex items-center gap-1"><ShieldBan className="w-4 h-4"/>Block</button></header>
-          <div className="flex-1 p-4 space-y-3 overflow-y-auto max-h-[440px]">{messages.map(m=><div key={m._id} className={`max-w-[80%] rounded-2xl p-3 text-sm ${m.senderId===sessionStorage.getItem('kaamsetu_user_id')?'ml-auto bg-blue-600 text-white':'bg-slate-100 text-slate-800'}`}>{m.text&&<p className="whitespace-pre-wrap break-words">{m.text}</p>}{m.imageDataUrl&&<img src={m.imageDataUrl} alt="Shared attachment" className="mt-2 max-w-full rounded-lg max-h-64"/>}<div className="text-[10px] opacity-60 mt-1">{new Date(m.createdAt).toLocaleString()}</div></div>)}</div>
+          <div className="flex-1 p-4 space-y-3 overflow-y-auto max-h-[440px]">{messages.map(m=><div key={m._id} className={`max-w-[80%] rounded-2xl p-3 text-sm ${m.senderId===user?._id?'ml-auto bg-blue-600 text-white':'bg-slate-100 text-slate-800'}`}>{m.text&&<p className="whitespace-pre-wrap break-words">{m.text}</p>}{m.imageDataUrl&&<img src={m.imageDataUrl} alt="Shared attachment" className="mt-2 max-w-full rounded-lg max-h-64"/>}<div className="text-[10px] opacity-60 mt-1">{new Date(m.createdAt).toLocaleString()}</div></div>)}</div>
           {image&&<div className="px-4 text-xs text-slate-500">Image attached <button onClick={()=>setImage(null)} className="text-red-600 ml-2">Remove</button></div>}
           <div className="p-3 border-t flex items-end gap-2"><label className="p-2 cursor-pointer text-slate-500 hover:bg-slate-100 rounded-lg" title="Attach image"><ImagePlus className="w-5 h-5"/><input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={e=>chooseImage(e.target.files?.[0])}/></label><textarea value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder="Write a message..." rows={2} maxLength={3000} className="flex-1 resize-none border rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"/><button disabled={busy||(!draft.trim()&&!image)} onClick={send} className="p-3 rounded-xl bg-blue-600 text-white disabled:opacity-40"><Send className="w-5 h-5"/></button></div>
         </>:<div className="flex-1 flex flex-col items-center justify-center text-slate-400"><MessageCircle className="w-12 h-12 mb-3"/><div className="font-semibold">Select a conversation</div><p className="text-sm mt-1">Your work conversations will appear here.</p></div>}
