@@ -66,7 +66,7 @@ export const updateWorkerProfile = async (req, res) => {
     if (preferences) updates.preferences = preferences;
     if (upiId !== undefined) {
       const cleanUpiId = String(upiId).trim();
-      if (cleanUpiId && !/^[\\w.\\-]{2,256}@[\\w]{2,64}$/.test(cleanUpiId)) {
+      if (cleanUpiId && !/^[\w.\-]{2,256}@[\w]{2,64}$/.test(cleanUpiId)) {
         return res.status(400).json({ success: false, message: 'Enter a valid UPI ID, for example name@bank.' });
       }
       updates.upiId = cleanUpiId;
