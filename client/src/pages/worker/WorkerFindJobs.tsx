@@ -55,6 +55,8 @@ export const WorkerFindJobs: React.FC = () => {
   const [voiceQuery, setVoiceQuery] = useState(searchParams.get('search') || '');
   const [selectedTrade, setSelectedTrade] = useState('All');
   const [selectedArea, setSelectedArea] = useState(searchParams.get('area') || '');
+  const [expectedWage, setExpectedWage] = useState<number | null>(null);
+  const [maxDistance, setMaxDistance] = useState<number | null>(null);
 
   // Modals
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -68,6 +70,8 @@ export const WorkerFindJobs: React.FC = () => {
       if (voiceQuery) params.search = voiceQuery;
       if (selectedTrade !== 'All') params.skill = selectedTrade;
       if (selectedArea) params.location = selectedArea;
+      if (expectedWage !== null && Number.isFinite(expectedWage) && expectedWage > 0) params.expected_wage = String(expectedWage);
+      if (maxDistance !== null && Number.isFinite(maxDistance) && maxDistance > 0) params.max_distance = String(maxDistance);
 
       const res = await apiGetMatchingJobs(params);
       if (res.success) {
@@ -82,14 +86,15 @@ export const WorkerFindJobs: React.FC = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [selectedTrade, selectedArea]);
+  }, [voiceQuery, selectedTrade, selectedArea, expectedWage, maxDistance]);
 
   const handleVoiceConfirmed = (prefs: ExtractedJobPreferences) => {
-    setVoiceQuery(prefs.skill);
-    setSelectedTrade(prefs.skill);
-    setSelectedArea(prefs.location);
-    fetchJobs();
-    showToast(`Preferences updated: ${prefs.skill} in ${prefs.location} at ₹${prefs.expected_wage}`, 'info');
+    setVoiceQuery(prefs.skill || '');
+    setSelectedTrade(prefs.skill || 'All');
+    setSelectedArea(prefs.location || '');
+    setExpectedWage(Number(prefs.expected_wage) > 0 ? Number(prefs.expected_wage) : null);
+    setMaxDistance(Number(prefs.preferred_distance) > 0 ? Number(prefs.preferred_distance) : null);
+    showToast(`Preferences updated: ${prefs.skill || 'Any trade'} in ${prefs.location || 'your area'} at ₹${prefs.expected_wage || 'any wage'}`, 'info');
   };
 
   const handleApply = async (job: Job) => {
@@ -238,10 +243,12 @@ export const WorkerFindJobs: React.FC = () => {
                       <span>{job.location?.area || 'Sector 63'}, {job.location?.city || 'Noida'}</span>
                       {job.location?.coordinates && <a target="_blank" rel="noreferrer" className="ml-1 text-brand-primary underline" href={"https://www.openstreetmap.org/?mlat=" + job.location.coordinates.lat + "&mlon=" + job.location.coordinates.lng + "#map=16/" + job.location.coordinates.lat + "/" + job.location.coordinates.lng}>Map</a>}
                     </span>
-                    {job.distanceKm && (
+                    {job.distanceKm !== undefined && job.distanceKm !== null ? (
                       <span className="font-semibold text-sky-700">
                         {job.distanceKm} km away · straight-line estimate
                       </span>
+                    ) : (
+                      <span className="text-[10px] text-brand-muted">Exact distance unavailable · map pin needed</span>
                     )}
                   </div>
                 </div>
