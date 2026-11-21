@@ -145,7 +145,7 @@ export const getEmployerApplications = async (req, res) => {
       return {
         ...app,
         workerProfile: workerProfile
-          ? { ...workerProfile, phone: app.status === 'Accepted' ? (workerProfile.phone || workerUser?.phone) : undefined }
+          ? { ...workerProfile, phone: app.status === 'Accepted' ? (workerProfile.phone || workerUser?.phone) : undefined, upiId: ['Accepted', 'Completed'].includes(app.status) ? workerProfile.upiId : undefined }
           : { fullName: workerUser?.name || 'Worker', skills: [] },
         workerUser: {
           name: workerUser?.name,
