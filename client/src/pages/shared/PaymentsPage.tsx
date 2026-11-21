@@ -119,6 +119,7 @@ export const PaymentsPage: React.FC = () => {
                 <input required type="number" min="1" max="1000000" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 800" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
               </label>
             </div>
+            {method === "direct_upi" && selectedWorkerUpiId && upiQrValue && <div className="rounded-xl border border-brand-border p-4 flex flex-col sm:flex-row items-center gap-4"><QRCodeSVG value={upiQrValue} size={160} level="M"/><div className="text-xs text-brand-muted"><strong className="block text-brand-dark text-sm mb-1">Scan to pay worker directly</strong>{selectedWorkerUpiId}<p className="mt-1">Amount: {money(Number(amount))}. Scan using a supported UPI app and verify the payee name and amount before paying.</p></div></div>}
             <div className="grid md:grid-cols-2 gap-3">
               <label className="text-xs font-semibold text-brand-muted">Payment method
                 <select value={method} onChange={e => setMethod(e.target.value as 'cash' | 'direct_upi')} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">
