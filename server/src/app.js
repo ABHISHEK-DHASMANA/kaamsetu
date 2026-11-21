@@ -44,11 +44,6 @@ app.get('/api/health', (req, res) => {
       totalEmployers: db.employerProfiles?.length || 0,
       totalJobs: db.jobs?.length || 0,
       totalApplications: db.applications?.length || 0
-    },
-    demoAccounts: {
-      worker: { phone: '9811002233', password: 'kaamsetu123', name: 'Ramesh Kumar (Electrician)' },
-      employer: { phone: '9811445566', password: 'kaamsetu123', name: 'Sharma Electrical Services' },
-      admin: { phone: '9876543210', password: 'kaamsetu123', name: 'KAAMSETU Admin' }
     }
   });
 });
