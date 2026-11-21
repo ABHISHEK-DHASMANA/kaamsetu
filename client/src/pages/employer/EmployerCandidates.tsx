@@ -202,13 +202,16 @@ export const EmployerCandidates: React.FC = () => {
                             <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                             <span>Accepted Candidate</span>
                           </span>
-                          <a
-                            href={`tel:${wp?.phone || userRec?.phone || '9811002233'}`}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-brand-primary text-white text-xs font-bold hover:bg-brand-primary-dark transition-colors shadow-sm"
-                          >
-                            <Phone className="w-3.5 h-3.5" />
-                            <span>Call {wp?.fullName?.split(' ')[0] || 'Worker'}</span>
-                          </a>
+                          {(wp?.phone || userRec?.phone) && (
+                            <a
+                              href={`tel:${(wp?.phone || userRec?.phone || '').replace(/[^+\\d]/g, '')}`}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-brand-primary text-white text-xs font-bold hover:bg-brand-primary-dark transition-colors shadow-sm"
+                              aria-label={`Call ${wp?.fullName || userRec?.name || 'worker'}`}
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>Call {wp?.fullName?.split(' ')[0] || 'Worker'}</span>
+                            </a>
+                          )}
                         </div>
                       ) : (
                         <>
