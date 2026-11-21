@@ -18,7 +18,9 @@ import {
   CheckCircle2,
   ShieldCheck,
   Building2,
-  Sparkles
+  Sparkles,
+  MessageCircle,
+  Bookmark
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -49,6 +51,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     { name: 'Dashboard', path: '/worker/dashboard', icon: LayoutDashboard },
     { name: 'Find Jobs (Voice AI)', path: '/worker/find-jobs', icon: Search },
     { name: 'My Applications', path: '/worker/applications', icon: FileCheck2 },
+    { name: 'Saved Jobs', path: '/worker/saved-jobs', icon: Bookmark },
+    { name: 'Messages', path: '/chats', icon: MessageCircle },
     { name: 'Digital Skill Passport', path: '/worker/skill-passport', icon: Award },
     { name: 'Profile & Trade', path: '/worker/profile', icon: User }
   ];
@@ -58,6 +62,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     { name: 'Post a New Job', path: '/employer/post-job', icon: PlusCircle },
     { name: 'Manage Jobs', path: '/employer/manage-jobs', icon: Briefcase },
     { name: 'Review Candidates', path: '/employer/candidates', icon: Users },
+    { name: 'Messages', path: '/chats', icon: MessageCircle },
     { name: 'Company Profile', path: '/employer/profile', icon: Building2 }
   ];
 
