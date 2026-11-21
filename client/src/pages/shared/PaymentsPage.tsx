@@ -19,7 +19,7 @@ export const PaymentsPage: React.FC = () => {
   const isWorker = user?.role === 'worker';
   const [payments, setPayments] = useState<Payment[]>([]);
   const [applications, setApplications] = useState<ApplicationOption[]>([]);
-  const [summary, setSummary] = useState({ paidTotal: 0, onlineTotal: 0, offlineTotal: 0, pendingTotal: 0, paidCount: 0 });
+  const [summary, setSummary] = useState({ paidTotal: 0, directUpiTotal: 0, cashTotal: 0, pendingTotal: 0, paidCount: 0 });
   const [applicationId, setApplicationId] = useState('');
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<'cash' | 'direct_upi'>('cash');
@@ -34,7 +34,7 @@ export const PaymentsPage: React.FC = () => {
   const refresh = async () => {
     const data = await apiGetMyPayments();
     setPayments(data.payments || []);
-    setSummary(data.summary || { paidTotal: 0, onlineTotal: 0, offlineTotal: 0, pendingTotal: 0, paidCount: 0 });
+    setSummary(data.summary || { paidTotal: 0, directUpiTotal: 0, cashTotal: 0, pendingTotal: 0, paidCount: 0 });
   };
 
   useEffect(() => {
@@ -96,8 +96,8 @@ export const PaymentsPage: React.FC = () => {
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Confirmed {isWorker ? 'earnings' : 'payments'}</div><div className="text-xl font-black text-emerald-600 mt-1">{money(summary.paidTotal)}</div></div>
           <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Pending</div><div className="text-xl font-black text-amber-600 mt-1">{money(summary.pendingTotal)}</div></div>
-          <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Online</div><div className="text-xl font-black text-brand-dark mt-1">{money(summary.onlineTotal)}</div></div>
-          <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Offline</div><div className="text-xl font-black text-brand-dark mt-1">{money(summary.offlineTotal)}</div></div>
+          <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Direct UPI</div><div className="text-xl font-black text-brand-dark mt-1">{money(summary.directUpiTotal)}</div></div>
+          <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Cash</div><div className="text-xl font-black text-brand-dark mt-1">{money(summary.cashTotal)}</div></div>
         </div>
 
         {message && <div className="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 text-sm">{message}</div>}
@@ -107,7 +107,7 @@ export const PaymentsPage: React.FC = () => {
 
         {!isWorker && (
           <form onSubmit={submitPayment} className="bg-white rounded-2xl border border-brand-border p-5 space-y-4">
-            <div><h2 className="font-bold text-brand-dark">Pay a worker</h2><p className="text-xs text-brand-muted mt-1">Choose a completed job, then pay the worker directly by cash or UPI. The worker confirms when the money is received.</p></div>
+            <div><h2 className="font-bold text-brand-dark">Pay a worker</h2><p className="text-xs text-brand-muted mt-1">Choose a completed job, pay the worker directly by cash or UPI, then record that you sent the payment. The worker confirms receipt.</p></div>
             <div className="grid md:grid-cols-2 gap-3">
               <label className="text-xs font-semibold text-brand-muted">Completed job / worker
                 <select required value={applicationId} onChange={e => setApplicationId(e.target.value)} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">
@@ -133,7 +133,7 @@ export const PaymentsPage: React.FC = () => {
             <label className="block text-xs font-semibold text-brand-muted">Note (optional)
               <input value={note} onChange={e => setNote(e.target.value)} maxLength={300} placeholder="Payment details" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
             </label>
-            <button disabled={busy || !applicationId || !amount || (method === 'direct_upi' && !selectedWorkerUpiId)} className="inline-flex items-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50"><Wallet className="w-4 h-4" />{busy ? 'Please wait...' : method === 'direct_upi' ? 'Show UPI payment details' : 'Record cash payment'}</button>
+            <button disabled={busy || !applicationId || !amount || (method === 'direct_upi' && !selectedWorkerUpiId)} className="inline-flex items-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50"><Wallet className="w-4 h-4" />{busy ? 'Please wait...' : method === 'direct_upi' ? 'I have sent UPI payment' : 'I have paid cash'}</button>
           </form>
         )}
 
