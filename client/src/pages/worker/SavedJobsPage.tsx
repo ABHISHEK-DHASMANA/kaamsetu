@@ -1,0 +1,11 @@
+import React,{useEffect,useState} from 'react';
+import {DashboardLayout} from '../../components/layout/DashboardLayout';
+import {Bookmark,MapPin,IndianRupee,Trash2} from 'lucide-react';
+import {Link} from 'react-router-dom';
+const API=import.meta.env.VITE_API_BASE_URL||'/api';
+const headers=()=>({Authorization:`Bearer ${sessionStorage.getItem('kaamsetu_token')||''}`});
+export const SavedJobsPage:React.FC=()=>{const [jobs,setJobs]=useState<any[]>([]);const [error,setError]=useState('');
+const load=async()=>{try{const r=await fetch(`${API}/social/saved-jobs`,{headers:headers()});const d=await r.json();if(!r.ok)throw new Error(d.message);setJobs(d.jobs||[]);}catch(e:any){setError(e.message||'Could not load saved jobs.');}};
+useEffect(()=>{load();},[]);
+const remove=async(id:string)=>{try{const r=await fetch(`${API}/social/saved-jobs/${id}`,{method:'PUT',headers:headers()});if(!r.ok)throw new Error('Could not update saved job.');await load();}catch(e:any){setError(e.message);}};
+return <DashboardLayout title="Saved Jobs" subtitle="Keep interesting opportunities in one place"><div className="space-y-4">{error&&<p className="text-sm text-red-600">{error}</p>}{jobs.length===0?<div className="bg-white rounded-2xl border p-10 text-center"><Bookmark className="w-9 h-9 mx-auto text-slate-300 mb-3"/><h3 className="font-bold">No saved jobs yet</h3><p className="text-sm text-slate-500 mt-1">Save jobs while exploring opportunities.</p><Link to="/worker/find-jobs" className="inline-block mt-4 text-sm text-blue-600 font-semibold">Explore jobs</Link></div>:jobs.map(job=><article key={job._id} className="bg-white rounded-2xl border p-5 flex items-center justify-between gap-3"><div><h3 className="font-bold">{job.title}</h3><p className="text-sm text-slate-500">{job.companyName}</p><p className="text-xs text-slate-500 mt-2 flex gap-3"><span><MapPin className="inline w-3 h-3"/>{job.location?.area}, {job.location?.city}</span><span><IndianRupee className="inline w-3 h-3"/>{job.offeredWage}/{job.wageType}</span></p></div><button onClick={()=>remove(job._id||job.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Remove saved job"><Trash2 className="w-4 h-4"/></button></article>)}</div></DashboardLayout>};
