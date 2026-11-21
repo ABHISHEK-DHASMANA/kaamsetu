@@ -57,6 +57,7 @@ export const WorkerFindJobs: React.FC = () => {
   const [selectedArea, setSelectedArea] = useState(searchParams.get('area') || '');
   const [expectedWage, setExpectedWage] = useState<number | null>(null);
   const [maxDistance, setMaxDistance] = useState<number | null>(null);
+  const [expectedWageType, setExpectedWageType] = useState<'daily' | 'monthly' | null>(null);
 
   // Modals
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -70,7 +71,10 @@ export const WorkerFindJobs: React.FC = () => {
       if (voiceQuery) params.search = voiceQuery;
       if (selectedTrade !== 'All') params.skill = selectedTrade;
       if (selectedArea) params.location = selectedArea;
-      if (expectedWage !== null && Number.isFinite(expectedWage) && expectedWage > 0) params.expected_wage = String(expectedWage);
+      if (expectedWage !== null && Number.isFinite(expectedWage) && expectedWage > 0) {
+        params.expected_wage = String(expectedWage);
+        if (expectedWageType) params.expected_wage_type = expectedWageType;
+      }
       if (maxDistance !== null && Number.isFinite(maxDistance) && maxDistance > 0) params.max_distance = String(maxDistance);
 
       const res = await apiGetMatchingJobs(params);
@@ -86,13 +90,14 @@ export const WorkerFindJobs: React.FC = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [voiceQuery, selectedTrade, selectedArea, expectedWage, maxDistance]);
+  }, [voiceQuery, selectedTrade, selectedArea, expectedWage, maxDistance, expectedWageType]);
 
   const handleVoiceConfirmed = (prefs: ExtractedJobPreferences) => {
     setVoiceQuery(prefs.skill || '');
     setSelectedTrade(prefs.skill || 'All');
     setSelectedArea(prefs.location || '');
     setExpectedWage(Number(prefs.expected_wage) > 0 ? Number(prefs.expected_wage) : null);
+    setExpectedWageType(prefs.wage_type === 'monthly' ? 'monthly' : 'daily');
     setMaxDistance(Number(prefs.preferred_distance) > 0 ? Number(prefs.preferred_distance) : null);
     showToast(`Preferences updated: ${prefs.skill || 'Any trade'} in ${prefs.location || 'your area'} at ₹${prefs.expected_wage || 'any wage'}`, 'info');
   };
