@@ -160,7 +160,6 @@ export interface Job {
     availabilityScore: number;
   };
   distanceKm?: number;
-  hiringRadiusKm?: number;
   matchExplanations?: string[];
   hasApplied?: boolean;
   applicationStatus?: string | null;
