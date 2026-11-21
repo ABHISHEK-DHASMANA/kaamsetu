@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { initializeStorage, enableMongoPersistence, flushStorage, getDb } from '../services/storage.js';
+import { initializeStorage, enableMongoPersistence, flushStorage, getDb, setDb } from '../services/storage.js';
 import { generateSeedData } from '../seeds/seedData.js';
 
 let isMongooseConnected = false;
@@ -9,7 +9,8 @@ const initializeAppStorage = async () => {
 
   if (!getDb().users?.length) {
     console.log('[Database] Empty application store detected. Creating demo dataset...');
-    await generateSeedData();
+    const seededDatabase = await generateSeedData();
+    setDb(seededDatabase);
     await flushStorage();
   }
 
