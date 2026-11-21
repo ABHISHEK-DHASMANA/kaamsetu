@@ -20,7 +20,8 @@ import {
   Building2,
   Sparkles,
   MessageCircle,
-  Bookmark
+  Bookmark,
+  Wallet
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -53,6 +54,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     { name: 'My Applications', path: '/worker/applications', icon: FileCheck2 },
     { name: 'Saved Jobs', path: '/worker/saved-jobs', icon: Bookmark },
     { name: 'Messages', path: '/chats', icon: MessageCircle },
+    { name: 'Payments', path: '/payments', icon: Wallet },
+    { name: 'My Earnings', path: '/payments', icon: Wallet },
     { name: 'Digital Skill Passport', path: '/worker/skill-passport', icon: Award },
     { name: 'Profile & Trade', path: '/worker/profile', icon: User }
   ];
