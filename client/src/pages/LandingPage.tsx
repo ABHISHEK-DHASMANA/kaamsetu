@@ -374,130 +374,26 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* D. Statistics Section (Clearly labelled demonstration figures) */}
-      <section className="py-14 bg-brand-dark text-white">
+      {/* Practical trust and payment information */}
+      <section className="py-14 bg-white border-y border-brand-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-brand-accent">
-              Platform Demonstration Metrics (Delhi-NCR Pilot Hubs)
-            </span>
+          <div className="max-w-2xl mb-8">
+            <span className="text-xs font-bold uppercase tracking-wider text-brand-secondary">Straightforward by design</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-brand-dark mt-2">Know what you're agreeing to.</h2>
+            <p className="text-sm text-brand-muted mt-2">A job listing should make the important details easy to find before anyone commits.</p>
           </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-black text-brand-accent">1,240+</div>
-              <div className="text-xs text-slate-300 mt-1">Verified Artisans Onboarded</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
+            <div className="border-l-2 border-brand-primary pl-5 py-1">
+              <h3 className="text-base font-bold text-brand-dark">Pay shown upfront</h3>
+              <p className="text-sm text-brand-muted mt-2">See the offered amount, whether it is daily or monthly, and the stated payment terms before applying.</p>
             </div>
-            <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-black text-brand-accent">₹870</div>
-              <div className="text-xs text-slate-300 mt-1">Average Daily Wage Earned</div>
+            <div className="border-l-2 border-brand-primary pl-5 py-1">
+              <h3 className="text-base font-bold text-brand-dark">Talk directly</h3>
+              <p className="text-sm text-brand-muted mt-2">Once an application is accepted, workers and employers can coordinate directly about the job.</p>
             </div>
-            <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-black text-brand-accent">94%</div>
-              <div className="text-xs text-slate-300 mt-1">On-Time Payment Fulfillment</div>
-            </div>
-            <div className="p-4">
-              <div className="text-3xl sm:text-4xl font-black text-brand-accent">2.4 km</div>
-              <div className="text-xs text-slate-300 mt-1">Average Proximity Distance</div>
-            </div>
-          </div>
-
-          <div className="mt-4 text-center text-[10px] text-slate-400">
-            * Demonstration figures representing targeted pilot impact metrics across Noida, Ghaziabad, and East Delhi clusters.
-          </div>
-        </div>
-      </section>
-
-      {/* E. Testimonials Section (Clearly labelled sample testimonials) */}
-      <section className="py-16 bg-brand-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-secondary">Voices of Bharat</span>
-            <h2 className="text-3xl font-extrabold text-brand-dark tracking-tight mt-1">
-              Sample Worker & Employer Stories
-            </h2>
-            <p className="text-xs text-brand-muted mt-1">
-              Representing real user journeys in our hyperlocal demonstration testbed.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-white border border-brand-border shadow-sm flex flex-col justify-between">
-              <div>
-                <div className="flex text-amber-400 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-xs text-brand-dark leading-relaxed italic font-normal">
-                  "Pehle thekedaar 30% cut rakh leta tha aur paise do hafte late deta tha. KAAMSETU par seedha Sharma ji se mila, Sector 63 mein kaam kiya aur roz shaam ko ₹900 UPI se mila. Meri skill passport bhi ban gayi!"
-                </p>
-              </div>
-              <div className="mt-4 pt-4 border-t border-brand-border flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150"
-                    alt="Ramesh Kumar"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-brand-dark">Ramesh Kumar</div>
-                  <div className="text-[11px] text-brand-muted">Electrician • Noida Sector 62</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white border border-brand-border shadow-sm flex flex-col justify-between">
-              <div>
-                <div className="flex text-amber-400 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-xs text-brand-dark leading-relaxed italic font-normal">
-                  "For electrical maintenance at our corporate site, finding reliable wiremen used to take days of phone calls. On KAAMSETU, Ramesh's verified passport and 94% trust score showed he was genuine. He arrived in 25 minutes."
-                </p>
-              </div>
-              <div className="mt-4 pt-4 border-t border-brand-border flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150"
-                    alt="Sunil Sharma"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-brand-dark">Sunil Sharma</div>
-                  <div className="text-[11px] text-brand-muted">Proprietor, Sharma Electrical Services</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white border border-brand-border shadow-sm flex flex-col justify-between">
-              <div>
-                <div className="flex text-amber-400 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-xs text-brand-dark leading-relaxed italic font-normal">
-                  "Main padh nahi sakti, lekin mic daba kar Hindi mein bola ki mujhe Indirapuram mein deep cleaning ka kaam chahiye. Turant do society ke kaam mil gaye. Voice feature ne meri zindagi aasan kar di."
-                </p>
-              </div>
-              <div className="mt-4 pt-4 border-t border-brand-border flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150"
-                    alt="Sunita Devi"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-brand-dark">Sunita Devi</div>
-                  <div className="text-[11px] text-brand-muted">Sanitation Worker • Indirapuram</div>
-                </div>
-              </div>
+            <div className="border-l-2 border-brand-primary pl-5 py-1">
+              <h3 className="text-base font-bold text-brand-dark">Choose how to settle</h3>
+              <p className="text-sm text-brand-muted mt-2">Payment is made directly by the employer to the worker, by UPI or cash. KaamSetu does not hold the money.</p>
             </div>
           </div>
         </div>
