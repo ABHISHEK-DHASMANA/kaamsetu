@@ -215,7 +215,7 @@ export const WorkerFindJobs: React.FC = () => {
                     </span>
                     {job.distanceKm && (
                       <span className="font-semibold text-sky-700">
-                        {job.distanceKm} km away
+                        {job.distanceKm} km away · straight-line estimate
                       </span>
                     )}
                   </div>
