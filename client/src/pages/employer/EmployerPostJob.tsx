@@ -46,7 +46,7 @@ export const EmployerPostJob: React.FC = () => {
   const getWageWarnings = () => {
     const warnings: string[] = [];
     if (offeredWage < 600 && wageType === 'daily') {
-      warnings.push('Wage is below the standard daily trade minimum (₹600). Consider raising compensation to attract skilled artisans.');
+      warnings.push('Wage is below KaamSetu's illustrative daily-wage reference (₹600). This is not a statutory minimum.');
     }
     if (!paymentTerms || paymentTerms.length < 10) {
       warnings.push('Payment terms are vague. Specify exactly when and how the worker will receive payment.');
@@ -214,7 +214,7 @@ export const EmployerPostJob: React.FC = () => {
                 <span>2. Fair Wage & Transparent Compensation</span>
               </div>
               <span className="text-[10px] bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold border border-emerald-200">
-                Mandatory Transparency Check
+                Transparency checklist
               </span>
             </h3>
 
@@ -331,7 +331,7 @@ export const EmployerPostJob: React.FC = () => {
             ) : (
               <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>100% Fair Wage Compliance verified! Your transparent listing will receive top matching priority.</span>
+                <span>Transparency checklist complete. Pay timing, method and deductions are listed; this is not a legal compliance certification.</span>
               </div>
             )}
           </div>
