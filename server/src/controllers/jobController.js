@@ -47,7 +47,7 @@ export const getJobs = async (req, res) => {
     res.status(200).json({
       success: true,
       count: jobs.length,
-      jobs
+      jobs: jobs.map(({ employerContact, ...publicJob }) => publicJob)
     });
   } catch (error) {
     console.error('getJobs error:', error);
@@ -69,7 +69,7 @@ export const getJobById = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      job,
+      job: (({ employerContact, ...publicJob }) => publicJob)(job),
       employerProfile
     });
   } catch (error) {
@@ -127,6 +127,7 @@ export const getMatchingJobsForWorker = async (req, res) => {
       const employerProfile = findOne('employerProfiles', profile => profile.userId === job.employerId);
       return {
         ...job,
+        employerContact: undefined,
         employerVerificationStatus: employerUser?.verificationStatus || 'Registered',
         employerRating: employerProfile?.rating !== undefined && employerProfile?.rating !== null && Number.isFinite(Number(employerProfile.rating)) ? Number(employerProfile.rating) : null,
         matchScore: matchResult.matchScore,
