@@ -1,0 +1,73 @@
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import dotenv from 'dotenv';
+import { getDbStatus } from './config/db.js';
+import { getDb } from './services/storage.js';
+
+import authRoutes from './routes/authRoutes.js';
+import jobRoutes from './routes/jobRoutes.js';
+import applicationRoutes from './routes/applicationRoutes.js';
+import workerRoutes from './routes/workerRoutes.js';
+import employerRoutes from './routes/employerRoutes.js';
+import voiceRoutes from './routes/voiceRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+
+dotenv.config();
+
+const app = express();
+
+// Middlewares
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
+
+// System Health & Diagnostics
+app.get('/api/health', (req, res) => {
+  const dbStatus = getDbStatus();
+  const db = getDb();
+  res.status(200).json({
+    status: 'online',
+    platform: 'KAAMSETU Hyperlocal Employment Network',
+    version: '1.0.0-production-mvp',
+    database: dbStatus,
+    stats: {
+      totalUsers: db.users?.length || 0,
+      totalWorkers: db.workerProfiles?.length || 0,
+      totalEmployers: db.employerProfiles?.length || 0,
+      totalJobs: db.jobs?.length || 0,
+      totalApplications: db.applications?.length || 0
+    },
+    demoAccounts: {
+      worker: { phone: '9811002233', password: 'kaamsetu123', name: 'Ramesh Kumar (Electrician)' },
+      employer: { phone: '9811445566', password: 'kaamsetu123', name: 'Sharma Electrical Services' },
+      admin: { phone: '9876543210', password: 'kaamsetu123', name: 'KAAMSETU Admin' }
+    }
+  });
+});
+
+// Mount Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/workers', workerRoutes);
+app.use('/api/employers', employerRoutes);
+app.use('/api/voice', voiceRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/reviews', reviewRoutes);
+
+// 404 handler
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ success: false, message: `Endpoint ${req.originalUrl} not found.` });
+});
+
+export default app;
