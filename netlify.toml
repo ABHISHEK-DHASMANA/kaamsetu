@@ -5,8 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  DEMO_MODE = "true"
-  JWT_SECRET = "kaamsetu_super_secure_jwt_secret_key_2026_hackathon"
+  DEMO_MODE = "false"
   NODE_ENV = "production"
 
 [[redirects]]
