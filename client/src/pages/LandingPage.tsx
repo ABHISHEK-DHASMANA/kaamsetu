@@ -32,14 +32,14 @@ export const LandingPage: React.FC = () => {
   };
 
   const categories = [
-    { name: 'Electrician', icon: '⚡', count: '45+ Jobs', query: 'Electrician' },
-    { name: 'Plumber', icon: '🔧', count: '38+ Jobs', query: 'Plumber' },
-    { name: 'Carpenter', icon: '🪚', count: '29+ Jobs', query: 'Carpenter' },
-    { name: 'Painter', icon: '🎨', count: '34+ Jobs', query: 'Painter' },
-    { name: 'Construction', icon: '🧱', count: '52+ Jobs', query: 'Mason' },
-    { name: 'Mechanic', icon: '⚙️', count: '22+ Jobs', query: 'Mechanic' },
-    { name: 'Delivery', icon: '🛵', count: '41+ Jobs', query: 'Delivery' },
-    { name: 'Cleaning', icon: '✨', count: '36+ Jobs', query: 'Cleaner' }
+    { name: 'Electrician', icon: '⚡', count: 'Browse jobs', query: 'Electrician' },
+    { name: 'Plumber', icon: '🔧', count: 'Browse jobs', query: 'Plumber' },
+    { name: 'Carpenter', icon: '🪚', count: 'Browse jobs', query: 'Carpenter' },
+    { name: 'Painter', icon: '🎨', count: 'Browse jobs', query: 'Painter' },
+    { name: 'Construction', icon: '🧱', count: 'Browse jobs', query: 'Mason' },
+    { name: 'Mechanic', icon: '⚙️', count: 'Browse jobs', query: 'Mechanic' },
+    { name: 'Delivery', icon: '🛵', count: 'Browse jobs', query: 'Delivery' },
+    { name: 'Cleaning', icon: '✨', count: 'Browse jobs', query: 'Cleaner' }
   ];
 
   return (
@@ -58,14 +58,14 @@ export const LandingPage: React.FC = () => {
               {/* Top Announcement Pill */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-primary-light border border-brand-primary/20 text-xs font-semibold text-brand-primary">
                 <span className="w-2 h-2 rounded-full bg-brand-secondary animate-pulse" />
-                <span>India's Hyperlocal Employment & Verified Skill Network</span>
+                <span>Local work. Real people. Better connections.</span>
               </div>
 
               {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-brand-dark tracking-tight leading-[1.15]">
-                Your Skills Deserve <br />
+                Good work should be <br />
                 <span className="text-brand-secondary relative">
-                  Better Opportunities.
+                  closer to home.
                   <svg className="absolute -bottom-2 left-0 w-full h-3 text-brand-accent/40" viewBox="0 0 100 12" preserveAspectRatio="none">
                     <path d="M0,8 Q50,0 100,8" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
                   </svg>
@@ -74,7 +74,7 @@ export const LandingPage: React.FC = () => {
 
               {/* Supporting Text */}
               <p className="text-base sm:text-lg text-brand-muted leading-relaxed max-w-2xl font-normal">
-                Discover trusted work opportunities near you. Find jobs based on your skills, exact location, and availability with zero middlemen and 100% fair wage transparency.
+                Find nearby jobs that fit your trade and schedule. Compare the pay and distance, then connect directly with the person hiring.
               </p>
 
               {/* Primary CTAs */}
@@ -100,10 +100,10 @@ export const LandingPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-brand-accent animate-ping" />
-                    <span className="text-xs font-bold text-brand-dark uppercase tracking-wider">Voice-to-Work Search</span>
+                    <span className="text-xs font-bold text-brand-dark uppercase tracking-wider">Find work by speaking</span>
                   </div>
                   <span className="text-[11px] font-semibold text-brand-secondary bg-brand-secondary-light px-2.5 py-0.5 rounded-full">
-                    Hindi & English AI
+                    Hindi & English
                   </span>
                 </div>
 
@@ -120,12 +120,12 @@ export const LandingPage: React.FC = () => {
                         "Mujhe kal electrician ka kaam chahiye, mere aas paas."
                       </div>
                       <div className="text-[11px] text-brand-muted truncate">
-                        Click microphone to speak or extract structured preferences
+                        Tap the microphone and tell us what kind of work you need
                       </div>
                     </div>
                   </div>
                   <span className="text-xs font-bold text-brand-primary bg-white px-3 py-1.5 rounded-xl border border-brand-border shadow-sm flex-shrink-0 group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                    Try Voice AI
+                    Speak your search
                   </span>
                 </div>
               </div>
@@ -141,12 +141,12 @@ export const LandingPage: React.FC = () => {
                       K
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-brand-dark">Hyperlocal Discovery</div>
-                      <div className="text-[10px] text-brand-secondary font-medium">Noida Sector 62 • 2.1 km Radius</div>
+                      <div className="text-xs font-bold text-brand-dark">A nearby work example</div>
+                      <div className="text-[10px] text-brand-secondary font-medium">Example location • distance varies</div>
                     </div>
                   </div>
                   <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Live Jobs
+                    Example listing
                   </span>
                 </div>
 
@@ -166,7 +166,7 @@ export const LandingPage: React.FC = () => {
                     </div>
                     <div className="text-[11px] text-brand-muted">Electrician • 3 Yrs Exp</div>
                     <div className="text-[10px] font-bold text-brand-secondary mt-0.5">
-                      Skill Passport #KSP-NOIDA-7842
+                      Work history & skills
                     </div>
                   </div>
                   <div className="text-right">
@@ -179,7 +179,7 @@ export const LandingPage: React.FC = () => {
                 <div className="mt-4 p-4 rounded-2xl border border-brand-border shadow-sm bg-white space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
-                      92% Match Score
+                      Illustrative match
                     </span>
                     <span className="text-xs font-extrabold text-brand-primary">₹900 / Day</span>
                   </div>
@@ -191,7 +191,7 @@ export const LandingPage: React.FC = () => {
                       <MapPin className="w-3 h-3" /> 2.1 km away
                     </span>
                     <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Zero Deductions
+                      <CheckCircle2 className="w-3 h-3" /> Pay agreed directly
                     </span>
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export const LandingPage: React.FC = () => {
               How KAAMSETU Connects You
             </h2>
             <p className="text-sm text-brand-muted mt-2">
-              Empowering informal and semi-skilled workers with dignity, digital proof of work, and transparent opportunities.
+              A straightforward way for workers and local employers to find each other.
             </p>
           </div>
 
@@ -232,17 +232,17 @@ export const LandingPage: React.FC = () => {
               {
                 step: '02',
                 title: 'Discover Nearby Jobs',
-                desc: 'Use voice search in Hindi or English to find jobs matching your exact schedule and location.'
+                desc: 'Search in Hindi or English and narrow results by location, pay and availability.'
               },
               {
                 step: '03',
                 title: 'Connect With Employers',
-                desc: 'Apply with 1-click. Employers review your Digital Skill Passport and verified ratings.'
+                desc: 'Apply to a listing and share your skills and work history with the employer.'
               },
               {
                 step: '04',
                 title: 'Get Hired & Paid Fairly',
-                desc: 'Work locally with transparent payment terms, zero cuts, and build your digital credibility.'
+                desc: 'Agree on the work and payment directly with the employer. Build a record of completed work.'
               }
             ].map((step, idx) => (
               <div
@@ -301,12 +301,12 @@ export const LandingPage: React.FC = () => {
       <section className="py-16 bg-white border-y border-brand-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-secondary">Core Value Proposition</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-brand-secondary">What makes KaamSetu useful</span>
             <h2 className="text-3xl font-extrabold text-brand-dark tracking-tight mt-1">
               Why KAAMSETU is Different
             </h2>
             <p className="text-sm text-brand-muted mt-2">
-              Not just another job board. A dedicated, accessible socio-economic platform for India's blue-collar workforce.
+              Practical tools for finding nearby work, checking job details and building a record of your skills.
             </p>
           </div>
 
@@ -315,7 +315,7 @@ export const LandingPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center">
                 <MapPin className="w-5 h-5 text-brand-accent" />
               </div>
-              <h3 className="text-base font-bold text-brand-dark">Hyperlocal Proximity First</h3>
+              <h3 className="text-base font-bold text-brand-dark">Jobs closer to home</h3>
               <p className="text-xs text-brand-muted leading-relaxed">
                 Matches you with contractors and households within 2–10 km to reduce travel time, commute fatigue, and transportation expenses.
               </p>
@@ -325,7 +325,7 @@ export const LandingPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center">
                 <Mic className="w-5 h-5 text-brand-accent" />
               </div>
-              <h3 className="text-base font-bold text-brand-dark">Voice-Based Job Discovery</h3>
+              <h3 className="text-base font-bold text-brand-dark">Search in your language</h3>
               <p className="text-xs text-brand-muted leading-relaxed">
                 Break literacy barriers. Speak naturally in Hindi or English, and our AI extracts your trade, preferred sector, and desired daily rate.
               </p>
@@ -365,7 +365,7 @@ export const LandingPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-brand-accent" />
               </div>
-              <h3 className="text-base font-bold text-brand-dark">Intelligent 4-Factor Matching</h3>
+              <h3 className="text-base font-bold text-brand-dark">Relevant matches, clearly explained</h3>
               <p className="text-xs text-brand-muted leading-relaxed">
                 Weighted algorithmic scoring across skill fit (40%), location (25%), wage (20%), and availability (15%) with transparent explanations.
               </p>
@@ -507,10 +507,10 @@ export const LandingPage: React.FC = () => {
       <section className="py-16 bg-gradient-to-r from-brand-primary to-brand-primary-dark text-white">
         <div className="max-w-5xl mx-auto px-4 text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Ready to Connect with Trusted Work Near You?
+            Your next job could be nearby.
           </h2>
           <p className="text-slate-300 text-sm max-w-xl mx-auto">
-            Join thousands of electricians, plumbers, masons, and local contractors building an honest, transparent employment ecosystem.
+            Create a profile to find local work, or post a job if you need skilled help.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link
