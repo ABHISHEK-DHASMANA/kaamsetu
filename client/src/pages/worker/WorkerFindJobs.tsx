@@ -174,7 +174,7 @@ export const WorkerFindJobs: React.FC = () => {
           </div>
 
           <div className="text-xs text-brand-muted font-medium">
-            Found <span className="font-bold text-brand-dark">{jobs.length}</span> verified matches
+            Found <span className="font-bold text-brand-dark">{jobs.length}</span> matched jobs
           </div>
         </div>
 
@@ -213,6 +213,8 @@ export const WorkerFindJobs: React.FC = () => {
                   <div className="text-xs font-semibold text-brand-muted mt-1 flex items-center gap-2">
                     <Building2 className="w-3.5 h-3.5 text-brand-secondary" />
                     <span>{job.companyName}</span>
+                    {job.employerVerificationStatus === 'Identity Verified' && <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">Identity verified</span>}
+                    {job.employerRating !== undefined && job.employerRating !== null && <span className="text-[10px] font-semibold text-amber-700">★ {job.employerRating.toFixed(1)}</span>}
                   </div>
 
                   <p className="text-xs text-brand-muted mt-2 line-clamp-2 leading-relaxed">
@@ -235,6 +237,15 @@ export const WorkerFindJobs: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {job.wageTransparencyWarnings && job.wageTransparencyWarnings.length > 0 && (
+                    <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] text-amber-900">
+                      <div className="font-bold flex items-center gap-1 mb-1"><AlertTriangle className="w-3.5 h-3.5" /> Pay terms need clarification</div>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {job.wageTransparencyWarnings.slice(0, 2).map((warning, index) => <li key={index}>{warning}</li>)}
+                      </ul>
+                    </div>
+                  )}
 
                   {/* Location & Proximity */}
                   <div className="mt-3 flex items-center justify-between text-xs text-brand-muted">
