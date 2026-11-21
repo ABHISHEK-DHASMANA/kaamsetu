@@ -18,6 +18,7 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import socialRoutes from './routes/socialRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import phonepeRoutes from './routes/phonepeRoutes.js';
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/social', socialRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/phonepe', phonepeRoutes);
 
 // 404 handler
 app.use('/api/*', (req, res) => {
