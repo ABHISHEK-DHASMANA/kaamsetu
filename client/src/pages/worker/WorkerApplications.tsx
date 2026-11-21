@@ -134,7 +134,10 @@ export const WorkerApplications: React.FC = () => {
               </p>
             </div>
           ) : (
-            applications.map((app) => (
+            applications.map((app) => {
+              const employerDigits = (app.employer?.phone || '').replace(/\D/g, '');
+              const employerPhone = employerDigits.length >= 10 ? `+91${employerDigits.slice(-10)}` : '';
+              return (
               <div
                 key={app._id}
                 className="p-6 rounded-3xl bg-white border border-brand-border shadow-sm space-y-4 hover:shadow-card transition-all"
@@ -194,14 +197,14 @@ export const WorkerApplications: React.FC = () => {
                       <span>Direct Contact Unlocked! You have been accepted for this position.</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-4 text-xs font-semibold pt-1">
-                      {app.employer?.phone ? (
+                      {employerPhone ? (
                         <a
-                          href={`tel:${app.employer.phone.replace(/[^+\\d]/g, '')}`}
+                          href={`tel:${employerPhone}`}
                           className="inline-flex items-center gap-1.5 underline font-bold"
                           aria-label={`Call employer at ${app.employer.phone}`}
                         >
                           <Phone className="w-3.5 h-3.5 text-emerald-700" />
-                          Call Employer: {app.employer.phone}
+                          Call Employer: {employerPhone}
                         </a>
                       ) : (
                         <span className="text-emerald-800">Employer has not shared a phone number yet.</span>
@@ -211,7 +214,8 @@ export const WorkerApplications: React.FC = () => {
                   </div>
                 )}
               </div>
-            ))
+            );
+            })
           )}
         </div>
       </div>
