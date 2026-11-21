@@ -17,6 +17,7 @@ export const getEmployerProfile = async (req, res) => {
       success: true,
       profile: {
         ...profile,
+        address: req.params.userId ? { ...profile.address, coordinates: undefined } : profile.address,
         activeJobsCount: activeJobs.length,
         jobsPostedCount: totalJobs.length
       },
