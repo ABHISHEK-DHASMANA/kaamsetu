@@ -46,7 +46,7 @@ export const EmployerPostJob: React.FC = () => {
   const getWageWarnings = () => {
     const warnings: string[] = [];
     if (offeredWage < 600 && wageType === 'daily') {
-      warnings.push('Wage is below KaamSetu's illustrative daily-wage reference (₹600). This is not a statutory minimum.');
+      warnings.push("Wage is below KaamSetu's illustrative daily-wage reference (₹600). This is not a statutory minimum.");
     }
     if (!paymentTerms || paymentTerms.length < 10) {
       warnings.push('Payment terms are vague. Specify exactly when and how the worker will receive payment.');
