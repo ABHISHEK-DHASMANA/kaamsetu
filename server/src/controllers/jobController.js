@@ -88,7 +88,7 @@ export const getMatchingJobsForWorker = async (req, res) => {
     }
 
     // Optional query overrides (e.g. from Voice-to-Work extraction!)
-    const { skill, location, expected_wage, max_distance } = req.query;
+    const { skill, location, expected_wage, expected_wage_type, max_distance } = req.query;
     
     // Construct effective worker preferences (merging profile and voice overrides)
     const effectiveProfile = {
@@ -96,8 +96,9 @@ export const getMatchingJobsForWorker = async (req, res) => {
       skills: skill ? [{ skillName: skill, category: 'Extracted' }, ...(workerProfile.skills || [])] : workerProfile.skills,
       preferences: {
         ...workerProfile.preferences,
-        expectedDailyWage: expected_wage ? Number(expected_wage) : workerProfile.preferences?.expectedDailyWage,
-        maxDistanceKm: max_distance ? Number(max_distance) : workerProfile.preferences?.maxDistanceKm
+        expectedDailyWage: expected_wage && expected_wage_type !== 'monthly' ? Number(expected_wage) : workerProfile.preferences?.expectedDailyWage,
+        expectedMonthlyWage: expected_wage && expected_wage_type === 'monthly' ? Number(expected_wage) : workerProfile.preferences?.expectedMonthlyWage,
+        maxDistanceKm: max_distance ? Math.min(100, Math.max(1, Number(max_distance))) : workerProfile.preferences?.maxDistanceKm
       }
     };
 
