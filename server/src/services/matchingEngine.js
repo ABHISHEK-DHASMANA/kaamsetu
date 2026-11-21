@@ -19,7 +19,9 @@ const RELATED_SKILLS_MAP = {
  * Calculates haversine distance between two sets of lat/lng in kilometers
  */
 export const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
-  const values = [lat1, lon1, lat2, lon2].map(Number);
+  const rawValues = [lat1, lon1, lat2, lon2];
+  if (rawValues.some(value => value === null || value === undefined || String(value).trim() === '')) return null;
+  const values = rawValues.map(Number);
   if (!values.every(Number.isFinite)) return null;
   const [latitude1, longitude1, latitude2, longitude2] = values;
   if (Math.abs(latitude1) > 90 || Math.abs(latitude2) > 90 || Math.abs(longitude1) > 180 || Math.abs(longitude2) > 180) return null;
@@ -93,7 +95,7 @@ export const calculateLocationScore = (workerLoc = {}, jobLoc = {}, maxDistanceK
   const jCoords = jobLoc.coordinates;
 
   const hasCoordinates = [wCoords?.lat, wCoords?.lng, jCoords?.lat, jCoords?.lng]
-    .every(value => value !== undefined && value !== null && Number.isFinite(Number(value)));
+    .every(value => value !== undefined && value !== null && String(value).trim() !== '' && Number.isFinite(Number(value)));
 
   if (hasCoordinates) {
     const distanceKm = calculateDistanceKm(wCoords.lat, wCoords.lng, jCoords.lat, jCoords.lng);
