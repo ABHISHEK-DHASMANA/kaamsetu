@@ -27,12 +27,12 @@ export const DEMO_USERS = {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('kaamsetu_token'));
+  const [token, setToken] = useState<string | null>(sessionStorage.getItem('kaamsetu_token'));
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem('kaamsetu_token');
+      const storedToken = sessionStorage.getItem('kaamsetu_token');
       if (storedToken) {
         try {
           const res = await apiGetMe();
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await apiLogin(phone, pass);
       if (res.success) {
-        localStorage.setItem('kaamsetu_token', res.token);
+        sessionStorage.setItem('kaamsetu_token', res.token);
         setToken(res.token);
         setUser(res.user);
         setProfile(res.profile);
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    localStorage.removeItem('kaamsetu_token');
+    sessionStorage.removeItem('kaamsetu_token');
     setToken(null);
     setUser(null);
     setProfile(null);
