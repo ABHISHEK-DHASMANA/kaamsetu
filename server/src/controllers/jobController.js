@@ -89,16 +89,20 @@ export const getMatchingJobsForWorker = async (req, res) => {
 
     // Optional query overrides (e.g. from Voice-to-Work extraction!)
     const { skill, location, expected_wage, expected_wage_type, max_distance } = req.query;
-    
-    // Construct effective worker preferences (merging profile and voice overrides)
+    const requestedWage = Number(expected_wage);
+    const hasRequestedWage = expected_wage !== undefined && Number.isFinite(requestedWage) && requestedWage > 0;
+    const requestedDistance = Number(max_distance);
+    const hasRequestedDistance = max_distance !== undefined && Number.isFinite(requestedDistance) && requestedDistance > 0;
+
+    // Construct effective worker preferences (merging voice-search overrides with saved profile settings).
     const effectiveProfile = {
       ...workerProfile,
       skills: skill ? [{ skillName: skill, category: 'Extracted' }, ...(workerProfile.skills || [])] : workerProfile.skills,
       preferences: {
         ...workerProfile.preferences,
-        expectedDailyWage: expected_wage && expected_wage_type !== 'monthly' ? Number(expected_wage) : workerProfile.preferences?.expectedDailyWage,
-        expectedMonthlyWage: expected_wage && expected_wage_type === 'monthly' ? Number(expected_wage) : workerProfile.preferences?.expectedMonthlyWage,
-        maxDistanceKm: max_distance ? Math.min(100, Math.max(1, Number(max_distance))) : workerProfile.preferences?.maxDistanceKm
+        expectedDailyWage: hasRequestedWage && expected_wage_type !== 'monthly' ? requestedWage : workerProfile.preferences?.expectedDailyWage,
+        expectedMonthlyWage: hasRequestedWage && expected_wage_type === 'monthly' ? requestedWage : workerProfile.preferences?.expectedMonthlyWage,
+        maxDistanceKm: hasRequestedDistance ? Math.min(100, Math.max(1, requestedDistance)) : workerProfile.preferences?.maxDistanceKm
       }
     };
 
@@ -115,7 +119,8 @@ export const getMatchingJobsForWorker = async (req, res) => {
     const existingApplications = find('applications', a => a.workerId === workerUserId);
     const appliedJobIds = new Set(existingApplications.map(a => a.jobId));
 
-    const workerRadius = Number(effectiveProfile.preferences?.maxDistanceKm || 10);
+    const configuredWorkerRadius = Number(effectiveProfile.preferences?.maxDistanceKm);
+    const workerRadius = Number.isFinite(configuredWorkerRadius) && configuredWorkerRadius > 0 ? configuredWorkerRadius : 10;
     const scoredJobs = activeJobs.map(job => {
       const matchResult = calculateJobMatch(effectiveProfile, job);
       const employerUser = findOne('users', user => user._id === job.employerId || user.id === job.employerId);
@@ -123,7 +128,7 @@ export const getMatchingJobsForWorker = async (req, res) => {
       return {
         ...job,
         employerVerificationStatus: employerUser?.verificationStatus || 'Registered',
-        employerRating: Number.isFinite(Number(employerProfile?.rating)) ? Number(employerProfile.rating) : null,
+        employerRating: employerProfile?.rating !== undefined && employerProfile?.rating !== null && Number.isFinite(Number(employerProfile.rating)) ? Number(employerProfile.rating) : null,
         matchScore: matchResult.matchScore,
         matchBreakdown: matchResult.breakdown,
         distanceKm: matchResult.distanceKm,
@@ -136,7 +141,8 @@ export const getMatchingJobsForWorker = async (req, res) => {
     // Respect both sides' distance preferences. Distances are straight-line estimates from saved map coordinates.
     const withinBothDistancePreferences = scoredJobs.filter(job => {
       if (job.distanceKm === null || job.distanceKm === undefined) return true;
-      const employerRadius = Number(job.hiringRadiusKm || 10);
+      const configuredEmployerRadius = Number(job.hiringRadiusKm);
+      const employerRadius = Number.isFinite(configuredEmployerRadius) && configuredEmployerRadius > 0 ? configuredEmployerRadius : 10;
       return job.distanceKm <= workerRadius && job.distanceKm <= employerRadius;
     });
 
