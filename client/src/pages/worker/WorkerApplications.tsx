@@ -8,6 +8,7 @@ import {
   MapPin,
   Clock,
   Phone,
+  MessageCircle,
   CheckCircle2,
   XCircle,
   AlertCircle,
@@ -198,14 +199,26 @@ export const WorkerApplications: React.FC = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-4 text-xs font-semibold pt-1">
                       {employerPhone ? (
-                        <a
-                          href={`tel:${employerPhone}`}
-                          className="inline-flex items-center gap-1.5 underline font-bold"
-                          aria-label={`Call employer at ${app.employer.phone}`}
-                        >
-                          <Phone className="w-3.5 h-3.5 text-emerald-700" />
-                          Call Employer: {employerPhone}
-                        </a>
+                        <>
+                          <a
+                            href={`https://wa.me/${employerPhone.replace(/\\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 underline font-bold"
+                            aria-label={`Message employer on WhatsApp at ${employerPhone}`}
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
+                            WhatsApp Employer
+                          </a>
+                          <a
+                            href={`tel:${employerPhone}`}
+                            className="inline-flex items-center gap-1.5 underline font-bold"
+                            aria-label={`Call employer at ${employerPhone}`}
+                          >
+                            <Phone className="w-3.5 h-3.5 text-emerald-700" />
+                            Mobile Call
+                          </a>
+                        </>
                       ) : (
                         <span className="text-emerald-800">Employer has not shared a phone number yet.</span>
                       )}
