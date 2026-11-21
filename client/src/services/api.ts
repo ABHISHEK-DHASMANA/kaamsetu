@@ -256,3 +256,25 @@ export const apiSubmitReport = async (payload: {
     body: JSON.stringify(payload)
   });
 };
+
+
+// Direct employer-to-worker payment tracking
+export const apiGetMyPayments = async () => {
+  return request<{ success: boolean; payments: any[]; summary: { paidTotal: number; onlineTotal: number; offlineTotal: number; pendingTotal: number; paidCount: number } }>('/payments/me');
+};
+
+export const apiCreatePayment = async (payload: { applicationId: string; amount: number; method: 'cash' | 'direct_upi'; transactionReference?: string; note?: string }) => {
+  return request<{ success: boolean; message: string; payment: any }>('/payments', {
+    method: 'POST', body: JSON.stringify(payload)
+  });
+};
+
+export const apiConfirmPaymentReceived = async (id: string) => {
+  return request<{ success: boolean; message: string; payment: any }>(`/payments/${id}/confirm-received`, { method: 'PUT' });
+};
+
+export const apiDisputePayment = async (id: string, reason: string) => {
+  return request<{ success: boolean; message: string; payment: any }>(`/payments/${id}/dispute`, {
+    method: 'POST', body: JSON.stringify({ reason })
+  });
+};
