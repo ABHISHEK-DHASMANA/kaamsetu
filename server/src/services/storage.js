@@ -18,7 +18,8 @@ let inMemoryDb = {
   reports: [],
   messages: [],
   savedJobs: [],
-  userBlocks: []
+  userBlocks: [],
+  payments: []
 };
 
 export const initializeStorage = async () => {
