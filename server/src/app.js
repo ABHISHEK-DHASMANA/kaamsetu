@@ -3,7 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { getDbStatus } from './config/db.js';
-import { getDb } from './services/storage.js';
+import { getDb, flushStorage } from './services/storage.js';
 
 import authRoutes from './routes/authRoutes.js';
 import jobRoutes from './routes/jobRoutes.js';
@@ -32,6 +32,24 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
+app.use((req, res, next) => {
+  const sendJson = res.json.bind(res);
+  res.json = payload => {
+    if (!getDbStatus().connected) return sendJson(payload);
+    flushStorage()
+      .then(() => sendJson(payload))
+      .catch(error => {
+        console.error('[API] Refusing to acknowledge a write that was not persisted:', error.message);
+        if (!res.headersSent) {
+          res.status(503);
+          sendJson({ success: false, message: 'We could not safely save this change. Please retry in a moment.' });
+        }
+      });
+    return res;
+  };
+  next();
+});
+
 
 // System Health & Diagnostics
 app.get('/api/health', (req, res) => {
