@@ -28,8 +28,8 @@ export const listMyPayments = (req, res) => {
     payments: own,
     summary: {
       paidTotal: paid.reduce((sum, p) => sum + p.amount, 0),
-      onlineTotal: paid.filter(p => p.method === 'online').reduce((sum, p) => sum + p.amount, 0),
-      offlineTotal: paid.filter(p => p.method !== 'online').reduce((sum, p) => sum + p.amount, 0),
+      directUpiTotal: paid.filter(p => p.method === 'direct_upi').reduce((sum, p) => sum + p.amount, 0),
+      cashTotal: paid.filter(p => p.method === 'cash').reduce((sum, p) => sum + p.amount, 0),
       pendingTotal: pending.reduce((sum, p) => sum + p.amount, 0),
       paidCount: paid.length
     }
