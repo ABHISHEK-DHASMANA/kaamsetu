@@ -11,6 +11,7 @@ import {
   Sparkles,
   Award,
   Phone,
+  MessageCircle,
   ShieldCheck,
   Building2,
   MapPin,
@@ -205,14 +206,26 @@ export const EmployerCandidates: React.FC = () => {
                             <span>Accepted Candidate</span>
                           </span>
                           {workerPhone && (
-                            <a
-                              href={`tel:${workerPhone}`}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-brand-primary text-white text-xs font-bold hover:bg-brand-primary-dark transition-colors shadow-sm"
-                              aria-label={`Call ${wp?.fullName || userRec?.name || 'worker'}`}
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                              <span>Call {wp?.fullName?.split(' ')[0] || 'Worker'}</span>
-                            </a>
+                            <>
+                              <a
+                                href={`https://wa.me/${workerPhone.replace(/\\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm"
+                                aria-label={`WhatsApp ${wp?.fullName || userRec?.name || 'worker'}`}
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                <span>WhatsApp</span>
+                              </a>
+                              <a
+                                href={`tel:${workerPhone}`}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-brand-primary text-white text-xs font-bold hover:bg-brand-primary-dark transition-colors shadow-sm"
+                                aria-label={`Call ${wp?.fullName || userRec?.name || 'worker'}`}
+                              >
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>Mobile Call</span>
+                              </a>
+                            </>
                           )}
                         </div>
                       ) : (
