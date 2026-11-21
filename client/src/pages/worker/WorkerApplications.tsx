@@ -194,12 +194,19 @@ export const WorkerApplications: React.FC = () => {
                       <span>Direct Contact Unlocked! You have been accepted for this position.</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-4 text-xs font-semibold pt-1">
-                      <span className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-emerald-700" />
-                        Call Employer: <a href="tel:9811445566" className="underline font-bold">9811445566 (Sunil Sharma)</a>
-                      </span>
-                      <span>•</span>
-                      <span>Site: H-14 Sector 63 Noida (9:00 AM)</span>
+                      {app.employer?.phone ? (
+                        <a
+                          href={`tel:${app.employer.phone.replace(/[^+\\d]/g, '')}`}
+                          className="inline-flex items-center gap-1.5 underline font-bold"
+                          aria-label={`Call employer at ${app.employer.phone}`}
+                        >
+                          <Phone className="w-3.5 h-3.5 text-emerald-700" />
+                          Call Employer: {app.employer.phone}
+                        </a>
+                      ) : (
+                        <span className="text-emerald-800">Employer has not shared a phone number yet.</span>
+                      )}
+                      <span>Contact is available because this application was accepted.</span>
                     </div>
                   </div>
                 )}
