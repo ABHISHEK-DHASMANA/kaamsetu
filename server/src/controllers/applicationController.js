@@ -89,10 +89,22 @@ export const getWorkerApplications = async (req, res) => {
     const hydrated = applications.map(app => {
       const job = findOne('jobs', j => j._id === app.jobId || j.id === app.jobId);
       const employer = findOne('employerProfiles', ep => ep.userId === app.employerId);
+      const employerUser = app.status === 'Accepted'
+        ? findOne('users', u => u._id === app.employerId || u.id === app.employerId)
+        : null;
       return {
         ...app,
         job: job || { title: 'Unknown Job', offeredWage: 0, location: {} },
-        employer: employer || { companyName: 'Employer', verificationStatus: 'Registered' }
+        employer: employer
+          ? {
+              ...employer,
+              phone: app.status === 'Accepted' ? (employer.phone || employerUser?.phone) : undefined
+            }
+          : {
+              companyName: 'Employer',
+              verificationStatus: 'Registered',
+              ...(app.status === 'Accepted' && employerUser?.phone ? { phone: employerUser.phone } : {})
+            }
       };
     });
 
@@ -132,10 +144,12 @@ export const getEmployerApplications = async (req, res) => {
       const job = findOne('jobs', j => j._id === app.jobId || j.id === app.jobId);
       return {
         ...app,
-        workerProfile: workerProfile || { fullName: workerUser?.name || 'Worker', skills: [] },
+        workerProfile: workerProfile
+          ? { ...workerProfile, phone: app.status === 'Accepted' ? (workerProfile.phone || workerUser?.phone) : undefined }
+          : { fullName: workerUser?.name || 'Worker', skills: [] },
         workerUser: {
           name: workerUser?.name,
-          phone: workerUser?.phone,
+          phone: app.status === 'Accepted' ? workerUser?.phone : undefined,
           verificationStatus: workerUser?.verificationStatus
         },
         job: job || { title: 'Job', offeredWage: 0 }
