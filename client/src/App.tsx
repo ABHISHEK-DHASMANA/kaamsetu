@@ -16,6 +16,8 @@ import { WorkerFindJobs } from './pages/worker/WorkerFindJobs';
 import { WorkerApplications } from './pages/worker/WorkerApplications';
 import { WorkerSkillPassport } from './pages/worker/WorkerSkillPassport';
 import { WorkerProfilePage } from './pages/worker/WorkerProfile';
+import { ChatPage } from './pages/shared/ChatPage';
+import { SavedJobsPage } from './pages/worker/SavedJobsPage';
 
 // Employer Pages
 import { EmployerDashboard } from './pages/employer/EmployerDashboard';
@@ -104,6 +106,8 @@ export const App: React.FC = () => {
           </ProtectedRoute>
         }
       />
+      <Route path="/chats" element={<ProtectedRoute allowedRoles={['worker','employer']}><ChatPage /></ProtectedRoute>} />
+      <Route path="/worker/saved-jobs" element={<ProtectedRoute allowedRoles={['worker']}><SavedJobsPage /></ProtectedRoute>} />
       <Route
         path="/worker/profile"
         element={
