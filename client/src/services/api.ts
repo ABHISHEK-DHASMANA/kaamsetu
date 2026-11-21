@@ -9,7 +9,7 @@ import {
   ExtractedJobPreferences
 } from '../types';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem('kaamsetu_token');
