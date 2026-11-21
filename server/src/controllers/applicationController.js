@@ -89,22 +89,25 @@ export const getWorkerApplications = async (req, res) => {
     const hydrated = applications.map(app => {
       const job = findOne('jobs', j => j._id === app.jobId || j.id === app.jobId);
       const employer = findOne('employerProfiles', ep => ep.userId === app.employerId);
-      const employerUser = app.status === 'Accepted'
+      const contactUnlocked = ['Accepted', 'Completed'].includes(app.status);
+      const employerUser = contactUnlocked
         ? findOne('users', u => u._id === app.employerId || u.id === app.employerId)
         : null;
       return {
         ...app,
-        job: job || { title: 'Unknown Job', offeredWage: 0, location: {} },
+        job: job
+          ? { ...job, employerContact: contactUnlocked ? job.employerContact : { ...job.employerContact, phone: undefined } }
+          : { title: 'Unknown Job', offeredWage: 0, location: {} },
         employer: employer
           ? {
               ...employer,
-              phone: app.status === 'Accepted' ? (employer.phone || employerUser?.phone) : undefined,
-              email: app.status === 'Accepted' ? employer.email : undefined
+              phone: contactUnlocked ? (employer.phone || employerUser?.phone) : undefined,
+              email: contactUnlocked ? employer.email : undefined
             }
           : {
               companyName: 'Employer',
               verificationStatus: 'Registered',
-              ...(app.status === 'Accepted' && employerUser?.phone ? { phone: employerUser.phone } : {})
+              ...(contactUnlocked && employerUser?.phone ? { phone: employerUser.phone } : {})
             }
       };
     });
