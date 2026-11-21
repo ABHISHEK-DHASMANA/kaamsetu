@@ -116,6 +116,8 @@ export interface Job {
   employerProfileId?: string;
   hiringRadiusKm?: number;
   companyName: string;
+  employerVerificationStatus?: UserVerificationStatus;
+  employerRating?: number | null;
   title: string;
   category: string;
   requiredSkills: string[];
