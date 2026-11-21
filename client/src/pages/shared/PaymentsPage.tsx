@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../context/AuthContext';
-import { apiCreatePayment, apiGetEmployerApplications, apiGetMyPayments, apiGetWorkerApplications, apiConfirmPaymentReceived, apiDisputePayment, apiGetWorkerProfile, apiUpdateWorkerProfile } from '../../services/api';
+import { apiCreatePayment, apiGetEmployerApplications, apiGetMyPayments, apiGetWorkerApplications, apiConfirmPaymentReceived, apiDisputePayment, apiGetWorkerProfile, apiUpdateWorkerProfile, apiCreatePhonePeCheckout, apiGetPhonePePaymentStatus, apiGetMyPhonePePayments, apiGetPhonePeAvailability } from '../../services/api';
 import { Banknote, CheckCircle2, Clock3, IndianRupee, QrCode, ShieldAlert, Smartphone, Wallet } from 'lucide-react';
 
 type Payment = {
@@ -22,7 +22,11 @@ export const PaymentsPage: React.FC = () => {
   const [summary, setSummary] = useState({ paidTotal: 0, onlineTotal: 0, offlineTotal: 0, pendingTotal: 0, paidCount: 0 });
   const [applicationId, setApplicationId] = useState('');
   const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState<'cash' | 'direct_upi'>('cash');
+  const [method, setMethod] = useState<'cash' | 'direct_upi' | 'online'>('online');
+  const [phonePePayments, setPhonePePayments] = useState<any[]>([]);
+  const [phonePeAvailable, setPhonePeAvailable] = useState(false);
+  const [phonePeMessage, setPhonePeMessage] = useState('Checking PhonePe checkout availability...');
+  const [verifyingOrder, setVerifyingOrder] = useState(false);
   const [reference, setReference] = useState('');
   const [note, setNote] = useState('');
   const [workerUpiId, setWorkerUpiId] = useState('');
@@ -52,6 +56,30 @@ export const PaymentsPage: React.FC = () => {
   }, [isWorker]);
 
   const pending = useMemo(() => payments.filter(p => p.status === 'awaiting_worker_confirmation'), [payments]);
+  const refreshPhonePe = async () => {
+    const [history, availability] = await Promise.all([apiGetMyPhonePePayments(), apiGetPhonePeAvailability()]);
+    setPhonePePayments(history.payments || []);
+    setPhonePeAvailable(availability.available);
+    setPhonePeMessage(availability.message);
+  };
+
+  useEffect(() => {
+    refreshPhonePe().catch(() => setPhonePeMessage('Online checkout is not currently available.'));
+    const merchantOrderId = new URLSearchParams(window.location.search).get('merchantOrderId');
+    if (merchantOrderId) {
+      setVerifyingOrder(true);
+      apiGetPhonePePaymentStatus(merchantOrderId)
+        .then(result => {
+          const state = result.payment?.status;
+          setMessage(state === 'paid' ? 'PhonePe payment verified successfully.' : state === 'failed' ? 'PhonePe reports that this payment failed.' : 'Payment is still pending verification.');
+          return refreshPhonePe();
+        })
+        .catch(e => setError(e.message || 'Could not verify the PhonePe payment yet.'))
+        .finally(() => setVerifyingOrder(false));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   const selectedApplication = applications.find(a => a._id === applicationId);
   const selectedWorkerUpiId = selectedApplication?.workerProfile?.upiId;
   const upiQrValue = selectedWorkerUpiId && amount && Number(amount) > 0 ? 'upi://pay?pa=' + encodeURIComponent(selectedWorkerUpiId) + '&pn=' + encodeURIComponent(selectedApplication?.workerProfile?.fullName || 'KaamSetu Worker') + '&am=' + encodeURIComponent(amount) + '&cu=INR&tn=KaamSetu%20job%20payment' : '';
@@ -66,6 +94,11 @@ export const PaymentsPage: React.FC = () => {
   const submitPayment = async (event: React.FormEvent) => {
     event.preventDefault(); setBusy(true); setError(''); setMessage('');
     try {
+      if (method === 'online') {
+        const result = await apiCreatePhonePeCheckout({ applicationId, amount: Number(amount) });
+        window.location.assign(result.checkoutUrl);
+        return;
+      }
       const result = await apiCreatePayment({ applicationId, amount: Number(amount), method, transactionReference: reference, note });
       setMessage(result.message); setApplicationId(''); setAmount(''); setReference(''); setNote('');
       await refresh();
@@ -93,6 +126,7 @@ export const PaymentsPage: React.FC = () => {
   return (
     <DashboardLayout title={isWorker ? 'My Earnings' : 'Payments'} subtitle={isWorker ? 'Track money received directly from employers' : 'Record and track direct payments to your workers'}>
       <div className="space-y-6">
+        {verifyingOrder && <div className="rounded-xl bg-blue-50 border border-blue-200 text-blue-800 p-3 text-sm">Verifying your PhonePe payment securely...</div>}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Confirmed {isWorker ? 'earnings' : 'payments'}</div><div className="text-xl font-black text-emerald-600 mt-1">{money(summary.paidTotal)}</div></div>
           <div className="bg-white rounded-2xl border border-brand-border p-4"><div className="text-xs text-brand-muted">Pending</div><div className="text-xl font-black text-amber-600 mt-1">{money(summary.pendingTotal)}</div></div>
@@ -107,7 +141,7 @@ export const PaymentsPage: React.FC = () => {
 
         {!isWorker && (
           <form onSubmit={submitPayment} className="bg-white rounded-2xl border border-brand-border p-5 space-y-4">
-            <div><h2 className="font-bold text-brand-dark">Record a worker payment</h2><p className="text-xs text-brand-muted mt-1">Only completed applications are eligible. The worker must confirm receipt before earnings count as paid.</p></div>
+            <div><h2 className="font-bold text-brand-dark">Pay a worker</h2><p className="text-xs text-brand-muted mt-1">Choose a completed job and pay securely. Online payments are marked paid only after server-side PhonePe verification.</p></div>
             <div className="grid md:grid-cols-2 gap-3">
               <label className="text-xs font-semibold text-brand-muted">Completed job / worker
                 <select required value={applicationId} onChange={e => setApplicationId(e.target.value)} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">
@@ -123,7 +157,7 @@ export const PaymentsPage: React.FC = () => {
             <div className="grid md:grid-cols-2 gap-3">
               <label className="text-xs font-semibold text-brand-muted">Payment method
                 <select value={method} onChange={e => setMethod(e.target.value as 'cash' | 'direct_upi')} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">
-                  <option value="cash">Cash</option><option value="direct_upi">Direct UPI (PhonePe / GPay / Paytm)</option>
+                  <option value="online">Online checkout (PhonePe)</option><option value="cash">Cash</option><option value="direct_upi">Direct UPI QR (manual confirmation)</option>
                 </select>
               </label>
               {method === 'direct_upi' && <label className="text-xs font-semibold text-brand-muted">UPI transaction reference (optional)
@@ -133,15 +167,21 @@ export const PaymentsPage: React.FC = () => {
             <label className="block text-xs font-semibold text-brand-muted">Note (optional)
               <input value={note} onChange={e => setNote(e.target.value)} maxLength={300} placeholder="Payment details" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
             </label>
-            <button disabled={busy || !applicationId || !amount} className="inline-flex items-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50"><Wallet className="w-4 h-4" />{busy ? 'Saving...' : 'Record payment'}</button>
+            <div className="rounded-xl bg-slate-50 border border-brand-border p-3 text-xs text-brand-muted">PhonePe: {phonePeMessage}</div>
+            <button disabled={busy || !applicationId || !amount || (method === 'online' && !phonePeAvailable)} className="inline-flex items-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50"><Wallet className="w-4 h-4" />{busy ? 'Please wait...' : method === 'online' ? 'Pay securely with PhonePe' : 'Record payment'}</button>
           </form>
         )}
 
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
           <ShieldAlert className="w-5 h-5 text-blue-700 shrink-0" />
-          <div className="text-xs text-blue-900"><strong>Payment safety:</strong> Cash and direct UPI records become confirmed earnings only after the worker confirms receipt. A QR scan opens a direct UPI payment in a supported app; KaamSetu does not independently verify the bank transfer. The worker must confirm receipt. Live online checkout is not enabled in this version.</div>
+          <div className="text-xs text-blue-900"><strong>Payment safety:</strong> PhonePe online payments are confirmed only by checking order status from the server. Cash and direct UPI remain manual records and require worker confirmation. Automatic worker bank payouts need a separately approved payout provider.</div>
         </div>
 
+
+        <section className="bg-white rounded-2xl border border-brand-border overflow-hidden">
+          <div className="p-5 border-b border-brand-border"><h2 className="font-bold text-brand-dark">Secure online payment history</h2><p className="text-xs text-brand-muted mt-1">PhonePe provider-verified status · {phonePePayments.length} record(s)</p></div>
+          {phonePePayments.length === 0 ? <div className="px-5 py-4 text-xs text-brand-muted">No online checkout records yet.</div> : <div className="divide-y divide-brand-border">{phonePePayments.map(p => <div key={p.merchantOrderId} className="px-5 py-4 flex items-center justify-between gap-3"><div><div className="text-sm font-semibold text-brand-dark">Order {p.merchantOrderId}</div><div className="text-xs text-brand-muted">{new Date(p.createdAt).toLocaleString('en-IN')}</div></div><div className="text-right"><div className="font-bold text-brand-dark">{money(p.amount)}</div><span className="text-xs font-semibold">{p.status === 'paid' ? 'Verified paid' : p.status === 'failed' ? 'Failed' : 'Pending verification'}</span></div></div>)}</div>}
+        </section>
         <section className="bg-white rounded-2xl border border-brand-border overflow-hidden">
           <div className="p-5 border-b border-brand-border"><h2 className="font-bold text-brand-dark">{isWorker ? 'Payment history' : 'Payments to workers'}</h2><p className="text-xs text-brand-muted mt-1">{payments.length} record(s)</p></div>
           {payments.length === 0 ? <div className="p-10 text-center text-sm text-brand-muted">No payment records yet.</div> : <div className="divide-y divide-brand-border">
