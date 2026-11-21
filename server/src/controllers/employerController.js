@@ -20,6 +20,7 @@ export const getEmployerProfile = async (req, res) => {
       success: true,
       profile: {
         ...profile,
+        ...(req.params.userId ? { phone: undefined, email: undefined } : {}),
         avatar: employerAvatar,
         address: req.params.userId ? { ...profile.address, coordinates: undefined } : profile.address,
         activeJobsCount: activeJobs.length,
@@ -27,8 +28,8 @@ export const getEmployerProfile = async (req, res) => {
       },
       user: {
         name: user?.name,
-        phone: user?.phone,
-        email: user?.email,
+        phone: req.params.userId ? undefined : user?.phone,
+        email: req.params.userId ? undefined : user?.email,
         verificationStatus: user?.verificationStatus,
         createdAt: user?.createdAt
       }
@@ -84,6 +85,9 @@ export const getCandidatesForJob = async (req, res) => {
     if (!job) {
       return res.status(404).json({ success: false, message: 'Job not found.' });
     }
+    if (job.employerId !== (req.user._id || req.user.id) && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'You can only view applicants for your own jobs.' });
+    }
 
     const applications = find('applications', a => a.jobId === jobId);
     const candidates = applications.map(app => {
@@ -98,13 +102,16 @@ export const getCandidatesForJob = async (req, res) => {
         worker: {
           id: workerProfile?.userId,
           fullName: workerProfile?.fullName || workerUser?.name,
-          phone: workerUser?.phone,
+          phone: ['Accepted', 'Completed'].includes(app.status) ? (workerProfile?.phone || workerUser?.phone) : undefined,
           avatar: workerProfile?.avatar,
           workerId: workerProfile?.workerId,
           primarySkill: workerProfile?.primarySkill,
           experienceLevel: workerProfile?.experienceLevel,
           skills: workerProfile?.skills,
-          location: workerProfile?.location,
+          location: workerProfile
+            ? (['Accepted', 'Completed'].includes(app.status) ? workerProfile.location : { ...workerProfile.location, coordinates: undefined })
+            : undefined,
+          upiId: ['Accepted', 'Completed'].includes(app.status) ? workerProfile?.upiId : undefined,
           skillPassport: workerProfile?.skillPassport
         }
       };
