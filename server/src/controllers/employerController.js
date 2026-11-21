@@ -10,6 +10,9 @@ export const getEmployerProfile = async (req, res) => {
     }
 
     const user = findOne('users', u => u._id === profile.userId || u.id === profile.userId);
+    // Older persisted demo records may not have profile.avatar; use the
+    // corresponding account avatar so every seeded employer displays a photo.
+    const employerAvatar = profile.avatar || user?.avatar || '';
     const activeJobs = find('jobs', j => j.employerId === profile.userId && j.status === 'active');
     const totalJobs = find('jobs', j => j.employerId === profile.userId);
 
@@ -17,6 +20,7 @@ export const getEmployerProfile = async (req, res) => {
       success: true,
       profile: {
         ...profile,
+        avatar: employerAvatar,
         address: req.params.userId ? { ...profile.address, coordinates: undefined } : profile.address,
         activeJobsCount: activeJobs.length,
         jobsPostedCount: totalJobs.length
