@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { apiCreateJob } from '../../services/api';
 import { useNotifications } from '../../context/NotificationContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   Briefcase,
   IndianRupee,
@@ -18,6 +19,7 @@ import {
 export const EmployerPostJob: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useNotifications();
+  const { profile } = useAuth();
 
   // Form states
   const [title, setTitle] = useState('');
@@ -35,7 +37,7 @@ export const EmployerPostJob: React.FC = () => {
   const [area, setArea] = useState('Sector 63');
   const [city, setCity] = useState('Noida');
   const [coordinates, setCoordinates] = useState({ lat: 28.6271, lng: 77.3820 });
-  const [hiringRadiusKm, setHiringRadiusKm] = useState(10);
+  const [hiringRadiusKm, setHiringRadiusKm] = useState(profile?.maxHiringDistanceKm || 10);
   const [workTimings, setWorkTimings] = useState('9:00 AM - 6:00 PM (1 hr lunch)');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
