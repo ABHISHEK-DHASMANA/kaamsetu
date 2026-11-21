@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiRegister } from '../services/api';
+import { uploadProfileImage } from '../services/imageUpload';
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
@@ -57,6 +58,8 @@ export const RegisterPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [preferredLanguage, setPreferredLanguage] = useState('Hindi');
   const [companyName, setCompanyName] = useState('');
+  const [avatar, setAvatar] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Step 2: Skills
   const [selectedSkills, setSelectedSkills] = useState<string[]>(['Electrician']);
@@ -116,6 +119,7 @@ export const RegisterPage: React.FC = () => {
         email,
         password,
         role,
+        avatar,
         preferredLanguage,
         location: {
           state,
@@ -228,6 +232,14 @@ export const RegisterPage: React.FC = () => {
                 />
               </div>
 
+              <div className="rounded-2xl border border-brand-border bg-slate-50 p-4 space-y-2">
+                <label className="text-xs font-semibold text-brand-dark block">Profile photo (optional)</label>
+                <div className="flex items-center gap-3">
+                  <img src={avatar || "https://ui-avatars.com/api/?name=KaamSetu"} alt="Profile preview" className="w-14 h-14 rounded-full object-cover border" />
+                  <div><input type="file" accept="image/*" disabled={isUploadingAvatar} onChange={async e => { const file=e.target.files?.[0]; if(!file)return; setIsUploadingAvatar(true); try { setAvatar(await uploadProfileImage(file)); } catch(err:any) { setErrorMsg(err.message || "Image upload failed."); } finally { setIsUploadingAvatar(false); e.currentTarget.value=""; } }} className="text-xs max-w-full" />
+                    <p className="text-[11px] text-brand-muted">{isUploadingAvatar ? "Uploading..." : "Worker / employer profile image · up to 5 MB"}</p></div>
+                </div>
+              </div>
               <div>
                 <label className="text-xs font-semibold text-brand-dark block mb-1">
                   Mobile Number (Used for SMS & OTP) <span className="text-red-500">*</span>
