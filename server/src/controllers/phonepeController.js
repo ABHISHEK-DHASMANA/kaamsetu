@@ -127,7 +127,7 @@ export const getPhonePePaymentStatus = async (req, res) => {
       const state = String(provider.state || 'PENDING').toUpperCase();
       const providerAmount = Number(provider.amount);
       if (state === 'COMPLETED') {
-        if (Number.isFinite(providerAmount) && providerAmount !== intent.amountPaisa) {
+        if (!Number.isFinite(providerAmount) || providerAmount !== intent.amountPaisa) {
           return res.status(409).json({ success: false, message: 'Payment amount mismatch. The payment has not been marked as paid; contact support.' });
         }
         intent.status = 'paid';
