@@ -122,7 +122,7 @@ export const getSkillPassport = async (req, res) => {
         skills: workerProfile.skills,
         experienceLevel: workerProfile.experienceLevel,
         experienceYearsNum: workerProfile.experienceYearsNum,
-        location: workerProfile.location,
+        location: passportId ? { ...workerProfile.location, coordinates: undefined } : workerProfile.location,
         bio: workerProfile.bio,
         userVerification: user?.verificationStatus || 'Registered',
         memberSince: user?.createdAt,
