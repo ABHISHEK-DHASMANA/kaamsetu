@@ -12,14 +12,9 @@ import {
   Award,
   IndianRupee,
   Sparkles,
-  ArrowRight,
   CheckCircle2,
-  Users,
   Briefcase,
-  Star,
   ChevronRight,
-  TrendingUp,
-  Clock,
   Smartphone
 } from 'lucide-react';
 
