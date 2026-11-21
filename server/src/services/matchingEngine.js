@@ -19,16 +19,17 @@ const RELATED_SKILLS_MAP = {
  * Calculates haversine distance between two sets of lat/lng in kilometers
  */
 export const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
-  if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) {
-    return null;
-  }
+  const values = [lat1, lon1, lat2, lon2].map(Number);
+  if (!values.every(Number.isFinite)) return null;
+  const [latitude1, longitude1, latitude2, longitude2] = values;
+  if (Math.abs(latitude1) > 90 || Math.abs(latitude2) > 90 || Math.abs(longitude1) > 180 || Math.abs(longitude2) > 180) return null;
   const R = 6371; // Earth's radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const dLat = ((latitude2 - latitude1) * Math.PI) / 180;
+  const dLon = ((longitude2 - longitude1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
+    Math.cos((latitude1 * Math.PI) / 180) *
+      Math.cos((latitude2 * Math.PI) / 180) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -91,49 +92,54 @@ export const calculateLocationScore = (workerLoc = {}, jobLoc = {}, maxDistanceK
   const wCoords = workerLoc.coordinates;
   const jCoords = jobLoc.coordinates;
 
-  if (wCoords?.lat && wCoords?.lng && jCoords?.lat && jCoords?.lng) {
-    const distanceKm = calculateDistanceKm(wCoords.lat, wCoords.lng, jCoords.lat, jCoords.lng);
-    let score = 100;
-    if (distanceKm <= 2) score = 100;
-    else if (distanceKm <= 5) score = 88;
-    else if (distanceKm <= 10) score = 72;
-    else if (distanceKm <= 15) score = 55;
-    else if (distanceKm <= 25) score = 35;
-    else score = 15;
+  const hasCoordinates = [wCoords?.lat, wCoords?.lng, jCoords?.lat, jCoords?.lng]
+    .every(value => value !== undefined && value !== null && Number.isFinite(Number(value)));
 
-    return {
-      score,
-      distanceKm,
-      explanation: `Job site is ${distanceKm} km away from your base location.`
-    };
+  if (hasCoordinates) {
+    const distanceKm = calculateDistanceKm(wCoords.lat, wCoords.lng, jCoords.lat, jCoords.lng);
+    if (distanceKm !== null) {
+      let score = 100;
+      if (distanceKm <= 2) score = 100;
+      else if (distanceKm <= 5) score = 88;
+      else if (distanceKm <= 10) score = 72;
+      else if (distanceKm <= 15) score = 55;
+      else if (distanceKm <= 25) score = 35;
+      else score = 15;
+
+      return {
+        score,
+        distanceKm,
+        explanation: `Worksite is approximately ${distanceKm} km away in a straight line.`
+      };
+    }
   }
 
-  // Fallback if coordinates missing: area / city match
+  // Area/city can help rank jobs, but must never be presented as a measured distance.
   const wCity = (workerLoc.city || '').toLowerCase().trim();
   const jCity = (jobLoc.city || '').toLowerCase().trim();
   const wArea = (workerLoc.area || '').toLowerCase().trim();
   const jArea = (jobLoc.area || '').toLowerCase().trim();
 
-  if (wArea && jArea && (wArea.includes(jArea) || jArea.includes(wArea))) {
+  if (wArea && jArea && wArea === jArea) {
     return {
       score: 90,
-      distanceKm: 2.5,
-      explanation: `Job is in your exact neighbourhood (${jobLoc.area || 'Same Area'}).`
+      distanceKm: null,
+      explanation: `Same neighbourhood (${jobLoc.area}); add both map pins to calculate exact distance.`
     };
   }
 
   if (wCity && jCity && wCity === jCity) {
     return {
       score: 75,
-      distanceKm: 6.0,
-      explanation: `Located within same city (${jobLoc.city || 'NCR'}).`
+      distanceKm: null,
+      explanation: `Same city (${jobLoc.city}); exact distance is unavailable until both map pins are set.`
     };
   }
 
   return {
     score: 40,
-    distanceKm: 18.0,
-    explanation: 'Different region or approximate location match.'
+    distanceKm: null,
+    explanation: 'Exact distance is unavailable because one or both map pins are missing.'
   };
 };
 
