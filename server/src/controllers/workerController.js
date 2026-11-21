@@ -48,7 +48,8 @@ export const updateWorkerProfile = async (req, res) => {
       skills,
       experienceLevel,
       location,
-      preferences
+      preferences,
+      avatar
     } = req.body;
 
     const updates = {};
@@ -59,12 +60,14 @@ export const updateWorkerProfile = async (req, res) => {
     if (primarySkill) updates.primarySkill = primarySkill;
     if (skills) updates.skills = skills;
     if (experienceLevel) updates.experienceLevel = experienceLevel;
+    if (avatar) updates.avatar = avatar;
     if (location) updates.location = location;
     if (preferences) updates.preferences = preferences;
 
     const updated = update('workerProfiles', workerProfile._id, updates);
 
     // Also update base user record
+    if (avatar) update('users', workerUserId, { avatar });
     if (fullName || phone) {
       update('users', workerUserId, {
         ...(fullName && { name: fullName }),
