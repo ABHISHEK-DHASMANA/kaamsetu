@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../context/AuthContext';
-import { apiCreatePayment, apiGetEmployerApplications, apiGetMyPayments, apiGetWorkerApplications, apiConfirmPaymentReceived, apiDisputePayment } from '../../services/api';
+import { apiCreatePayment, apiGetEmployerApplications, apiGetMyPayments, apiGetWorkerApplications, apiConfirmPaymentReceived, apiDisputePayment, apiGetWorkerProfile, apiUpdateWorkerProfile } from '../../services/api';
 import { Banknote, CheckCircle2, Clock3, IndianRupee, QrCode, ShieldAlert, Smartphone, Wallet } from 'lucide-react';
 
 type Payment = {
@@ -9,7 +10,7 @@ type Payment = {
   status: string; jobTitle: string; workerName: string; employerName: string;
   transactionReference?: string; createdAt: string; note?: string;
 };
-type ApplicationOption = { _id: string; status: string; workerProfile?: { fullName?: string }; job?: { title?: string; offeredWage?: number } };
+type ApplicationOption = { _id: string; status: string; workerProfile?: { fullName?: string; upiId?: string }; job?: { title?: string; offeredWage?: number } };
 
 const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value || 0);
 
@@ -24,6 +25,8 @@ export const PaymentsPage: React.FC = () => {
   const [method, setMethod] = useState<'cash' | 'direct_upi'>('cash');
   const [reference, setReference] = useState('');
   const [note, setNote] = useState('');
+  const [workerUpiId, setWorkerUpiId] = useState('');
+  const [upiSaving, setUpiSaving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -36,6 +39,9 @@ export const PaymentsPage: React.FC = () => {
 
   useEffect(() => {
     refresh().catch(e => setError(e.message || 'Unable to load payments.'));
+    if (isWorker) {
+      apiGetWorkerProfile().then(data => setWorkerUpiId((data.workerProfile as any)?.upiId || '')).catch(() => undefined);
+    }
     if (!isWorker) {
       apiGetEmployerApplications().then(data => setApplications((data.applications || []).filter((a: ApplicationOption) => a.status === 'Completed')))
         .catch(e => setError(e.message || 'Unable to load completed jobs.'));
@@ -46,6 +52,16 @@ export const PaymentsPage: React.FC = () => {
   }, [isWorker]);
 
   const pending = useMemo(() => payments.filter(p => p.status === 'awaiting_worker_confirmation'), [payments]);
+  const selectedApplication = applications.find(a => a._id === applicationId);
+  const selectedWorkerUpiId = selectedApplication?.workerProfile?.upiId;
+  const upiQrValue = selectedWorkerUpiId && amount && Number(amount) > 0 ? 'upi://pay?pa=' + encodeURIComponent(selectedWorkerUpiId) + '&pn=' + encodeURIComponent(selectedApplication?.workerProfile?.fullName || 'KaamSetu Worker') + '&am=' + encodeURIComponent(amount) + '&cu=INR&tn=KaamSetu%20job%20payment' : '';
+
+  const saveWorkerUpi = async (event: React.FormEvent) => {
+    event.preventDefault(); setUpiSaving(true); setError(''); setMessage('');
+    try { await apiUpdateWorkerProfile({ upiId: workerUpiId.trim() } as any); setMessage('Your UPI ID has been saved. Employers can see it only for accepted/completed work.'); }
+    catch (e: any) { setError(e.message || 'Could not save UPI ID.'); }
+    finally { setUpiSaving(false); }
+  };
 
   const submitPayment = async (event: React.FormEvent) => {
     event.preventDefault(); setBusy(true); setError(''); setMessage('');
@@ -87,6 +103,8 @@ export const PaymentsPage: React.FC = () => {
         {message && <div className="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 text-sm">{message}</div>}
         {error && <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 p-3 text-sm">{error}</div>}
 
+        {isWorker && <form onSubmit={saveWorkerUpi} className="bg-white rounded-2xl border border-brand-border p-5 space-y-3"><div><h2 className="font-bold text-brand-dark">Your UPI payment QR</h2><p className="text-xs text-brand-muted mt-1">Add your own UPI ID to let an employer scan and pay you directly after an accepted job is completed.</p></div><div className="flex flex-col sm:flex-row gap-2"><input value={workerUpiId} onChange={e => setWorkerUpiId(e.target.value)} maxLength={100} placeholder="yourname@bank" className="flex-1 rounded-xl border border-brand-border p-3 text-sm"/><button disabled={upiSaving} className="rounded-xl bg-brand-primary text-white px-4 py-3 text-sm font-bold disabled:opacity-50">{upiSaving ? 'Saving...' : 'Save UPI ID'}</button></div>{workerUpiId && <div className="inline-flex flex-col items-center gap-2 rounded-xl border border-brand-border p-4"><QRCodeSVG value={'upi://pay?pa=' + encodeURIComponent(workerUpiId) + '&pn=' + encodeURIComponent(user?.name || 'KaamSetu Worker') + '&cu=INR'} size={176} level="M"/><span className="text-xs font-semibold text-brand-dark">{workerUpiId}</span><span className="text-[11px] text-brand-muted">Share this QR with the employer in person</span></div>}</form>}
+
         {!isWorker && (
           <form onSubmit={submitPayment} className="bg-white rounded-2xl border border-brand-border p-5 space-y-4">
             <div><h2 className="font-bold text-brand-dark">Record a worker payment</h2><p className="text-xs text-brand-muted mt-1">Only completed applications are eligible. The worker must confirm receipt before earnings count as paid.</p></div>
@@ -120,7 +138,7 @@ export const PaymentsPage: React.FC = () => {
 
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
           <ShieldAlert className="w-5 h-5 text-blue-700 shrink-0" />
-          <div className="text-xs text-blue-900"><strong>Payment safety:</strong> Cash and direct UPI records become confirmed earnings only after the worker confirms receipt. A UPI reference is supporting information, not automatic bank verification. Live online checkout is not enabled in this version.</div>
+          <div className="text-xs text-blue-900"><strong>Payment safety:</strong> Cash and direct UPI records become confirmed earnings only after the worker confirms receipt. A QR scan opens a direct UPI payment in a supported app; KaamSetu does not independently verify the bank transfer. The worker must confirm receipt. Live online checkout is not enabled in this version.</div>
         </div>
 
         <section className="bg-white rounded-2xl border border-brand-border overflow-hidden">
