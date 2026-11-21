@@ -114,6 +114,7 @@ export interface Job {
   id?: string;
   employerId: string;
   employerProfileId?: string;
+  hiringRadiusKm?: number;
   companyName: string;
   title: string;
   category: string;
