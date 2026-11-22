@@ -57,7 +57,7 @@ export const EmployerDashboard: React.FC = () => {
 
   return (
     <DashboardLayout
-      title={`Dashboard: ${profile?.companyName || user?.name}`}
+      title={profile?.businessType === "Home Owner" ? `Home Hiring · ${user?.name}` : `Dashboard · ${profile?.companyName || user?.name}`}
       subtitle={`${profile?.businessType || 'Hiring Enterprise'} • ${profile?.address?.area || 'Sector 63'}, Noida`}
       actionButton={
         <Link
@@ -65,7 +65,7 @@ export const EmployerDashboard: React.FC = () => {
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-primary text-white text-xs font-bold hover:bg-brand-primary-dark transition-all shadow-sm"
         >
           <PlusCircle className="w-4 h-4 text-brand-accent" />
-          <span>Post New Job</span>
+          <span>Post a Job</span>
         </Link>
       }
     >
