@@ -18,7 +18,6 @@ export const EmployerProfilePage: React.FC = () => {
   const [contactPerson, setContactPerson] = useState('');
   const [phone, setPhone] = useState('');
   const [industry, setIndustry] = useState('');
-  const [businessType, setBusinessType] = useState('');
   const [gstOrGovtId, setGstOrGovtId] = useState('');
   const [area, setArea] = useState('');
   const [city, setCity] = useState('');
