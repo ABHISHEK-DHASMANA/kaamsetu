@@ -40,8 +40,8 @@ export const getMessages = async (req, res) => {
 };
 
 export const sendMessage = async (req, res) => {
-  const userId = req.user._id || req.user.id;
-  const application = findOne('applications', a => a._id === req.params.applicationId || a.id === req.params.applicationId);
+  const userId = String(req.user._id || req.user.id);
+  const application = findOne('applications', a => String(a._id || a.id) === String(req.params.applicationId));
   if (!canAccess(application, userId)) return res.status(403).json({ success:false, message:'Chat is available only to the accepted parties.' });
   const { text, imageDataUrl } = req.body;
   const messageText = typeof text === 'string' ? text.trim().slice(0, 3000) : '';

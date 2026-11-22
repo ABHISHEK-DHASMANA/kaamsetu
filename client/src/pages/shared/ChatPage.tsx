@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
@@ -12,6 +12,7 @@ const auth = () => ({'Content-Type':'application/json',Authorization:`Bearer ${s
 
 export const ChatPage:React.FC = () => {
   const { user } = useAuth();
+  const messageRequest = useRef(0);
   const [searchParams] = useSearchParams();
   const requestedApplicationId = searchParams.get('applicationId');
   const [chats,setChats]=useState<Chat[]>([]);
@@ -22,11 +23,11 @@ export const ChatPage:React.FC = () => {
   const [error,setError]=useState('');
   const [busy,setBusy]=useState(false);
   const loadChats=useCallback(async()=>{try{const r=await fetch(`${API}/chats`,{headers:auth()});const d=await r.json();if(!r.ok)throw new Error(d.message);const nextChats: Chat[] = d.chats || [];setChats(nextChats);}catch(e:any){setError(e.message||'Unable to load chats.');}},[]);
-  const loadMessages=useCallback(async(id:string)=>{try{const r=await fetch(`${API}/chats/${id}/messages`,{headers:auth()});const d=await r.json();if(!r.ok)throw new Error(d.message);setMessages(d.messages||[]);setError('');}catch(e:any){setError(e.message||'Unable to load messages.');}},[]);
+  const loadMessages=useCallback(async(id:string)=>{const requestId=++messageRequest.current;try{const r=await fetch(`${API}/chats/${encodeURIComponent(id)}/messages`,{headers:auth()});const d=await r.json();if(!r.ok)throw new Error(d.message);if(requestId===messageRequest.current){setMessages(d.messages||[]);setError('');}}catch(e:any){if(requestId===messageRequest.current)setError(e.message||'Unable to load messages.');}},[]);
   useEffect(()=>{loadChats();const t=window.setInterval(loadChats,10000);return()=>window.clearInterval(t);},[loadChats]);
   useEffect(()=>{if(!requestedApplicationId)return;const match=chats.find(chat=>chat.applicationId===requestedApplicationId);if(match)setActive(match);},[requestedApplicationId,chats]);
-  useEffect(()=>{if(!active)return;loadMessages(active.applicationId);const t=window.setInterval(()=>loadMessages(active.applicationId),4000);return()=>window.clearInterval(t);},[active,loadMessages]);
-  const send=async()=>{if(!active||(!draft.trim()&&!image)||busy)return;setBusy(true);try{const r=await fetch(`${API}/chats/${active.applicationId}/messages`,{method:'POST',headers:auth(),body:JSON.stringify({text:draft,imageDataUrl:image})});const d=await r.json();if(!r.ok)throw new Error(d.message);setMessages(v=>[...v,d.message]);setDraft('');setImage(null);loadChats();}catch(e:any){setError(e.message||'Message could not be sent.');}finally{setBusy(false);}};
+  useEffect(()=>{if(!active){messageRequest.current++;setMessages([]);return;}loadMessages(active.applicationId);const t=window.setInterval(()=>loadMessages(active.applicationId),4000);return()=>{window.clearInterval(t);messageRequest.current++;};},[active?.applicationId,loadMessages]);
+  const send=async()=>{if(!active||(!draft.trim()&&!image)||busy)return;setBusy(true);try{const r=await fetch(`${API}/chats/${encodeURIComponent(active.applicationId)}/messages`,{method:'POST',headers:auth(),body:JSON.stringify({text:draft,imageDataUrl:image})});const d=await r.json();if(!r.ok)throw new Error(d.message);setMessages(v=>[...v,d.message]);setDraft('');setImage(null);loadChats();}catch(e:any){setError(e.message||'Message could not be sent.');}finally{setBusy(false);}};
   const chooseImage=(file?:File)=>{if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)){setError('Choose a PNG, JPG or WEBP image.');return;}if(file.size>3.7*1024*1024){setError('Image must be smaller than 3.7 MB.');return;}const reader=new FileReader();reader.onload=()=>setImage(String(reader.result));reader.readAsDataURL(file);};
   const block=async()=>{if(!active||!window.confirm(`Block ${active.otherUser.name}? You will no longer be able to continue this conversation.`))return;try{const r=await fetch(`${API}/social/blocks/${active.otherUser.id}`,{method:'POST',headers:auth()});const d=await r.json();if(!r.ok)throw new Error(d.message);setActive(null);setMessages([]);setError('User blocked.');}catch(e:any){setError(e.message||'Could not block user.');}};
   return <DashboardLayout title="Messages" subtitle="Chat with people connected to your accepted work">
