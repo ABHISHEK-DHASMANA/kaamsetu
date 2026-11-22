@@ -243,6 +243,13 @@ export const apiUpdateReportStatus = async (id: string, payload: any) => {
   });
 };
 
+export const apiCreateReview = async (payload: { toUserId: string; jobId: string; rating: number; reviewText: string }) => {
+  return request<{ success: boolean; message: string; review: any }>('/reviews', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+};
+
 // Reports API (Public / User)
 export const apiSubmitReport = async (payload: {
   targetType: 'job' | 'employer' | 'worker';
