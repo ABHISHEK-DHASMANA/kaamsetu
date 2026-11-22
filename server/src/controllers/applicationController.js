@@ -157,7 +157,7 @@ export const updateWorkLifecycle = async (req, res) => {
         if (workerProfile) {
           const passport = workerProfile.skillPassport || {};
           update('workerProfiles', String(workerProfile._id || workerProfile.id), {
-            skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1, trustScore: Math.min(100, (passport.trustScore || 85) + 2) }
+            skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1 }
           });
         }
         const otherActive = find('applications', a => a.jobId === application.jobId && (a._id || a.id) !== req.params.id && ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending'].includes(a.status));
