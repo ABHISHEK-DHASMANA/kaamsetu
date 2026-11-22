@@ -122,6 +122,8 @@ export const RibbonStage: React.FC = () => {
           }
         };
 
+        let resize = () => {};
+
         const onScroll = () => {
           const rect = host.getBoundingClientRect();
           scrollProgress = Math.max(-1, Math.min(
@@ -179,7 +181,7 @@ export const RibbonStage: React.FC = () => {
           renderer.render(scene, camera);
         };
 
-        const resize = () => {
+        resize = () => {
           const width = Math.max(1, host.clientWidth);
           const height = Math.max(1, host.clientHeight);
           const narrow = width / height < 0.9;
