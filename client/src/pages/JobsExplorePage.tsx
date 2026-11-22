@@ -154,6 +154,18 @@ export const JobsExplorePage: React.FC = () => {
       <Navbar />
 
       <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {!isAuthenticated && (
+          <div className="rounded-2xl border border-brand-primary/20 bg-brand-primary-light/60 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-brand-dark">Browse jobs freely. Sign in only when you're ready to apply.</p>
+              <p className="text-xs text-brand-muted mt-1">Create a worker account to apply, track applications and contact employers.</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => navigate('/login?role=worker')} className="px-4 py-2 rounded-xl bg-brand-primary text-white text-xs font-bold">Login</button>
+              <button onClick={() => navigate('/register?role=worker')} className="px-4 py-2 rounded-xl bg-white border border-brand-border text-brand-dark text-xs font-bold">Create account</button>
+            </div>
+          </div>
+        )}
         {/* Top Search & Filter Bar */}
         <div className="bg-white p-4 sm:p-6 rounded-3xl border border-brand-border shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">

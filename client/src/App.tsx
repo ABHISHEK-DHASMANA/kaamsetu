@@ -8,6 +8,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { AboutPage } from './pages/AboutPage';
 import { JobsExplorePage } from './pages/JobsExplorePage';
+import { WorkersExplorePage } from './pages/WorkersExplorePage';
 import { PublicPassportPage } from './pages/PublicPassportPage';
 
 // Worker Pages
@@ -72,6 +73,7 @@ export const App: React.FC = () => {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/jobs" element={<JobsExplorePage />} />
+      <Route path="/workers" element={<WorkersExplorePage />} />
       <Route path="/passport/:passportId" element={<PublicPassportPage />} />
 
       {/* Worker Routes */}

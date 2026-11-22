@@ -77,7 +77,7 @@ export const Navbar: React.FC = () => {
                 Find Jobs
               </Link>
               <Link
-                to="/register?role=employer"
+                to="/workers"
                 className="px-3 py-2 rounded-lg text-sm font-medium text-brand-muted hover:text-brand-dark hover:bg-slate-50 transition-colors"
               >
                 Hire Workers

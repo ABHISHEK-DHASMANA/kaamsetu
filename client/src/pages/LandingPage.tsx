@@ -82,7 +82,7 @@ export const LandingPage: React.FC = () => {
                   <span>Find Work</span>
                 </Link>
                 <Link
-                  to="/register?role=employer"
+                  to="/workers"
                   className="px-6 py-3.5 rounded-2xl bg-white border border-brand-border text-brand-dark text-sm font-bold hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
                 >
                   <Briefcase className="w-4 h-4 text-brand-secondary" />

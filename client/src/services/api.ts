@@ -143,6 +143,18 @@ export const apiUpdateApplicationStatus = async (appId: string, status: string, 
   );
 };
 
+// Public worker discovery
+export const apiGetWorkers = async (params: Record<string, string> = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return request<{ success: boolean; count: number; workers: Array<{
+    _id: string; userId: string; fullName: string; avatar?: string; primarySkill: string;
+    experienceLevel: string; experienceYearsNum: number; skills?: Array<{ skillName: string }>;
+    location?: { city?: string; area?: string };
+    skillPassport?: { passportId?: string; rating?: number; reviewsCount?: number; completedJobsCount?: number; trustScore?: number };
+    bio?: string; isProfileComplete?: boolean;
+  }> }>('/workers/all' + (query ? '?' + query : ''));
+};
+
 // Worker Profile & Passport API
 export const apiGetWorkerProfile = async (userId?: string) => {
   return request<{ success: boolean; workerProfile: WorkerProfile; user: User; reviews: any[] }>(
