@@ -43,7 +43,7 @@ export const WorkerApplications: React.FC = () => {
   const lifecycleAction = async (app: Application, action: 'start_work' | 'request_completion' | 'cancel') => {
     const reason = action === 'cancel' ? window.prompt('Please explain why you need to cancel (at least 5 characters):') : undefined;
     if (action === 'cancel' && (!reason || reason.trim().length < 5)) return;
-    try { await apiUpdateWorkLifecycle(app._id, action, reason); window.alert('Your update was sent to the other party.'); await fetchApps(); }
+    try { await apiUpdateWorkLifecycle(app._id || (app as any).id || '', action, reason); window.alert('Your update was sent to the other party.'); await fetchApps(); }
     catch (error: any) { window.alert(error.message || 'Could not update this job.'); }
   };
 
