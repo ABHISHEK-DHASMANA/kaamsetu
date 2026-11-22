@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { apiGetWorkerApplications } from '../../services/api';
+import { apiGetWorkerApplications, apiCreateReview, apiSubmitReport } from '../../services/api';
 import { Application } from '../../types';
 import {
   FileCheck2,
@@ -13,7 +13,9 @@ import {
   XCircle,
   AlertCircle,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Star,
+  Flag
 } from 'lucide-react';
 
 export const WorkerApplications: React.FC = () => {
@@ -37,6 +39,42 @@ export const WorkerApplications: React.FC = () => {
   useEffect(() => {
     fetchApps();
   }, []);
+
+  const submitRating = async (app: Application) => {
+    const ratingInput = window.prompt('Rate this employer from 1 to 5 stars:');
+    if (ratingInput === null) return;
+    const rating = Number(ratingInput);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      window.alert('Please enter a whole number from 1 to 5.');
+      return;
+    }
+    const reviewText = window.prompt('Write a short review (at least 3 characters):');
+    if (!reviewText) return;
+    try {
+      const result = await apiCreateReview({ toUserId: app.employerId, jobId: app.jobId, rating, reviewText });
+      window.alert(result.message);
+    } catch (error: any) {
+      window.alert(error.message || 'Could not submit your rating.');
+    }
+  };
+
+  const reportJob = async (app: Application) => {
+    const reasons = ['Fake listing', 'Unsafe behaviour', 'Harassment', 'Payment issue', 'Misleading information', 'Other'];
+    const reason = window.prompt('Report reason: ' + reasons.join(', '));
+    if (!reason) return;
+    if (!reasons.includes(reason)) {
+      window.alert('Choose one of the listed report reasons.');
+      return;
+    }
+    const details = window.prompt('Describe the issue (at least 5 characters):');
+    if (!details || details.trim().length < 5) return;
+    try {
+      const result = await apiSubmitReport({ targetType: 'job', targetId: app.jobId, targetName: app.job?.title || 'Job', reason, details });
+      window.alert(result.message);
+    } catch (error: any) {
+      window.alert(error.message || 'Could not submit your report.');
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -189,6 +227,17 @@ export const WorkerApplications: React.FC = () => {
                     </span>
                   </div>
                 </div>
+
+                {app.status === 'Completed' && (
+                  <div className="flex flex-wrap gap-2 border-t border-brand-border pt-3">
+                    <button onClick={() => submitRating(app)} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-xs font-bold">
+                      <Star className="w-3.5 h-3.5" /> Rate employer
+                    </button>
+                    <button onClick={() => reportJob(app)} className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">
+                      <Flag className="w-3.5 h-3.5" /> Report issue
+                    </button>
+                  </div>
+                )}
 
                 {/* Unlocked Employer Contact Box when ACCEPTED */}
                 {app.status === 'Accepted' && (
