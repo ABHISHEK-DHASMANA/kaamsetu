@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RibbonStage } from '../components/visual/RibbonStage';
 import { Link, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
@@ -83,45 +84,7 @@ export const LandingPage: React.FC = () => {
               </div>
 
               <div className="lg:col-span-5">
-                <div className="ks-interactive-stage" onPointerMove={(event) => {
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  const x = (event.clientX - rect.left) / rect.width;
-                  const y = (event.clientY - rect.top) / rect.height;
-                  event.currentTarget.style.setProperty('--mx', String((x - .5) * 2));
-                  event.currentTarget.style.setProperty('--my', String((y - .5) * 2));
-                }} onPointerLeave={(event) => {
-                  event.currentTarget.style.setProperty('--mx', '0');
-                  event.currentTarget.style.setProperty('--my', '0');
-                }}>
-                  <div className="ks-ribbon-glow" />
-                  <div className="ks-ribbon-orbit ks-ribbon-orbit-a" />
-                  <div className="ks-ribbon-orbit ks-ribbon-orbit-b" />
-                  <svg className="ks-flow-ribbon" viewBox="0 0 620 470" role="img" aria-label="Colourful flowing ribbon that responds to cursor movement">
-                    <defs>
-                      <linearGradient id="ksRibbonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#f3a2b8" />
-                        <stop offset="28%" stopColor="#e56c9d" />
-                        <stop offset="52%" stopColor="#a879c4" />
-                        <stop offset="76%" stopColor="#718bd0" />
-                        <stop offset="100%" stopColor="#8ec4d5" />
-                      </linearGradient>
-                      <linearGradient id="ksRibbonHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#fff" stopOpacity=".9" />
-                        <stop offset="48%" stopColor="#fff" stopOpacity=".08" />
-                        <stop offset="100%" stopColor="#344b87" stopOpacity=".3" />
-                      </linearGradient>
-                      <filter id="ksRibbonShadow" x="-30%" y="-30%" width="160%" height="160%">
-                        <feGaussianBlur stdDeviation="13" />
-                      </filter>
-                    </defs>
-                    <path d="M35 255 C130 65 190 75 260 218 S395 390 470 215 S545 85 600 160" fill="none" stroke="#a67bc3" strokeWidth="94" opacity=".22" filter="url(#ksRibbonShadow)" />
-                    {Array.from({length:25},(_,i) => <path key={i} d="M35 255 C130 65 190 75 260 218 S395 390 470 215 S545 85 600 160" fill="none" stroke="url(#ksRibbonGradient)" strokeWidth={3.1} strokeLinecap="round" opacity={.45 + (i%5)*.1} transform={`translate(0 ${(i-12)*3.2})`} />)}
-                    <path d="M35 255 C130 65 190 75 260 218 S395 390 470 215 S545 85 600 160" fill="none" stroke="url(#ksRibbonHighlight)" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                  <div className="ks-ribbon-caption"><span>MOVE YOUR CURSOR</span><span>KAAMSETU / LOCAL CONNECTIONS</span></div>
-                  <div className="ks-ribbon-card ks-ribbon-card-top"><span className="ks-ribbon-card-icon"><Zap size={16}/></span><span><b>Work, nearby.</b><small>Opportunities around you</small></span></div>
-                  <div className="ks-ribbon-card ks-ribbon-card-bottom"><span className="ks-ribbon-card-icon"><HeartHandshake size={16}/></span><span><b>People, connected.</b><small>Skills meet local needs</small></span></div>
-                </div>
+                <RibbonStage />
               </div>
             </div>
           </div>

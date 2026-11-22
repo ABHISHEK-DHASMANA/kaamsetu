@@ -151,3 +151,19 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--k
 .ks-ribbon-card-bottom{left:0;bottom:14%;transform:translate(calc(var(--mx)*12px),calc(var(--my)*10px))}
 @media(max-width:640px){.ks-interactive-stage{min-height:350px;margin:0 -18px}.ks-flow-ribbon{width:112%}.ks-ribbon-orbit-a{width:300px}.ks-ribbon-orbit-b{height:320px}.ks-ribbon-card-top{right:2%;top:4%}.ks-ribbon-card-bottom{left:2%;bottom:6%}.ks-ribbon-caption{font-size:6px;bottom:0}}
 @media(prefers-reduced-motion:reduce){.ks-flow-ribbon,.ks-ribbon-card,.ks-ribbon-glow{transition:none!important}}
+
+/* Three.js sculptural ribbon stage inspired by the supplied interaction reference */
+.ks-interactive-stage{position:relative;isolation:isolate;min-height:510px;width:100%;perspective:1200px;overflow:visible;touch-action:pan-y}
+.ks-three-ribbon-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;outline:none}
+.ks-ribbon-glow{position:absolute;z-index:0;inset:12%;border-radius:50%;background:radial-gradient(ellipse,rgba(226,169,204,.28),rgba(164,188,220,.18) 45%,transparent 72%);filter:blur(22px);pointer-events:none}
+.ks-ribbon-orbit{position:absolute;z-index:0;left:50%;top:50%;border:1px solid rgba(113,137,174,.16);border-radius:50%;pointer-events:none}
+.ks-ribbon-orbit-a{width:88%;height:56%;transform:translate(-50%,-50%) rotate(-18deg)}
+.ks-ribbon-orbit-b{width:64%;height:86%;border-color:rgba(216,144,177,.16);transform:translate(-50%,-50%) rotate(32deg)}
+.ks-ribbon-caption{position:absolute;z-index:2;left:7%;right:7%;bottom:14px;display:flex;justify-content:space-between;gap:12px;color:#849189;font-size:8px;letter-spacing:.14em;font-weight:800;pointer-events:none}
+.ks-ribbon-card{position:absolute;z-index:3;display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid rgba(225,231,229,.9);border-radius:14px;background:rgba(255,255,255,.9);box-shadow:0 15px 35px rgba(49,68,83,.1);backdrop-filter:blur(12px);pointer-events:none;transition:transform .22s ease-out}
+.ks-ribbon-card b,.ks-ribbon-card small{display:block}.ks-ribbon-card b{font-size:10px;color:#263a32}.ks-ribbon-card small{font-size:9px;color:#87938d;margin-top:2px}
+.ks-ribbon-card-icon{display:grid;place-items:center;width:33px;height:33px;border-radius:10px;background:#f8eaf0;color:#b35d83}
+.ks-ribbon-card-top{right:0;top:13%;transform:translateY(-4px)}
+.ks-ribbon-card-bottom{left:0;bottom:14%;transform:translateY(4px)}
+@media(max-width:640px){.ks-interactive-stage{min-height:350px;margin:0 -18px}.ks-ribbon-orbit-a{width:94%}.ks-ribbon-orbit-b{height:78%}.ks-ribbon-card-top{right:2%;top:5%}.ks-ribbon-card-bottom{left:2%;bottom:7%}.ks-ribbon-caption{font-size:6px;bottom:0}}
+@media(prefers-reduced-motion:reduce){.ks-three-ribbon-canvas{animation:none}}
