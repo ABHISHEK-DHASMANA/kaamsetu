@@ -4,7 +4,7 @@ import { apiGetEmployerProfile, apiUpdateEmployerProfile } from '../../services/
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { EmployerProfile } from '../../types';
-import { Building2, Phone, Mail, MapPin, ShieldCheck, Save, Award, Camera } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, ShieldCheck, Save, Award, Camera, Star } from 'lucide-react';
 import { uploadProfileImage } from '../../services/imageUpload';
 import { LocationPicker } from '../../components/maps/LocationPicker';
 
@@ -27,8 +27,8 @@ export const EmployerProfilePage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [coordinates, setCoordinates] = useState({ lat: 28.6271, lng: 77.3820 });
   const [isSaving, setIsSaving] = useState(false);
-  const [trustScore, setTrustScore] = useState<number | null>(null);
-  const [trustReviewsCount, setTrustReviewsCount] = useState(0);
+  const [employerRating, setEmployerRating] = useState<number | null>(null);
+  const [reviewsCount, setReviewsCount] = useState(0);
   const [completedHiresCount, setCompletedHiresCount] = useState(0);
 
   useEffect(() => {
@@ -38,8 +38,8 @@ export const EmployerProfilePage: React.FC = () => {
         if (res.success && res.profile) {
           const ep = res.profile;
           setCompanyName(ep.companyName);
-          setTrustScore(typeof ep.trustScore === 'number' ? ep.trustScore : null);
-          setTrustReviewsCount(Number(ep.trustReviewsCount || 0));
+          setEmployerRating(typeof ep.rating === 'number' ? ep.rating : null);
+          setReviewsCount(Number(ep.reviewsCount || 0));
           setCompletedHiresCount(Number(ep.completedHiresCount || 0));
           setBusinessType(ep.businessType || 'Small Business / Shop');
           setVerificationStatus(ep.verificationStatus || 'Registered');
@@ -128,14 +128,17 @@ export const EmployerProfilePage: React.FC = () => {
         <div className="rounded-2xl border border-brand-border bg-slate-50 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-brand-muted">Employer trust</p>
-              {trustScore === null ? (
+              <p className="text-xs font-bold uppercase tracking-wide text-brand-muted">Worker feedback</p>
+              {employerRating === null ? (
                 <p className="mt-1 text-sm font-bold text-brand-dark">New to KaamSetu</p>
               ) : (
-                <p className="mt-1 text-2xl font-black text-emerald-700">{trustScore}/100</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <Star className="w-5 h-5 fill-amber-400 text-amber-500" />
+                  <p className="text-2xl font-black text-brand-dark">{employerRating.toFixed(1)}<span className="text-sm font-semibold text-brand-muted">/5</span></p>
+                </div>
               )}
               <p className="mt-1 text-[11px] text-brand-muted">
-                {trustScore === null ? 'No verified worker feedback yet' : `Based on ${trustReviewsCount} worker review(s)`}
+                {reviewsCount ? `Based on ${reviewsCount} verified completed-job review(s)` : 'No worker reviews yet'}
               </p>
             </div>
             <div className="text-right">
@@ -143,7 +146,7 @@ export const EmployerProfilePage: React.FC = () => {
               <p className="text-[10px] font-bold uppercase text-brand-muted">Completed hires</p>
             </div>
           </div>
-          <p className="mt-3 text-[11px] text-brand-muted">Trust is based on feedback from workers after completed jobs. It is not a payment guarantee.</p>
+          <p className="mt-3 text-[11px] text-brand-muted">Your rating comes from workers you have hired after a job is marked completed. New employers start without a rating.</p>
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
