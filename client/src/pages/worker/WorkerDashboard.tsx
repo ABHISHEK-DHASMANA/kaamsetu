@@ -34,6 +34,8 @@ export const WorkerDashboard: React.FC = () => {
 
   const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const activeApplications = applications.filter(application => application.status !== 'Completed');
+  const completedApplications = applications.filter(application => application.status === 'Completed');
   const [isLoading, setIsLoading] = useState(true);
 
   // Modals
@@ -125,10 +127,10 @@ export const WorkerDashboard: React.FC = () => {
                 Applications Sent
               </div>
               <div className="text-2xl font-black text-brand-dark mt-1">
-                {applications.length}
+                {activeApplications.length}
               </div>
               <div className="text-[10px] text-brand-muted mt-0.5">
-                {applications.filter(a => a.status === 'Accepted').length} Accepted
+                {applications.filter(a => a.status === 'Accepted').length} Accepted · {completedApplications.length} completed
               </div>
             </div>
             <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-700">
@@ -187,7 +189,7 @@ export const WorkerDashboard: React.FC = () => {
               className="px-3.5 py-1.5 rounded-xl border border-brand-border bg-slate-50 text-brand-dark text-xs font-semibold hover:bg-slate-100 transition-colors flex items-center gap-1.5"
             >
               <FileCheck2 className="w-3.5 h-3.5 text-brand-secondary" />
-              <span>View Applications ({applications.length})</span>
+              <span>View Applications ({activeApplications.length})</span>
             </button>
             <button
               onClick={() => navigate('/worker/skill-passport')}
@@ -346,12 +348,12 @@ export const WorkerDashboard: React.FC = () => {
           </h2>
 
           <div className="bg-white rounded-3xl border border-brand-border shadow-sm divide-y divide-brand-border/60 overflow-hidden">
-            {applications.length === 0 ? (
+            {activeApplications.length === 0 ? (
               <div className="p-6 text-center text-xs text-brand-muted">
                 No recent activity. Apply for recommended jobs above to begin!
               </div>
             ) : (
-              applications.slice(0, 4).map((app) => (
+              activeApplications.slice(0, 4).map((app) => (
                 <div key={app._id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-brand-primary-light flex items-center justify-center text-brand-primary font-bold">
