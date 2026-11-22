@@ -71,6 +71,11 @@ export const getEmployerApplications = async (req, res) => {
     const hydrated = applications.map(app => {
       const workerProfile = findOne('workerProfiles', wp => wp.userId === app.workerId);
       const workerUser = findOne('users', u => idOf(u) === app.workerId);
+      const workerReviews = find('reviews', review => review.toUserId === app.workerId);
+      const workerCompletedJobs = find('applications', item => item.workerId === app.workerId && item.status === 'Completed');
+      const workerAverageRating = workerReviews.length
+        ? Math.round((workerReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / workerReviews.length) * 10) / 10
+        : null;
       const job = findOne('jobs', j => j._id === app.jobId || j.id === app.jobId);
       const unlocked = ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending', 'Completed'].includes(app.status);
       return {
@@ -79,6 +84,12 @@ export const getEmployerApplications = async (req, res) => {
         employerReviewed: findOne('reviews', r => r.jobId === app.jobId && r.fromUserId === app.employerId && r.toUserId === app.workerId) !== null,
         workerProfile: workerProfile ? {
           ...workerProfile,
+          skillPassport: workerProfile.skillPassport ? {
+            ...workerProfile.skillPassport,
+            rating: workerAverageRating,
+            reviewsCount: workerReviews.length,
+            completedJobsCount: workerCompletedJobs.length
+          } : undefined,
           phone: unlocked ? (workerProfile.phone || workerUser?.phone) : undefined,
           email: undefined,
           upiId: unlocked ? workerProfile.upiId : undefined,
