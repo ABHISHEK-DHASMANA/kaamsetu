@@ -42,88 +42,154 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="ks-site min-h-screen flex flex-col">
       <Navbar />
+
       <main className="flex-1">
-        <section className="ks-modern-hero">
-          <div className="ks-hero-glow ks-hero-glow-a" />
-          <div className="ks-hero-glow ks-hero-glow-b" />
-          <div className="ks-modern-shell">
-            <div className="ks-hero-copy">
-              <div className="ks-modern-eyebrow"><span /> LOCAL WORK, MADE SIMPLE</div>
-              <h1 className="ks-modern-title">Good work is<br /><em>closer than</em><br />you think.</h1>
-              <p className="ks-modern-lead">Find trusted local opportunities or connect with skilled people around you. Clear details, fair expectations, and a simpler way to get to work.</p>
-              <form onSubmit={handleQuickSearch} className="ks-search-panel">
-                <label className="ks-search-field">
-                  <Search size={18} />
-                  <input aria-label="Skill or job" value={quickSkill} onChange={e => setQuickSkill(e.target.value)} placeholder="What work do you need?" />
-                </label>
-                <span className="ks-search-divider" />
-                <label className="ks-search-field ks-location-field">
-                  <MapPin size={18} />
-                  <input aria-label="Location" value={quickArea} onChange={e => setQuickArea(e.target.value)} placeholder="Your area" />
-                </label>
-                <button type="submit" className="ks-search-submit">Find work <ArrowUpRight size={17} /></button>
-              </form>
-              <div className="ks-hero-actions">
-                <button type="button" onClick={() => setVoiceModalOpen(true)} className="ks-voice-pill"><AudioLines size={17} /> Search by voice <span>Hindi or English</span><Mic size={15} /></button>
-                <span className="ks-no-account">No account needed to explore.</span>
-              </div>
-              <div className="ks-popular-skills">
-                <span>Popular:</span>
-                {['Electrician', 'Plumber', 'Painter'].map(skill => <button key={skill} type="button" onClick={() => { setQuickSkill(skill); navigate('/jobs?search=' + encodeURIComponent(skill)); }}>{skill}</button>)}
-              </div>
-            </div>
+        <section className="ks-hero relative overflow-hidden">
+          <div className="ks-hero-orb ks-hero-orb-one" />
+          <div className="ks-hero-orb ks-hero-orb-two" />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-16 lg:pt-24 lg:pb-24">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 xl:gap-16 items-center">
+              <div className="lg:col-span-7 space-y-7">
+                <div className="ks-eyebrow"><span className="ks-live-dot" /> A better way to find local work</div>
+                <div className="space-y-5">
+                  <h1 className="ks-display">Good work.<br /><span>Closer to home.</span></h1>
+                  <p className="max-w-xl text-base sm:text-lg text-slate-600 leading-relaxed">
+                    Find nearby opportunities or connect with skilled people in your area. Clear work details, transparent pay and a more direct way to get started.
+                  </p>
+                </div>
 
-            <div className="ks-hero-art" aria-label="Illustration of local work connections">
-              <div className="ks-art-orbit ks-art-orbit-one" />
-              <div className="ks-art-orbit ks-art-orbit-two" />
-              <div className="ks-art-ribbon ks-art-ribbon-back" />
-              <div className="ks-art-ribbon ks-art-ribbon-front" />
-              <div className="ks-art-core"><HeartHandshake size={58} strokeWidth={1.35} /></div>
-              <div className="ks-float-card ks-float-card-job">
-                <div className="ks-float-card-head"><span className="ks-mini-icon"><Zap size={16} /></span><span className="ks-mini-status"><i /> Nearby opportunity</span></div>
-                <strong>Electrician needed</strong>
-                <small><MapPin size={12} /> Sector 62 · 2.4 km away</small>
-                <div className="ks-mini-card-bottom"><b>₹800 <small>/ day</small></b><span>View job <ArrowUpRight size={13} /></span></div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link to="/jobs" className="ks-button ks-button-primary">
+                    <Search size={17} /> Find work <ArrowUpRight size={16} />
+                  </Link>
+                  <Link to="/workers" className="ks-button ks-button-light">
+                    <Users size={17} /> Hire local talent <ArrowUpRight size={16} />
+                  </Link>
+                </div>
+
+                <div className="ks-voice-card">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="ks-voice-icon"><AudioLines size={21} /></div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900">Rather speak than type?</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Search in Hindi or English. No account needed.</p>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => setVoiceModalOpen(true)} className="ks-voice-action">
+                    <Mic size={15} /> Speak
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400">Browse freely. Sign in only when you want to apply, hire or contact someone.</p>
               </div>
-              <div className="ks-float-card ks-float-card-profile">
-                <div className="ks-profile-avatar">RK</div>
-                <div><strong>Ramesh Kumar</strong><small>Verified skill profile</small><span className="ks-profile-rating"><Sparkles size={12} /> Skilled professional</span></div>
-                <BadgeCheck className="ks-profile-check" size={19} />
+
+              <div className="lg:col-span-5">
+                <div className="ks-interactive-stage" onPointerMove={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const x = (event.clientX - rect.left) / rect.width;
+                  const y = (event.clientY - rect.top) / rect.height;
+                  event.currentTarget.style.setProperty('--mx', String((x - .5) * 2));
+                  event.currentTarget.style.setProperty('--my', String((y - .5) * 2));
+                }} onPointerLeave={(event) => {
+                  event.currentTarget.style.setProperty('--mx', '0');
+                  event.currentTarget.style.setProperty('--my', '0');
+                }}>
+                  <div className="ks-ribbon-glow" />
+                  <div className="ks-ribbon-orbit ks-ribbon-orbit-a" />
+                  <div className="ks-ribbon-orbit ks-ribbon-orbit-b" />
+                  <svg className="ks-flow-ribbon" viewBox="0 0 620 470" role="img" aria-label="Colourful flowing ribbon that responds to cursor movement">
+                    <defs>
+                      <linearGradient id="ksRibbonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#f3a2b8" />
+                        <stop offset="28%" stopColor="#e56c9d" />
+                        <stop offset="52%" stopColor="#a879c4" />
+                        <stop offset="76%" stopColor="#718bd0" />
+                        <stop offset="100%" stopColor="#8ec4d5" />
+                      </linearGradient>
+                      <linearGradient id="ksRibbonHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#fff" stopOpacity=".9" />
+                        <stop offset="48%" stopColor="#fff" stopOpacity=".08" />
+                        <stop offset="100%" stopColor="#344b87" stopOpacity=".3" />
+                      </linearGradient>
+                      <filter id="ksRibbonShadow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="13" />
+                      </filter>
+                    </defs>
+                    <path d="M35 255 C130 65 190 75 260 218 S395 390 470 215 S545 85 600 160" fill="none" stroke="#a67bc3" strokeWidth="94" opacity=".22" filter="url(#ksRibbonShadow)" />
+                    {Array.from({length:25},(_,i) => <path key={i} d="M35 255 C130 65 190 75 260 218 S395 390 470 215 S545 85 600 160" fill="none" stroke="url(#ksRibbonGradient)" strokeWidth={3.1} strokeLinecap="round" opacity={.45 + (i%5)*.1} transform={`translate(0 ${(i-12)*3.2})`} />)}
+                    <path d="M35 255 C130 65 190 75 260 218 S395 390 470 215 S545 85 600 160" fill="none" stroke="url(#ksRibbonHighlight)" strokeWidth="4" strokeLinecap="round" />
+                  </svg>
+                  <div className="ks-ribbon-caption"><span>MOVE YOUR CURSOR</span><span>KAAMSETU / LOCAL CONNECTIONS</span></div>
+                  <div className="ks-ribbon-card ks-ribbon-card-top"><span className="ks-ribbon-card-icon"><Zap size={16}/></span><span><b>Work, nearby.</b><small>Opportunities around you</small></span></div>
+                  <div className="ks-ribbon-card ks-ribbon-card-bottom"><span className="ks-ribbon-card-icon"><HeartHandshake size={16}/></span><span><b>People, connected.</b><small>Skills meet local needs</small></span></div>
+                </div>
               </div>
-              <div className="ks-art-caption"><span><span className="ks-caption-dot" /> Built for nearby connections</span><b>KAAMSETU / 01</b></div>
             </div>
-          </div>
-          <div className="ks-trust-strip">
-            <div><ShieldCheck size={18} /><span>Clear work details</span></div>
-            <div><Wallet size={18} /><span>Transparent pay</span></div>
-            <div><BadgeCheck size={18} /><span>Skill-based profiles</span></div>
-            <div><HeartHandshake size={18} /><span>Direct connections</span></div>
           </div>
         </section>
 
-        <section className="ks-modern-section">
-          <div className="ks-modern-section-head">
-            <div><p className="ks-modern-kicker">EXPLORE OPPORTUNITIES</p><h2>Start with what<br />you do best.</h2><p>Choose a trade and discover work that matches your skills.</p></div>
-            <Link to="/jobs" className="ks-modern-link">Explore all jobs <ArrowUpRight size={17} /></Link>
-          </div>
-          <div className="ks-trade-grid">
-            {categories.map(category => { const Icon = category.icon; return <Link key={category.name} to={`/jobs?category=${encodeURIComponent(category.query)}`} className="ks-trade-card"><span className={`ks-trade-icon tone-${category.tone}`}><Icon size={22} /></span><span className="ks-trade-name">{category.name}</span><span className="ks-trade-detail">{category.detail}</span><span className="ks-trade-arrow"><ArrowUpRight size={17} /></span></Link>; })}
-          </div>
-        </section>
-
-        <section className="ks-modern-how">
-          <div className="ks-how-inner">
-            <div className="ks-how-intro"><p className="ks-modern-kicker">A BETTER WAY TO GET STARTED</p><h2>From looking<br />to working.</h2><p>Everything starts with a simple connection. Take the next step when you are ready.</p></div>
-            <div className="ks-how-list">
-              {[{n:'01',icon:Search,title:'Explore nearby',desc:'Find jobs by skill, location and work details. Employers can browse public skill profiles.'},{n:'02',icon:Users,title:'Connect directly',desc:'Create an account when you are ready to apply, hire or contact someone.'},{n:'03',icon:BriefcaseBusiness,title:'Get things done',desc:'Agree on work and payment terms directly, then keep a record of progress and feedback.'}].map(step => {const Icon=step.icon;return <article className="ks-how-row" key={step.n}><span className="ks-how-number">{step.n}</span><span className="ks-how-icon"><Icon size={20}/></span><div><h3>{step.title}</h3><p>{step.desc}</p></div><ChevronRight className="ks-how-chevron" size={19}/></article>;})}
+        <section className="py-16 lg:py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 mb-8">
+              <div>
+                <p className="ks-section-kicker">Explore opportunities</p>
+                <h2 className="ks-section-title">Start with your skill.</h2>
+                <p className="text-sm text-slate-500 mt-2">Choose a trade to see relevant work around you.</p>
+              </div>
+              <Link to="/jobs" className="ks-text-link">Browse all jobs <ChevronRight size={16} /></Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {categories.map((category) => {
+                const Icon = category.icon;
+                return (
+                  <Link key={category.name} to={`/jobs?category=${encodeURIComponent(category.query)}`} className="ks-category-card">
+                    <span className={`ks-category-icon tone-${category.tone}`}><Icon size={21} /></span>
+                    <span className="block text-base font-bold text-slate-900 mt-5">{category.name}</span>
+                    <span className="block text-xs text-slate-500 mt-1">{category.detail}</span>
+                    <span className="ks-category-arrow"><ArrowUpRight size={16} /></span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
 
-        <section className="ks-modern-cta-wrap">
-          <div className="ks-modern-cta"><div><p className="ks-modern-kicker">YOUR NEXT STEP STARTS HERE</p><h2>Good people.<br /><em>Honest work.</em></h2><p>Whether you are looking for your next opportunity or someone reliable for a job, start with KaamSetu.</p><div className="ks-cta-actions"><Link to="/jobs" className="ks-cta-primary">Find local work <ArrowUpRight size={17}/></Link><Link to="/workers" className="ks-cta-secondary">Hire skilled people <ArrowUpRight size={17}/></Link></div></div><div className="ks-cta-art"><div className="ks-cta-ring" /><HeartHandshake size={100} strokeWidth={1}/><span>काम पास में<br/>मौके सबके लिए</span></div></div>
+        <section className="ks-how-section py-16 lg:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl mb-10">
+              <p className="ks-section-kicker">Simple from the start</p>
+              <h2 className="ks-section-title">Less searching around.<br />More getting things done.</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { n: '01', icon: Search, title: 'Explore', desc: 'Search local jobs by trade, location and work details. Employers can browse public skill profiles.' },
+                { n: '02', icon: BriefcaseBusiness, title: 'Connect', desc: 'Create an account when you are ready to apply, post a job or contact the other person.' },
+                { n: '03', icon: Clock3, title: 'Get to work', desc: 'Agree on the work and payment terms directly. Keep a record of progress and feedback.' },
+              ].map((step) => {
+                const Icon = step.icon;
+                return <article key={step.n} className="ks-step-card"><div className="flex items-center justify-between"><span className="ks-step-number">{step.n}</span><Icon size={21} className="text-emerald-700" /></div><h3>{step.title}</h3><p>{step.desc}</p></article>;
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16 lg:py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="ks-cta-panel">
+              <div className="relative z-10 max-w-2xl">
+                <p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-200">Your next step starts here</p>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-3 leading-tight">Good people. Honest work.<br />A connection that works.</h2>
+                <p className="text-sm text-emerald-50/80 mt-4 max-w-lg">Whether you are looking for your next opportunity or someone reliable for a job, start with KaamSetu.</p>
+                <div className="flex flex-wrap gap-3 mt-7">
+                  <Link to="/jobs" className="ks-button ks-button-cta">Explore jobs <ArrowUpRight size={16} /></Link>
+                  <Link to="/workers" className="ks-button ks-button-cta-outline">Find workers <ArrowUpRight size={16} /></Link>
+                </div>
+              </div>
+              <div className="ks-cta-decoration"><HeartHandshake size={140} strokeWidth={0.8} /></div>
+            </div>
+          </div>
         </section>
       </main>
+
       <Footer />
       <VoiceSearchModal isOpen={voiceModalOpen} onClose={() => setVoiceModalOpen(false)} onConfirmPreferences={handleVoiceConfirmed} />
     </div>
