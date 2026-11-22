@@ -1,79 +1,32 @@
 import { find, findOne, insert, update } from '../services/storage.js';
 import { calculateJobMatch } from '../services/matchingEngine.js';
 
+const idOf = user => user?._id || user?.id;
+
+const notify = (userId, title, message, type = 'info') => insert('notifications', {
+  userId, title, message, type, actionUrl: '/worker/applications', isRead: false
+});
+
 export const applyJob = async (req, res) => {
   try {
-    const workerUserId = req.user._id || req.user.id;
+    const workerUserId = idOf(req.user);
     const { jobId, coverNote } = req.body;
-
-    if (!jobId) {
-      return res.status(400).json({ success: false, message: 'Please provide a valid Job ID.' });
-    }
-
+    if (!jobId) return res.status(400).json({ success: false, message: 'Please provide a valid Job ID.' });
     const job = findOne('jobs', j => j._id === jobId || j.id === jobId);
-    if (!job) {
-      return res.status(404).json({ success: false, message: 'Job not found or no longer active.' });
-    }
-
-    if (job.status !== 'active') {
-      return res.status(400).json({ success: false, message: `Cannot apply: This job listing is ${job.status}.` });
-    }
-
-    // Check duplicate applications (Requirement 13)
-    const existing = findOne('applications', a => a.jobId === jobId && a.workerId === workerUserId);
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: 'You have already submitted an application for this job.',
-        existingStatus: existing.status
-      });
-    }
-
-    // Worker profile
+    if (!job || job.status !== 'active') return res.status(404).json({ success: false, message: 'Job not found or no longer active.' });
+    const existing = findOne('applications', a => a.jobId === jobId && a.workerId === workerUserId && a.status !== 'Cancelled');
+    if (existing) return res.status(409).json({ success: false, message: 'You already have an active application for this job.', existingStatus: existing.status });
     const workerProfile = findOne('workerProfiles', wp => wp.userId === workerUserId);
-    if (!workerProfile) {
-      return res.status(400).json({ success: false, message: 'Please complete your worker profile before applying.' });
-    }
-
-    // Calculate match
+    if (!workerProfile) return res.status(400).json({ success: false, message: 'Please complete your worker profile before applying.' });
     const match = calculateJobMatch(workerProfile, job);
-
-    // Create application
     const application = insert('applications', {
-      jobId,
-      workerId: workerUserId,
-      employerId: job.employerId,
-      status: 'Applied',
-      matchScore: {
-        total: match.matchScore,
-        breakdown: match.breakdown,
-        distanceKm: match.distanceKm,
-        explanations: match.explanations
-      },
-      coverNote: coverNote || '',
-      employerNotes: ''
+      jobId, workerId: workerUserId, employerId: job.employerId, status: 'Applied',
+      matchScore: { total: match.matchScore, breakdown: match.breakdown, distanceKm: match.distanceKm, explanations: match.explanations },
+      coverNote: coverNote || '', employerNotes: ''
     });
-
-    // Increment job applicantsCount
-    update('jobs', jobId, {
-      applicantsCount: (job.applicantsCount || 0) + 1
-    });
-
-    // Notify Employer
-    insert('notifications', {
-      userId: job.employerId,
-      title: 'New Candidate Applied!',
-      message: `${workerProfile.fullName} (${workerProfile.primarySkill}, ${match.matchScore}% Match) applied for "${job.title}".`,
-      type: 'success',
-      actionUrl: '/employer/candidates',
-      isRead: false
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Application submitted successfully! The employer has been notified.',
-      application
-    });
+    update('jobs', job._id || job.id, { applicantsCount: (job.applicantsCount || 0) + 1 });
+    notify(job.employerId, 'New candidate applied', `${workerProfile.fullName} applied for "${job.title}".`, 'success');
+    res.status(201).json({ success: true, message: 'Application submitted. The employer has been notified.', application });
   } catch (error) {
     console.error('applyJob error:', error);
     res.status(500).json({ success: false, message: 'Error submitting application.' });
@@ -82,44 +35,19 @@ export const applyJob = async (req, res) => {
 
 export const getWorkerApplications = async (req, res) => {
   try {
-    const workerUserId = req.user._id || req.user.id;
-    const applications = find('applications', a => a.workerId === workerUserId);
-
-    // Hydrate with job details
-    const hydrated = applications.map(app => {
+    const workerUserId = idOf(req.user);
+    const hydrated = find('applications', a => a.workerId === workerUserId).map(app => {
       const job = findOne('jobs', j => j._id === app.jobId || j.id === app.jobId);
       const employer = findOne('employerProfiles', ep => ep.userId === app.employerId);
-      const contactUnlocked = ['Accepted', 'Completed'].includes(app.status);
-      const employerUser = contactUnlocked
-        ? findOne('users', u => u._id === app.employerId || u.id === app.employerId)
-        : null;
+      const unlocked = ['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(app.status);
+      const employerUser = unlocked ? findOne('users', u => idOf(u) === app.employerId) : null;
       return {
         ...app,
-        job: job
-          ? { ...job, employerContact: contactUnlocked ? job.employerContact : { ...job.employerContact, phone: undefined } }
-          : { title: 'Unknown Job', offeredWage: 0, location: {} },
-        employer: employer
-          ? {
-              ...employer,
-              phone: contactUnlocked ? (employer.phone || employerUser?.phone) : undefined,
-              email: contactUnlocked ? employer.email : undefined
-            }
-          : {
-              companyName: 'Employer',
-              verificationStatus: 'Registered',
-              ...(contactUnlocked && employerUser?.phone ? { phone: employerUser.phone } : {})
-            }
+        job: job ? { ...job, employerContact: unlocked ? job.employerContact : { ...job.employerContact, phone: undefined } } : { title: 'Unknown Job', offeredWage: 0, location: {} },
+        employer: employer ? { ...employer, phone: unlocked ? (employer.phone || employerUser?.phone) : undefined, email: unlocked ? employer.email : undefined } : { companyName: 'Employer', ...(unlocked && employerUser?.phone ? { phone: employerUser.phone } : {}) }
       };
-    });
-
-    // Sort newest first
-    hydrated.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    res.status(200).json({
-      success: true,
-      count: hydrated.length,
-      applications: hydrated
-    });
+    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json({ success: true, count: hydrated.length, applications: hydrated });
   } catch (error) {
     console.error('getWorkerApplications error:', error);
     res.status(500).json({ success: false, message: 'Error retrieving applications.' });
@@ -128,149 +56,138 @@ export const getWorkerApplications = async (req, res) => {
 
 export const getEmployerApplications = async (req, res) => {
   try {
-    const employerUserId = req.user._id || req.user.id;
+    const employerUserId = idOf(req.user);
     const { jobId, status } = req.query;
-
     let applications = find('applications', a => a.employerId === employerUserId);
-
-    if (jobId) {
-      applications = applications.filter(a => a.jobId === jobId);
-    }
-
-    if (status && status !== 'All') {
-      applications = applications.filter(a => a.status === status);
-    }
-
-    // Hydrate with worker profile and job details
+    if (jobId) applications = applications.filter(a => a.jobId === jobId);
+    if (status && status !== 'All') applications = applications.filter(a => a.status === status);
     const hydrated = applications.map(app => {
       const workerProfile = findOne('workerProfiles', wp => wp.userId === app.workerId);
-      const workerUser = findOne('users', u => u._id === app.workerId || u.id === app.workerId);
+      const workerUser = findOne('users', u => idOf(u) === app.workerId);
       const job = findOne('jobs', j => j._id === app.jobId || j.id === app.jobId);
+      const unlocked = ['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(app.status);
       return {
         ...app,
-        workerProfile: workerProfile
-          ? {
-              ...workerProfile,
-              phone: ['Accepted', 'Completed'].includes(app.status) ? (workerProfile.phone || workerUser?.phone) : undefined,
-              email: undefined,
-              upiId: ['Accepted', 'Completed'].includes(app.status) ? workerProfile.upiId : undefined,
-              location: ['Accepted', 'Completed'].includes(app.status)
-                ? workerProfile.location
-                : { ...workerProfile.location, coordinates: undefined }
-            }
-          : { fullName: workerUser?.name || 'Worker', skills: [] },
-        workerUser: {
-          name: workerUser?.name,
-          phone: ['Accepted', 'Completed'].includes(app.status) ? workerUser?.phone : undefined,
-          verificationStatus: workerUser?.verificationStatus
-        },
+        workerProfile: workerProfile ? {
+          ...workerProfile,
+          phone: unlocked ? (workerProfile.phone || workerUser?.phone) : undefined,
+          email: undefined,
+          upiId: unlocked ? workerProfile.upiId : undefined,
+          location: unlocked ? workerProfile.location : { ...workerProfile.location, coordinates: undefined }
+        } : { fullName: workerUser?.name || 'Worker', skills: [] },
+        workerUser: { name: workerUser?.name, phone: unlocked ? workerUser?.phone : undefined, verificationStatus: workerUser?.verificationStatus },
         job: job || { title: 'Job', offeredWage: 0 }
       };
-    });
-
-    hydrated.sort((a, b) => (b.matchScore?.total || 0) - (a.matchScore?.total || 0));
-
-    res.status(200).json({
-      success: true,
-      count: hydrated.length,
-      applications: hydrated
-    });
+    }).sort((a, b) => (b.matchScore?.total || 0) - (a.matchScore?.total || 0));
+    res.json({ success: true, count: hydrated.length, applications: hydrated });
   } catch (error) {
     console.error('getEmployerApplications error:', error);
     res.status(500).json({ success: false, message: 'Error retrieving candidates.' });
   }
 };
 
+// Employer may decide applications, but work completion/cancellation has dedicated audited actions.
 export const updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, employerNotes } = req.body;
-
-    const allowed = ['Applied', 'Viewed', 'Shortlisted', 'Accepted', 'Rejected', 'Completed', 'Cancelled'];
-    if (!allowed.includes(status)) {
-      return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${allowed.join(', ')}` });
-    }
-
-    const application = findOne('applications', a => a._id === id || a.id === id);
-    if (!application) {
-      return res.status(404).json({ success: false, message: 'Application not found.' });
-    }
-
-    if (application.employerId !== req.user._id && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Unauthorized to manage this application.' });
-    }
-
-    const wasCompleted = application.status === 'Completed';
-    const updated = update('applications', id, {
-      status,
-      employerNotes: employerNotes !== undefined ? employerNotes : application.employerNotes,
-      ...(status === 'Completed' && !wasCompleted ? { completedAt: new Date().toISOString() } : {})
-    });
-
-    const job = findOne('jobs', j => j._id === application.jobId || j.id === application.jobId);
-    const workerProfile = findOne('workerProfiles', wp => wp.userId === application.workerId);
-
-    // If accepted:
+    const { status, employerNotes } = req.body || {};
+    const allowed = ['Viewed', 'Shortlisted', 'Accepted', 'Rejected'];
+    if (!allowed.includes(status)) return res.status(400).json({ success: false, message: 'Use the dedicated work lifecycle actions for starting, completing, or cancelling work.' });
+    const application = findOne('applications', a => (a._id || a.id) === id);
+    if (!application) return res.status(404).json({ success: false, message: 'Application not found.' });
+    if (application.employerId !== idOf(req.user) && req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Unauthorized to manage this application.' });
+    if (!['Applied', 'Viewed', 'Shortlisted'].includes(application.status)) return res.status(409).json({ success: false, message: 'This application can no longer be changed using this action.' });
+    const updated = update('applications', id, { status, employerNotes: employerNotes !== undefined ? employerNotes : application.employerNotes });
+    const job = findOne('jobs', j => (j._id || j.id) === application.jobId);
     if (status === 'Accepted') {
-      // Update job filled vacancies & acceptedWorkerId
-      if (job) {
-        update('jobs', job._id, {
-          acceptedWorkerId: application.workerId,
-          filledVacancies: (job.filledVacancies || 0) + 1,
-          status: (job.filledVacancies + 1 >= job.vacancies) ? 'in_progress' : job.status
-        });
-      }
-
-      // Worker gets notification
-      insert('notifications', {
-        userId: application.workerId,
-        title: 'Congratulations! Application Accepted 🎉',
-        message: `Your application for "${job?.title || 'Job'}" has been ACCEPTED by ${job?.companyName || 'the employer'}! Contact details unlocked.`,
-        type: 'success',
-        actionUrl: '/worker/applications',
-        isRead: false
-      });
-    } else if (status === 'Shortlisted') {
-      insert('notifications', {
-        userId: application.workerId,
-        title: 'Application Shortlisted ⭐',
-        message: `You have been shortlisted for "${job?.title || 'Job'}" by ${job?.companyName || 'employer'}.`,
-        type: 'info',
-        actionUrl: '/worker/applications',
-        isRead: false
-      });
-    } else if (status === 'Completed') {
-      // Keep completed work in history, but remove a fully finished listing from discovery.
-      if (job) {
-        const otherOpenWork = find('applications', a =>
-          a.jobId === application.jobId &&
-          (a._id || a.id) !== id &&
-          ['Accepted'].includes(a.status)
-        );
-        update('jobs', job._id || job.id, {
-          status: otherOpenWork.length ? 'in_progress' : 'completed'
-        });
-      }
-      // Do not increment completed-work statistics twice if the status is re-saved.
-      if (workerProfile && !wasCompleted) {
-        const passport = workerProfile.skillPassport || {};
-        update('workerProfiles', workerProfile._id, {
-          skillPassport: {
-            ...passport,
-            completedJobsCount: (passport.completedJobsCount || 0) + 1,
-            trustScore: Math.min(100, (passport.trustScore || 85) + 2)
-          }
-        });
-      }
+      if (job) update('jobs', job._id || job.id, { acceptedWorkerId: application.workerId, status: 'in_progress' });
+      notify(application.workerId, 'Application accepted', `Your application for "${job?.title || 'the job'}" was accepted. Contact details are unlocked.`, 'success');
+    } else {
+      notify(application.workerId, status === 'Rejected' ? 'Application not selected' : 'Application update', `Your application for "${job?.title || 'the job'}" is now ${status.toLowerCase()}.`);
     }
-
-    res.status(200).json({
-      success: true,
-      message: `Application marked as ${status}.`,
-      application: updated
-    });
+    res.json({ success: true, message: `Application marked as ${status}.`, application: updated });
   } catch (error) {
     console.error('updateApplicationStatus error:', error);
     res.status(500).json({ success: false, message: 'Error updating application status.' });
+  }
+};
+
+export const updateWorkLifecycle = async (req, res) => {
+  try {
+    const actorId = idOf(req.user);
+    const { action, reason } = req.body || {};
+    const application = findOne('applications', a => (a._id || a.id) === req.params.id);
+    if (!application) return res.status(404).json({ success: false, message: 'Application not found.' });
+    const isWorker = application.workerId === actorId && req.user.role === 'worker';
+    const isEmployer = application.employerId === actorId && req.user.role === 'employer';
+    if (!isWorker && !isEmployer && req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Only the worker or employer on this job can update it.' });
+    const job = findOne('jobs', j => (j._id || j.id) === application.jobId);
+    const now = new Date().toISOString();
+    let changes = {};
+    let recipient = null;
+    let title = 'Work update';
+    let message = '';
+
+    if (action === 'start_work') {
+      if (!isWorker || application.status !== 'Accepted') return res.status(409).json({ success: false, message: 'Only the accepted worker can mark this job as started.' });
+      changes = { status: 'InProgress', startedAt: now };
+      recipient = application.employerId; title = 'Work started'; message = `${job?.title || 'The job'} has been marked as started by the worker.`;
+    } else if (action === 'request_completion') {
+      if (!isWorker || application.status !== 'InProgress') return res.status(409).json({ success: false, message: 'Only the assigned worker can request completion after starting the job.' });
+      changes = { status: 'CompletionRequested', completionRequestedAt: now };
+      recipient = application.employerId; title = 'Completion confirmation needed'; message = `The worker marked "${job?.title || 'the job'}" as finished. Please confirm the work before recording payment.`;
+    } else if (action === 'confirm_completion') {
+      if (!isEmployer || application.status !== 'CompletionRequested') return res.status(409).json({ success: false, message: 'The employer can confirm only after the worker requests completion.' });
+      changes = { status: 'Completed', completedAt: now, completionConfirmedAt: now };
+      recipient = application.workerId; title = 'Work completion confirmed'; message = `The employer confirmed "${job?.title || 'the job'}" as completed. Payment can now be recorded.`;
+      const workerProfile = findOne('workerProfiles', wp => wp.userId === application.workerId);
+      if (workerProfile) {
+        const passport = workerProfile.skillPassport || {};
+        update('workerProfiles', workerProfile._id || workerProfile.id, {
+          skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1, trustScore: Math.min(100, (passport.trustScore || 85) + 2) }
+        });
+      }
+      const otherActive = find('applications', a => a.jobId === application.jobId && (a._id || a.id) !== req.params.id && ['Accepted', 'InProgress', 'CompletionRequested'].includes(a.status));
+      if (job) update('jobs', job._id || job.id, { status: otherActive.length ? 'in_progress' : 'completed' });
+    } else if (action === 'cancel') {
+      const cancellationReason = String(reason || '').trim();
+      if (cancellationReason.length < 5 || cancellationReason.length > 500) return res.status(400).json({ success: false, message: 'Provide a cancellation reason between 5 and 500 characters.' });
+      if (!['Applied', 'Viewed', 'Shortlisted', 'Accepted', 'InProgress', 'CompletionRequested'].includes(application.status)) return res.status(409).json({ success: false, message: 'This application can no longer be cancelled.' });
+      if (!isWorker && !isEmployer && req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Not allowed to cancel this application.' });
+      const afterStart = ['InProgress', 'CompletionRequested'].includes(application.status);
+      changes = {
+        status: 'Cancelled', cancelledAt: now, cancelledBy: actorId, cancellationReason,
+        cancellationStage: afterStart ? 'after_work_started' : 'before_work_started',
+        cancellationReviewRequired: afterStart,
+        cancellationResolution: afterStart ? 'Pending admin review' : 'No review required'
+      };
+      recipient = isWorker ? application.employerId : application.workerId;
+      title = afterStart ? 'Work cancellation needs review' : 'Application cancelled';
+      message = afterStart
+        ? `The other party cancelled "${job?.title || 'the job'}" after work had started. Reason: ${cancellationReason}. This has been flagged for review.`
+        : `The other party cancelled "${job?.title || 'the job'}". Reason: ${cancellationReason}.`;
+    } else {
+      return res.status(400).json({ success: false, message: 'Unknown work lifecycle action.' });
+    }
+
+    const updated = update('applications', req.params.id, changes);
+    if (action === 'cancel' && changes.cancellationReviewRequired) {
+      insert('reports', {
+        reportedBy: actorId,
+        targetType: 'application',
+        targetId: req.params.id,
+        targetName: job?.title || 'Work cancellation after start',
+        reason: 'Cancellation dispute',
+        details: `Cancellation after work started. Reason: ${String(reason).trim()}`,
+        status: 'Pending',
+        actionTaken: 'Awaiting admin review',
+        createdAt: now
+      });
+    }
+    if (recipient) insert('notifications', { userId: recipient, title, message, type: action === 'cancel' ? 'warning' : 'info', actionUrl: isWorker ? '/employer/candidates' : '/worker/applications', isRead: false });
+    res.json({ success: true, message: action === 'cancel' ? 'Cancellation recorded and the other party notified.' : 'Work status updated and the other party notified.', application: updated });
+  } catch (error) {
+    console.error('updateWorkLifecycle error:', error);
+    res.status(500).json({ success: false, message: 'Error updating work status.' });
   }
 };

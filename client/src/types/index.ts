@@ -168,7 +168,7 @@ export interface Job {
   createdAt: string;
 }
 
-export type ApplicationStatus = 'Applied' | 'Viewed' | 'Shortlisted' | 'Accepted' | 'Rejected' | 'Completed' | 'Cancelled';
+export type ApplicationStatus = 'Applied' | 'Viewed' | 'Shortlisted' | 'Accepted' | 'InProgress' | 'CompletionRequested' | 'Rejected' | 'Completed' | 'Cancelled';
 
 export interface Application {
   _id: string;
@@ -191,6 +191,12 @@ export interface Application {
   employerNotes?: string;
   createdAt: string;
   updatedAt: string;
+  startedAt?: string;
+  completionRequestedAt?: string;
+  completedAt?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
+  cancellationReviewRequired?: boolean;
   job?: Partial<Job>;
   employer?: Partial<EmployerProfile>;
   workerProfile?: Partial<WorkerProfile>;

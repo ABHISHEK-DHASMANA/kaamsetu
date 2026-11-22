@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { apiGetEmployerApplications, apiUpdateApplicationStatus, apiCreateReview, apiSubmitReport } from '../../services/api';
+import { apiGetEmployerApplications, apiUpdateApplicationStatus, apiCreateReview, apiSubmitReport, apiUpdateWorkLifecycle } from '../../services/api';
 import { useNotifications } from '../../context/NotificationContext';
 import { Application } from '../../types';
 import {
@@ -59,6 +59,13 @@ export const EmployerCandidates: React.FC = () => {
     }
   };
 
+  const lifecycleAction = async (application: Application, action: 'confirm_completion' | 'cancel') => {
+    const reason = action === 'cancel' ? window.prompt('Please explain why you need to cancel (at least 5 characters):') : undefined;
+    if (action === 'cancel' && (!reason || reason.trim().length < 5)) return;
+    try { await apiUpdateWorkLifecycle(application._id, action, reason); showToast('Work status updated and worker notified.', 'success'); await fetchCandidates(); }
+    catch (error: any) { showToast(error.message || 'Could not update this job.', 'error'); }
+  };
+
   const rateWorker = async (application: Application) => {
     const ratingInput = window.prompt('Rate this worker from 1 to 5 stars:');
     if (ratingInput === null) return;
@@ -78,7 +85,7 @@ export const EmployerCandidates: React.FC = () => {
   };
 
   const reportWorker = async (application: Application) => {
-    const reasons = ['Fake listing', 'Unsafe behaviour', 'Harassment', 'Payment issue', 'Misleading information', 'Other'];
+    const reasons = ['Fake listing', 'Unsafe behaviour', 'Harassment', 'Payment issue', 'Non-payment', 'Unsafe conduct', 'Misleading information', 'Other'];
     const reason = window.prompt('Report reason: ' + reasons.join(', '));
     if (!reason) return;
     if (!reasons.includes(reason)) {
@@ -156,6 +163,18 @@ export const EmployerCandidates: React.FC = () => {
                       : 'border-brand-border shadow-sm hover:shadow-card'
                   }`}
                 >
+                  {cand.status === 'CompletionRequested' && (
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      <button onClick={() => lifecycleAction(cand, 'confirm_completion')} className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Confirm work completed</button>
+                      <button onClick={() => lifecycleAction(cand, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel / raise issue</button>
+                    </div>
+                  )}
+                  {['Accepted', 'InProgress'].includes(cand.status) && (
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      <button onClick={() => lifecycleAction(cand, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel with reason</button>
+                    </div>
+                  )}
+                  {cand.status === 'Cancelled' && <p className="mb-3 text-xs text-red-700">Cancelled: {(cand as any).cancellationReason || 'Reason recorded'} {(cand as any).cancellationReviewRequired ? '• Flagged for admin review' : ''}</p>}
                   {cand.status === 'Completed' && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       <button onClick={() => rateWorker(cand)} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-xs font-bold">

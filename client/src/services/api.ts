@@ -127,6 +127,12 @@ export const apiGetEmployerApplications = async (jobId?: string, status?: string
   );
 };
 
+export const apiUpdateWorkLifecycle = async (appId: string, action: 'start_work' | 'request_completion' | 'confirm_completion' | 'cancel', reason?: string) => {
+  return request<{ success: boolean; message: string; application: Application }>(`/applications/${appId}/lifecycle`, {
+    method: 'POST', body: JSON.stringify({ action, reason })
+  });
+};
+
 export const apiUpdateApplicationStatus = async (appId: string, status: string, notes?: string) => {
   return request<{ success: boolean; message: string; application: Application }>(
     `/applications/${appId}/status`,

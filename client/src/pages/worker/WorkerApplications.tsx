@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { apiGetWorkerApplications, apiCreateReview, apiSubmitReport } from '../../services/api';
+import { apiGetWorkerApplications, apiCreateReview, apiSubmitReport, apiUpdateWorkLifecycle } from '../../services/api';
 import { Application } from '../../types';
 import {
   FileCheck2,
@@ -40,6 +40,13 @@ export const WorkerApplications: React.FC = () => {
     fetchApps();
   }, []);
 
+  const lifecycleAction = async (app: Application, action: 'start_work' | 'request_completion' | 'cancel') => {
+    const reason = action === 'cancel' ? window.prompt('Please explain why you need to cancel (at least 5 characters):') : undefined;
+    if (action === 'cancel' && (!reason || reason.trim().length < 5)) return;
+    try { await apiUpdateWorkLifecycle(app._id, action, reason); window.alert('Your update was sent to the other party.'); await fetchApps(); }
+    catch (error: any) { window.alert(error.message || 'Could not update this job.'); }
+  };
+
   const submitRating = async (app: Application) => {
     const ratingInput = window.prompt('Rate this employer from 1 to 5 stars:');
     if (ratingInput === null) return;
@@ -59,7 +66,7 @@ export const WorkerApplications: React.FC = () => {
   };
 
   const reportJob = async (app: Application) => {
-    const reasons = ['Fake listing', 'Unsafe behaviour', 'Harassment', 'Payment issue', 'Misleading information', 'Other'];
+    const reasons = ['Fake listing', 'Unsafe behaviour', 'Harassment', 'Payment issue', 'Non-payment', 'Unsafe conduct', 'Misleading information', 'Other'];
     const reason = window.prompt('Report reason: ' + reasons.join(', '));
     if (!reason) return;
     if (!reasons.includes(reason)) {
@@ -228,6 +235,25 @@ export const WorkerApplications: React.FC = () => {
                   </div>
                 </div>
 
+                {['Applied', 'Viewed', 'Shortlisted'].includes(app.status) && (
+                  <div className="flex flex-wrap gap-2 border-t border-brand-border pt-3">
+                    <button onClick={() => lifecycleAction(app, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Withdraw application</button>
+                  </div>
+                )}
+                {app.status === 'Accepted' && (
+                  <div className="flex flex-wrap gap-2 border-t border-brand-border pt-3">
+                    <button onClick={() => lifecycleAction(app, 'start_work')} className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Start work</button>
+                    <button onClick={() => lifecycleAction(app, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel with reason</button>
+                  </div>
+                )}
+                {app.status === 'InProgress' && (
+                  <div className="flex flex-wrap gap-2 border-t border-brand-border pt-3">
+                    <button onClick={() => lifecycleAction(app, 'request_completion')} className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Request completion</button>
+                    <button onClick={() => lifecycleAction(app, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel / raise issue</button>
+                  </div>
+                )}
+                {app.status === 'CompletionRequested' && <p className="text-xs text-amber-700">Completion requested. Waiting for the employer to confirm the work.</p>}
+                {app.status === 'Cancelled' && <p className="text-xs text-red-700">Cancelled: {(app as any).cancellationReason || 'Reason recorded'} {(app as any).cancellationReviewRequired ? '• Flagged for review' : ''}</p>}
                 {app.status === 'Completed' && (
                   <div className="flex flex-wrap gap-2 border-t border-brand-border pt-3">
                     <button onClick={() => submitRating(app)} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-xs font-bold">

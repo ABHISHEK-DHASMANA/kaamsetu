@@ -6,7 +6,7 @@ export const createReport = async (req, res) => {
     const { targetType, targetId, targetName, reason, details } = req.body;
 
     const allowedTypes = ['job', 'worker', 'employer', 'payment'];
-    const allowedReasons = ['Fake listing', 'Unsafe behaviour', 'Harassment', 'Payment issue', 'Misleading information', 'Other'];
+    const allowedReasons = ['Fake listing', 'Unsafe behaviour', 'Harassment', 'Payment issue', 'Misleading information', 'Non-payment', 'Unsafe conduct', 'Cancellation dispute', 'Other'];
     if (!allowedTypes.includes(targetType) || !targetId || !allowedReasons.includes(reason) || !details || String(details).trim().length < 5 || String(details).length > 1500) {
       return res.status(400).json({ success: false, message: 'Please provide all report details.' });
     }
