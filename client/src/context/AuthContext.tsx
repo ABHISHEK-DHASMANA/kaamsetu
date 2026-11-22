@@ -60,12 +60,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const res = await apiLogin(phone, pass);
-      if (res.success) {
-        sessionStorage.setItem('kaamsetu_token', res.token);
-        setToken(res.token);
-        setUser(res.user);
-        setProfile(res.profile);
+      if (!res.success || !res.token || !res.user) {
+        throw new Error('Login was not completed. Please check the credentials and try again.');
       }
+      sessionStorage.setItem('kaamsetu_token', res.token);
+      setToken(res.token);
+      setUser(res.user);
+      setProfile(res.profile);
     } finally {
       setIsLoading(false);
     }
