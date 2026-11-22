@@ -13,6 +13,7 @@ export const EmployerProfilePage: React.FC = () => {
   const { showToast } = useNotifications();
 
   const [companyName, setCompanyName] = useState('');
+  const [businessType, setBusinessType] = useState('Small Business / Shop');
   const [contactPerson, setContactPerson] = useState('');
   const [phone, setPhone] = useState('');
   const [industry, setIndustry] = useState('');
@@ -34,6 +35,7 @@ export const EmployerProfilePage: React.FC = () => {
         if (res.success && res.profile) {
           const ep = res.profile;
           setCompanyName(ep.companyName);
+          setBusinessType(ep.businessType || 'Small Business / Shop');
           setContactPerson(ep.contactPerson);
           setPhone(ep.phone);
           setIndustry(ep.industry);
@@ -90,8 +92,8 @@ export const EmployerProfilePage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Company Profile & Employer Verification"
-      subtitle="Manage your business verification and contact details"
+      title={businessType === "Home Owner" ? "My Hiring Profile" : "Business Profile & Verification"}
+      subtitle={businessType === "Home Owner" ? "Manage the details used when hiring help for your home" : "Manage your business details and hiring location"}
     >
       <div className="max-w-2xl bg-white rounded-3xl border border-brand-border shadow-sm p-6 sm:p-8 space-y-6">
         <div className="flex items-center gap-4">
@@ -122,6 +124,7 @@ export const EmployerProfilePage: React.FC = () => {
             <input type="range" min="1" max="50" value={maxHiringDistanceKm} onChange={e => setMaxHiringDistanceKm(Number(e.target.value))} className="w-full accent-brand-primary" />
             <p className="text-[11px] text-brand-muted">Nearby candidate recommendations will use this radius.</p>
           </div>
+          {businessType !== 'Home Owner' && (
           <div>
             <label className="text-xs font-semibold text-brand-dark block mb-1">Company / Firm Name</label>
             <input
@@ -130,7 +133,7 @@ export const EmployerProfilePage: React.FC = () => {
               onChange={(e) => setCompanyName(e.target.value)}
               className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark font-bold"
             />
-          </div>
+          </div>          )}
 
           <LocationPicker coordinates={coordinates} onChange={setCoordinates} title="Business location" />
           <div className="grid grid-cols-2 gap-3">
