@@ -31,6 +31,28 @@ const clone = value => JSON.parse(JSON.stringify(value));
 const recordId = item => String(item?._id || item?.id || '');
 const mongoId = (collection, id) => `${collection}:${id}`;
 
+// Every persisted record needs a unique key, including seed/catalog rows that
+// intentionally have no application-level ID (for example skill names).
+export const normalizeDatabaseRecords = database => {
+  const normalized = { ...emptyDatabase(), ...database };
+  for (const [collection, items] of Object.entries(normalized)) {
+    if (!Array.isArray(items)) {
+      normalized[collection] = [];
+      continue;
+    }
+    const usedIds = new Set();
+    normalized[collection] = items.map((item, index) => {
+      const existingId = recordId(item);
+      let id = existingId || `legacy_${collection}_${index}`;
+      if (usedIds.has(id)) id = `${id}__${index}`;
+      while (usedIds.has(id)) id = `${id}_`;
+      usedIds.add(id);
+      return existingId === id ? item : { ...item, _id: id };
+    });
+  }
+  return normalized;
+};
+
 const enqueuePersistence = operation => {
   if (!mongoCollection) return;
   const task = persistenceQueue.then(operation);
@@ -60,13 +82,14 @@ export const enableMongoPersistence = async collection => {
       if (!restored[document.collection]) restored[document.collection] = [];
       if (document.data) restored[document.collection].push(document.data);
     }
-    inMemoryDb = restored;
+    inMemoryDb = normalizeDatabaseRecords(restored);
     console.log(`[Storage] Restored ${documents.length} records from persistent MongoDB storage.`);
     return;
   }
 
   // One-time migration for an existing local JSON database, if present.
   if (readLocalFile()) {
+    inMemoryDb = normalizeDatabaseRecords(inMemoryDb);
     const records = Object.entries(inMemoryDb).flatMap(([name, items]) =>
       items.map(item => ({
         _id: mongoId(name, recordId(item)),
@@ -115,7 +138,7 @@ export const saveStorage = () => {
 export const getDb = () => inMemoryDb;
 
 export const setDb = newDb => {
-  inMemoryDb = { ...emptyDatabase(), ...newDb };
+  inMemoryDb = normalizeDatabaseRecords(newDb);
   if (!mongoCollection) {
     saveStorage();
     return;
@@ -147,10 +170,10 @@ export const find = (collection, filterFn) => {
 export const insert = (collection, item) => {
   if (!inMemoryDb[collection]) inMemoryDb[collection] = [];
   const newItem = {
+    ...item,
     _id: item._id || 'id_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36),
     createdAt: item.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    ...item
+    updatedAt: new Date().toISOString()
   };
   inMemoryDb[collection].push(newItem);
   if (mongoCollection) {
