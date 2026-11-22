@@ -213,6 +213,10 @@ export const WorkerApplications: React.FC = () => {
                       <Building2 className="w-3.5 h-3.5 text-brand-secondary" />
                       <span>{app.employer?.companyName || 'Employer'}</span>
                       <span>•</span>
+                      <span className="font-bold text-emerald-700">
+                        {app.employer?.trustScore != null ? `Trusted employer · ${app.employer.trustScore}/100` : 'New to KaamSetu'}
+                      </span>
+                      <span>•</span>
                       <span>Applied on {new Date(app.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
