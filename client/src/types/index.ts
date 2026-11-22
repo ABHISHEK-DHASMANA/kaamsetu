@@ -100,12 +100,12 @@ export interface EmployerProfile {
   verificationStatus: UserVerificationStatus;
   gstOrGovtId?: string;
   address: GeoLocation;
-  rating: number;
+  rating: number | null;
+  reviewsCount?: number;
   jobsPostedCount: number;
   activeJobsCount: number;
   hiredWorkersCount: number;
-  trustScore?: number | null;
-  trustReviewsCount?: number;
+  reviewsCount?: number;
   completedHiresCount?: number;
   aboutCompany: string;
   avatar?: string;
