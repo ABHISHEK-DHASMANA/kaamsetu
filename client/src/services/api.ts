@@ -75,8 +75,12 @@ export const apiRegister = async (payload: any) => {
 };
 
 export const apiFirebaseLogin = async (idToken: string) => {
+  if (!idToken || typeof idToken !== 'string') {
+    throw new Error('Firebase sign-in did not return an ID token. Please sign in again.');
+  }
   return request<{ success: boolean; token: string; user: User; profile: any }>('/auth/firebase', {
     method: 'POST',
+    headers: { Authorization: `Bearer ${idToken}` },
     body: JSON.stringify({ idToken })
   });
 };
