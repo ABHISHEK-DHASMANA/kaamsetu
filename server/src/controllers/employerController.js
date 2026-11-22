@@ -21,8 +21,11 @@ export const getEmployerProfile = async (req, res) => {
     const employerReviews = find('reviews', r =>
       String(r.toUserId) === String(profile.userId) && String(r.fromUserId) !== String(profile.userId)
     );
-    const employerTrustScore = completedHires.length > 0 && employerReviews.length > 0
-      ? Math.round((employerReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / employerReviews.length) * 20)
+    const averageEmployerRating = employerReviews.length
+      ? Math.round((employerReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / employerReviews.length) * 10) / 10
+      : null;
+    const employerTrustScore = completedHires.length > 0 && averageEmployerRating !== null
+      ? Math.round(averageEmployerRating * 20)
       : null;
 
     res.status(200).json({
@@ -34,6 +37,8 @@ export const getEmployerProfile = async (req, res) => {
         address: req.params.userId ? { ...profile.address, coordinates: undefined } : profile.address,
         activeJobsCount: activeJobs.length,
         jobsPostedCount: totalJobs.length,
+        rating: averageEmployerRating,
+        reviewsCount: employerReviews.length,
         completedHiresCount: completedHires.length,
         trustScore: employerTrustScore,
         trustReviewsCount: employerReviews.length
