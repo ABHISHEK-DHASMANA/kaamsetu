@@ -32,23 +32,27 @@ export const firebaseLogin = async (req, res) => {
     const firebaseAuth = getFirebaseAdminAuth();
     const decoded = await firebaseAuth.verifyIdToken(idToken, true);
     const firebaseUser = await firebaseAuth.getUser(decoded.uid);
-    const hasVerifiedPhoneProvider =
-      decoded.firebase?.sign_in_provider === 'phone' ||
+    const hasVerifiedPhoneProvider = decoded.firebase?.sign_in_provider === 'phone' ||
       firebaseUser.providerData?.some(provider => provider.providerId === 'phone');
+    const hasVerifiedGoogleEmail = decoded.firebase?.sign_in_provider === 'google.com' &&
+      decoded.email_verified === true && !!decoded.email &&
+      firebaseUser.providerData?.some(provider => provider.providerId === 'google.com');
 
-    if (!decoded.phone_number || !hasVerifiedPhoneProvider) {
-      return res.status(403).json({
-        success: false,
-        message: 'Link and verify your mobile number with Firebase before signing in.'
-      });
+    let user = null;
+    if (hasVerifiedGoogleEmail) {
+      const verifiedEmail = String(decoded.email).trim().toLowerCase();
+      user = findOne('users', candidate => String(candidate.email || '').trim().toLowerCase() === verifiedEmail);
     }
-
-    const verifiedPhone = normalizePhone(decoded.phone_number);
-    if (verifiedPhone.length < 10) {
-      return res.status(400).json({ success: false, message: 'Firebase returned an invalid phone number.' });
+    if (!user && hasVerifiedPhoneProvider && decoded.phone_number) {
+      const verifiedPhone = normalizePhone(decoded.phone_number);
+      if (verifiedPhone.length < 10) {
+        return res.status(400).json({ success: false, message: 'Firebase returned an invalid phone number.' });
+      }
+      user = findOne('users', candidate => normalizePhone(candidate.phone) === verifiedPhone);
     }
-
-    const user = findOne('users', candidate => normalizePhone(candidate.phone) === verifiedPhone);
+    if (!hasVerifiedGoogleEmail && !hasVerifiedPhoneProvider) {
+      return res.status(403).json({ success: false, message: 'Use a verified Google account or verify your mobile number to sign in.' });
+    }
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -97,6 +101,13 @@ export const register = async (req, res) => {
 
     if (!name || !phone || !password) {
       return res.status(400).json({ success: false, message: 'Please provide full name, phone number, and password.' });
+    }
+    const passwordClasses = [/[a-z]/.test(password), /[A-Z]/.test(password), /\d/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length;
+    if (password.length < 8 || password.length > 128 || passwordClasses < 3) {
+      return res.status(400).json({ success: false, message: 'Password must be 8–128 characters and include at least 3 of: lowercase, uppercase, number, and special character.' });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
     }
 
     const cleanPhone = phone.trim();
@@ -215,11 +226,12 @@ export const login = async (req, res) => {
     const { phone, password } = req.body;
 
     if (!phone || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide phone number and password.' });
+      return res.status(400).json({ success: false, message: 'Please provide phone number/email and password.' });
     }
 
-    const cleanPhone = phone.trim();
-    const user = findOne('users', u => u.phone === cleanPhone || u.email === cleanPhone);
+    const identifier = String(phone).trim();
+    const normalizedIdentifier = identifier.toLowerCase();
+    const user = findOne('users', u => u.phone === identifier || String(u.email || '').trim().toLowerCase() === normalizedIdentifier);
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid phone number or password.' });

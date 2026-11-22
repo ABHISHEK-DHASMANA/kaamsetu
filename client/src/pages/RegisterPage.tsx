@@ -39,6 +39,12 @@ const SKILLS_LIST = [
   'Delivery'
 ];
 
+const getPasswordStrength = (value: string) => {
+  const checks = [/[a-z]/.test(value), /[A-Z]/.test(value), /\d/.test(value), /[^A-Za-z0-9]/.test(value)];
+  const score = checks.filter(Boolean).length + (value.length >= 8 ? 1 : 0);
+  return { checks, score: Math.min(score, 5), strong: value.length >= 8 && checks.filter(Boolean).length >= 3 };
+};
+
 export const RegisterPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('role') === 'employer' ? 'employer' : 'worker';
@@ -56,6 +62,8 @@ export const RegisterPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const passwordStrength = getPasswordStrength(password);
   const [preferredLanguage, setPreferredLanguage] = useState('Hindi');
   const [companyName, setCompanyName] = useState('');
   const [businessType, setBusinessType] = useState('Home Owner');
@@ -113,6 +121,10 @@ export const RegisterPage: React.FC = () => {
 
   const handleSubmitRegistration = async () => {
     setErrorMsg(null);
+    if (password.length < 8 || !passwordStrength.strong) {
+      setErrorMsg('Use at least 8 characters and include at least 3 of these: lowercase, uppercase, number, and special character.');
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -277,14 +289,31 @@ export const RegisterPage: React.FC = () => {
                 <label className="text-xs font-semibold text-brand-dark block mb-1">
                   Set Password <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="password"
-                  required
-                  placeholder="At least 6 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    maxLength={128}
+                    autoComplete="new-password"
+                    placeholder="Create a strong password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 pr-20 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark"
+                  />
+                  <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-brand-primary">{showPassword ? 'Hide' : 'Show'}</button>
+                </div>
+                {password && <div className="space-y-2" aria-live="polite">
+                  <div className="flex gap-1">{[1,2,3,4,5].map(level => <div key={level} className={"h-1.5 flex-1 rounded-full " + (passwordStrength.score >= level ? (passwordStrength.strong ? 'bg-emerald-500' : passwordStrength.score >= 3 ? 'bg-amber-500' : 'bg-red-400') : 'bg-slate-200')} />)}</div>
+                  <p className={"text-[11px] font-semibold " + (passwordStrength.strong ? 'text-emerald-700' : 'text-amber-700')}>{passwordStrength.strong ? 'Strong password' : 'Make your password stronger'}</p>
+                  <ul className="grid grid-cols-2 gap-1 text-[10px] text-brand-muted">
+                    <li className={password.length >= 8 ? 'text-emerald-700' : ''}>{password.length >= 8 ? '✓' : '○'} At least 8 characters</li>
+                    <li className={/[a-z]/.test(password) ? 'text-emerald-700' : ''}>{/[a-z]/.test(password) ? '✓' : '○'} Lowercase letter</li>
+                    <li className={/[A-Z]/.test(password) ? 'text-emerald-700' : ''}>{/[A-Z]/.test(password) ? '✓' : '○'} Uppercase letter</li>
+                    <li className={/\d/.test(password) ? 'text-emerald-700' : ''}>{/\d/.test(password) ? '✓' : '○'} Number</li>
+                    <li className={/[^A-Za-z0-9]/.test(password) ? 'text-emerald-700' : ''}>{/[^A-Za-z0-9]/.test(password) ? '✓' : '○'} Special character</li>
+                  </ul>
+                </div>}
               </div>
 
               <div>

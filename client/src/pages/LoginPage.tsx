@@ -5,11 +5,12 @@ import { firebaseAuth, googleProvider } from '../services/firebase';
 import { useAuth, DEMO_USERS } from '../context/AuthContext';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
-import { LogIn, User, Briefcase, ShieldCheck, Phone, Lock, AlertCircle, Sparkles, CheckCircle2, Chrome } from 'lucide-react';
+import { LogIn, User, Briefcase, ShieldCheck, Phone, Mail, Lock, AlertCircle, Sparkles, CheckCircle2, Chrome } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login, quickLogin, loginWithFirebase, isLoading } = useAuth();
   const [phone, setPhone] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
@@ -74,10 +75,7 @@ export const LoginPage: React.FC = () => {
     try {
       const result = await signInWithPopup(firebaseAuth, googleProvider);
       const current = result.user;
-      const hasPhone = current.providerData.some(p => p.providerId === 'phone') && !!current.phoneNumber;
-      if (hasPhone) { await completeLogin(current); return; }
-      setGoogleUser(current);
-      setNotice('Google verified. Now verify your mobile number to continue.');
+      await completeLogin(current);
     } catch (err: any) {
       setErrorMsg(err.code === 'auth/unauthorized-domain'
         ? `Firebase is blocking this website (${window.location.hostname}). Add this exact hostname in Firebase Console → Authentication → Settings → Authorized domains, then reload the site.`
@@ -86,7 +84,7 @@ export const LoginPage: React.FC = () => {
   };
   const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setErrorMsg(null);
-    try { await login(phone, password); destination(); }
+    try { await login(identifier.trim(), password); destination(); }
     catch (err: any) { setErrorMsg(err.message || 'Login failed. Please verify credentials.'); }
   };
   const handleQuickDemoClick = async (type: 'worker' | 'employer' | 'admin') => {
@@ -126,7 +124,7 @@ export const LoginPage: React.FC = () => {
           {notice && <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2"><CheckCircle2 className="w-4 h-4 flex-shrink-0" />{notice}</div>}
 
           <section className="space-y-3">
-            <div className="text-xs font-bold text-brand-dark">Continue with Google + phone verification</div>
+            <div className="text-xs font-bold text-brand-dark">Continue with Google</div>
             <button type="button" onClick={handleGoogle} disabled={busy || isLoading} className="w-full py-3 rounded-xl border border-brand-border bg-white hover:bg-slate-50 text-sm font-bold text-brand-dark flex items-center justify-center gap-2 disabled:opacity-60">
               <Chrome className="w-4 h-4" /> Continue with Google
             </button>
@@ -156,12 +154,12 @@ export const LoginPage: React.FC = () => {
 
           <div className="relative flex items-center"><div className="flex-1 border-t border-brand-border" /><span className="px-3 text-[10px] text-brand-muted">OR USE PASSWORD</span><div className="flex-1 border-t border-brand-border" /></div>
           <form onSubmit={handleManualLogin} className="space-y-3">
-            <div className="relative"><Phone className="w-4 h-4 text-brand-muted absolute left-3 top-3" /><input type="text" required placeholder="Registered mobile number" value={phone} onChange={e => setPhone(e.target.value)} className="w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-slate-50 text-brand-dark" /></div>
+            <div className="relative"><Mail className="w-4 h-4 text-brand-muted absolute left-3 top-3" /><input type="text" autoComplete="username" required placeholder="Registered mobile number or email" value={identifier} onChange={e => setIdentifier(e.target.value)} className="w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-slate-50 text-brand-dark" /></div>
             <div className="relative"><Lock className="w-4 h-4 text-brand-muted absolute left-3 top-3" /><input type="password" required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-slate-50 text-brand-dark" /></div>
             <button type="submit" disabled={isLoading} className="w-full py-3 rounded-xl bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-60"><LogIn className="w-4 h-4" />Sign In with Password</button>
           </form>
           <div className="text-center text-xs text-brand-muted pt-2 border-t border-brand-border">Don't have an account? <Link to="/register" className="font-bold text-brand-primary hover:underline">Create Profile Free</Link></div>
-          <p className="text-[10px] leading-relaxed text-center text-brand-muted">Phone OTP sign-in requires an existing KaamSetu account with the same verified mobile number. Google sign-in links a verified phone before access is granted.</p>
+          <p className="text-[10px] leading-relaxed text-center text-brand-muted">Sign in with your registered phone and password, email and password, Google account linked to your registered email, or phone OTP.</p>
         </div>
       </div>
       <Footer />
