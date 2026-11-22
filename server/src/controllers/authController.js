@@ -29,11 +29,17 @@ export const firebaseLogin = async (req, res) => {
       return res.status(401).json({ success: false, message: 'A Firebase ID token is required.' });
     }
 
-    const decoded = await getFirebaseAdminAuth().verifyIdToken(idToken, true);
-    if (!decoded.phone_number || decoded.phone_number_verified !== true) {
+    const firebaseAuth = getFirebaseAdminAuth();
+    const decoded = await firebaseAuth.verifyIdToken(idToken, true);
+    const firebaseUser = await firebaseAuth.getUser(decoded.uid);
+    const hasVerifiedPhoneProvider =
+      decoded.firebase?.sign_in_provider === 'phone' ||
+      firebaseUser.providerData?.some(provider => provider.providerId === 'phone');
+
+    if (!decoded.phone_number || !hasVerifiedPhoneProvider) {
       return res.status(403).json({
         success: false,
-        message: 'Verify your mobile number with Firebase before signing in.'
+        message: 'Link and verify your mobile number with Firebase before signing in.'
       });
     }
 
