@@ -31,11 +31,28 @@ const request = async <T>(endpoint: string, options: RequestInit = {}): Promise<
       }
     });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || `Request failed with status ${response.status}`);
+    const responseText = await response.text();
+    let data: any = null;
+
+    if (responseText.trim()) {
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        const contentType = response.headers.get('content-type') || 'unknown content type';
+        throw new Error(
+          `Server returned an invalid response for ${endpoint} (HTTP ${response.status}, ${contentType}). Please try again or contact support.`
+        );
+      }
+    } else {
+      throw new Error(
+        `Server returned an empty response for ${endpoint} (HTTP ${response.status}). Please try again in a moment.`
+      );
     }
-    return data;
+
+    if (!response.ok || data?.success === false) {
+      throw new Error(data?.message || `Request failed with status ${response.status}`);
+    }
+    return data as T;
   } catch (err: any) {
     console.warn(`[API] Network request to ${endpoint} failed:`, err.message);
     throw err;
