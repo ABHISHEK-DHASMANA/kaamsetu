@@ -26,6 +26,7 @@ export interface SkillItem {
 }
 
 export interface GeoLocation {
+  pinConfirmed?: boolean;
   state: string;
   city: string;
   area: string;
@@ -143,6 +144,7 @@ export interface Job {
       lat: number;
       lng: number;
     };
+    pinConfirmed?: boolean;
   };
   startDate: string;
   endDate?: string;

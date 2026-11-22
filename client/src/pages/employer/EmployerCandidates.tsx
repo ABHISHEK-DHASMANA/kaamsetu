@@ -62,7 +62,7 @@ export const EmployerCandidates: React.FC = () => {
   const lifecycleAction = async (application: Application, action: 'confirm_completion' | 'cancel') => {
     const reason = action === 'cancel' ? window.prompt('Please explain why you need to cancel (at least 5 characters):') : undefined;
     if (action === 'cancel' && (!reason || reason.trim().length < 5)) return;
-    try { await apiUpdateWorkLifecycle(application._id || (application as any).id || '', action, reason); showToast('Work status updated and worker notified.', 'success'); await fetchCandidates(); }
+    try { await apiUpdateWorkLifecycle(application._id || (application as any).id || '', action, reason ?? undefined); showToast('Work status updated and worker notified.', 'success'); await fetchCandidates(); }
     catch (error: any) { showToast(error.message || 'Could not update this job.', 'error'); }
   };
 
