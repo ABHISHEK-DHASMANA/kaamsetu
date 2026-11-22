@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { RibbonStage } from '../components/visual/RibbonStage';
 import { Link, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
+import { RibbonStage } from '../components/visual/RibbonStage';
 import { VoiceSearchModal } from '../components/voice/VoiceSearchModal';
 import { ExtractedJobPreferences } from '../types';
 import {
-  ArrowUpRight, AudioLines, BadgeCheck, BriefcaseBusiness, Check, ChevronRight,
-  Clock3, Hammer, HardHat, HeartHandshake, MapPin, Mic, Search, ShieldCheck,
-  Sparkles, Users, Wallet, Wrench, Zap
+  ArrowUpRight, AudioLines, BriefcaseBusiness, Clock3, Hammer, HardHat,
+  HeartHandshake, MapPin, Mic, Search, Users, Wrench, Zap
 } from 'lucide-react';
 
 const categories = [
@@ -46,45 +45,86 @@ export const LandingPage: React.FC = () => {
 
       <main className="flex-1">
         <section className="ks-hero relative overflow-hidden">
-          <div className="ks-hero-orb ks-hero-orb-one" />
-          <div className="ks-hero-orb ks-hero-orb-two" />
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-16 lg:pt-24 lg:pb-24">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 xl:gap-16 items-center">
-              <div className="lg:col-span-7 space-y-7">
-                <div className="ks-eyebrow"><span className="ks-live-dot" /> A better way to find local work</div>
-                <div className="space-y-5">
-                  <h1 className="ks-display">Good work.<br /><span>Closer to home.</span></h1>
-                  <p className="max-w-xl text-base sm:text-lg text-slate-600 leading-relaxed">
-                    Find nearby opportunities or connect with skilled people in your area. Clear work details, transparent pay and a more direct way to get started.
-                  </p>
-                </div>
+          <div className="ks-hero-backdrop" aria-hidden="true">
+            <RibbonStage />
+          </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link to="/jobs" className="ks-button ks-button-primary">
-                    <Search size={17} /> Find work <ArrowUpRight size={16} />
-                  </Link>
-                  <Link to="/workers" className="ks-button ks-button-light">
-                    <Users size={17} /> Hire local talent <ArrowUpRight size={16} />
-                  </Link>
-                </div>
-
-                <div className="ks-voice-card">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="ks-voice-icon"><AudioLines size={21} /></div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900">Rather speak than type?</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Search in Hindi or English. No account needed.</p>
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => setVoiceModalOpen(true)} className="ks-voice-action">
-                    <Mic size={15} /> Speak
-                  </button>
-                </div>
-                <p className="text-[11px] text-slate-400">Browse freely. Sign in only when you want to apply, hire or contact someone.</p>
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 lg:py-20">
+            <div className="ks-hero-copy">
+              <div className="ks-eyebrow">
+                <span className="ks-live-dot" />
+                A better way to find local work
               </div>
 
-              <div className="lg:col-span-5">
-                <RibbonStage />
+              <h1 className="ks-display mt-6">
+                Good work.<br />
+                <span>Closer to home.</span>
+              </h1>
+
+              <p className="ks-hero-description mt-5">
+                Find nearby opportunities or connect with skilled people in your area.
+                Clear work details, transparent pay and a more direct way to get started.
+              </p>
+
+              <form className="ks-quick-search mt-8" onSubmit={handleQuickSearch} role="search" aria-label="Search for local work">
+                <label className="ks-search-field">
+                  <Search size={19} aria-hidden="true" />
+                  <span className="sr-only">Skill or type of work</span>
+                  <input
+                    type="search"
+                    value={quickSkill}
+                    onChange={(event) => setQuickSkill(event.target.value)}
+                    placeholder="What work are you looking for?"
+                    aria-label="Skill or type of work"
+                    autoComplete="off"
+                  />
+                </label>
+
+                <label className="ks-search-field ks-search-field-area">
+                  <MapPin size={19} aria-hidden="true" />
+                  <span className="sr-only">Area or locality</span>
+                  <input
+                    type="text"
+                    value={quickArea}
+                    onChange={(event) => setQuickArea(event.target.value)}
+                    placeholder="Area or locality"
+                    aria-label="Area or locality"
+                    autoComplete="address-level3"
+                  />
+                </label>
+
+                <button type="submit" className="ks-search-submit">
+                  <span>Find nearby work</span>
+                  <ArrowUpRight size={17} aria-hidden="true" />
+                </button>
+              </form>
+
+              <div className="ks-hero-secondary mt-5">
+                <Link to="/workers" className="ks-hire-link">
+                  <Users size={16} aria-hidden="true" />
+                  Looking to hire? Browse skilled people
+                  <ArrowUpRight size={14} aria-hidden="true" />
+                </Link>
+                <span className="ks-hero-note">Explore first. Sign in only when you’re ready to apply or hire.</span>
+              </div>
+
+              <div className="ks-voice-card mt-7">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="ks-voice-icon"><AudioLines size={21} /></div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900">Rather speak than type?</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Search in Hindi or English. No account needed.</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setVoiceModalOpen(true)} className="ks-voice-action">
+                  <Mic size={15} aria-hidden="true" /> Speak
+                </button>
+              </div>
+
+              <div className="ks-hero-proof mt-5">
+                <span><BriefcaseBusiness size={14} /> Local opportunities</span>
+                <span><Clock3 size={14} /> Clear work details</span>
+                <span><HeartHandshake size={14} /> Direct connections</span>
               </div>
             </div>
           </div>
@@ -98,7 +138,7 @@ export const LandingPage: React.FC = () => {
                 <h2 className="ks-section-title">Start with your skill.</h2>
                 <p className="text-sm text-slate-500 mt-2">Choose a trade to see relevant work around you.</p>
               </div>
-              <Link to="/jobs" className="ks-text-link">Browse all jobs <ChevronRight size={16} /></Link>
+              <Link to="/jobs" className="ks-text-link">Browse all jobs <ArrowUpRight size={16} /></Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {categories.map((category) => {
@@ -129,7 +169,16 @@ export const LandingPage: React.FC = () => {
                 { n: '03', icon: Clock3, title: 'Get to work', desc: 'Agree on the work and payment terms directly. Keep a record of progress and feedback.' },
               ].map((step) => {
                 const Icon = step.icon;
-                return <article key={step.n} className="ks-step-card"><div className="flex items-center justify-between"><span className="ks-step-number">{step.n}</span><Icon size={21} className="text-emerald-700" /></div><h3>{step.title}</h3><p>{step.desc}</p></article>;
+                return (
+                  <article key={step.n} className="ks-step-card">
+                    <div className="flex items-center justify-between">
+                      <span className="ks-step-number">{step.n}</span>
+                      <Icon size={21} className="text-emerald-700" />
+                    </div>
+                    <h3>{step.title}</h3>
+                    <p>{step.desc}</p>
+                  </article>
+                );
               })}
             </div>
           </div>
