@@ -39,7 +39,7 @@ export const getWorkerApplications = async (req, res) => {
     const hydrated = find('applications', a => a.workerId === workerUserId).map(app => {
       const job = findOne('jobs', j => j._id === app.jobId || j.id === app.jobId);
       const employer = findOne('employerProfiles', ep => ep.userId === app.employerId);
-      const employerReviews = find('reviews', review => review.toUserId === app.employerId);
+      const employerReviews = find('reviews', review => review.toUserId === app.employerId && review.fromRole === 'worker' && review.isVerifiedWork === true);
       const completedEmployerHires = find('applications', item => item.employerId === app.employerId && item.status === 'Completed');
       const employerAverageRating = employerReviews.length
         ? Math.round((employerReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / employerReviews.length) * 10) / 10
@@ -71,7 +71,7 @@ export const getEmployerApplications = async (req, res) => {
     const hydrated = applications.map(app => {
       const workerProfile = findOne('workerProfiles', wp => wp.userId === app.workerId);
       const workerUser = findOne('users', u => idOf(u) === app.workerId);
-      const workerReviews = find('reviews', review => review.toUserId === app.workerId);
+      const workerReviews = find('reviews', review => review.toUserId === app.workerId && review.fromRole === 'employer' && review.isVerifiedWork === true);
       const workerCompletedJobs = find('applications', item => item.workerId === app.workerId && item.status === 'Completed');
       const workerAverageRating = workerReviews.length
         ? Math.round((workerReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / workerReviews.length) * 10) / 10
