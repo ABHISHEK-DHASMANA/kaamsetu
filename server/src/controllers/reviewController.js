@@ -40,7 +40,7 @@ export const createReview = async (req, res) => {
       createdAt: new Date().toISOString()
     });
 
-    const targetReviews = find('reviews', item => item.toUserId === toUserId);
+    const targetReviews = find('reviews', item => item.toUserId === toUserId && item.isVerifiedWork === true);
     const averageRating = targetReviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / Math.max(targetReviews.length, 1);
     if (targetUser.role === 'worker') {
       const workerProfile = findOne('workerProfiles', profile => profile.userId === toUserId);
