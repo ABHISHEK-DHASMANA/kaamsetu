@@ -131,11 +131,12 @@ export const getSkillPassport = async (req, res) => {
     const averageRating = reviews.length
       ? Math.round((reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length) * 10) / 10
       : null;
+    const { trustScore: _legacyTrustScore, ...passportWithoutLegacyTrust } = workerProfile.skillPassport || {};
 
     res.status(200).json({
       success: true,
       skillPassport: {
-        ...workerProfile.skillPassport,
+        ...passportWithoutLegacyTrust,
         rating: averageRating,
         reviewsCount: reviews.length,
         workerName: workerProfile.fullName,
