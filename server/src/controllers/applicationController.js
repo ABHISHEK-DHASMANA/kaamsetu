@@ -200,9 +200,11 @@ export const updateApplicationStatus = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized to manage this application.' });
     }
 
+    const wasCompleted = application.status === 'Completed';
     const updated = update('applications', id, {
       status,
-      employerNotes: employerNotes !== undefined ? employerNotes : application.employerNotes
+      employerNotes: employerNotes !== undefined ? employerNotes : application.employerNotes,
+      ...(status === 'Completed' && !wasCompleted ? { completedAt: new Date().toISOString() } : {})
     });
 
     const job = findOne('jobs', j => j._id === application.jobId || j.id === application.jobId);
@@ -238,8 +240,19 @@ export const updateApplicationStatus = async (req, res) => {
         isRead: false
       });
     } else if (status === 'Completed') {
-      // Job completion update worker stats
-      if (workerProfile) {
+      // Keep completed work in history, but remove a fully finished listing from discovery.
+      if (job) {
+        const otherOpenWork = find('applications', a =>
+          a.jobId === application.jobId &&
+          (a._id || a.id) !== id &&
+          ['Accepted'].includes(a.status)
+        );
+        update('jobs', job._id || job.id, {
+          status: otherOpenWork.length ? 'in_progress' : 'completed'
+        });
+      }
+      // Do not increment completed-work statistics twice if the status is re-saved.
+      if (workerProfile && !wasCompleted) {
         const passport = workerProfile.skillPassport || {};
         update('workerProfiles', workerProfile._id, {
           skillPassport: {
