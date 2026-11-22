@@ -255,10 +255,17 @@ export const EmployerCandidates: React.FC = () => {
                       </div>
                       <div className="w-px h-8 bg-slate-200" />
                       <div className="text-center px-2">
-                        <div className="text-2xl font-black text-brand-accent">
-                          {wp?.skillPassport?.trustScore || 94}%
+                        {wp?.skillPassport?.reviewsCount ? (
+                          <div className="text-2xl font-black text-brand-accent flex items-center justify-center gap-1">
+                            <Star className="w-4 h-4 fill-brand-accent" />
+                            {(Number(wp.skillPassport.rating || 0)).toFixed(1)}/5
+                          </div>
+                        ) : (
+                          <div className="text-xs font-bold text-brand-muted">New to KaamSetu</div>
+                        )}
+                        <div className="text-[10px] font-bold uppercase text-brand-muted">
+                          {wp?.skillPassport?.reviewsCount ? `${wp.skillPassport.reviewsCount} Employer Reviews` : 'No ratings yet'}
                         </div>
-                        <div className="text-[10px] font-bold uppercase text-brand-muted">Trust Rating</div>
                       </div>
                     </div>
                   </div>
