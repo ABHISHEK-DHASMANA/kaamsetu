@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { apiGetEmployerApplications, apiUpdateApplicationStatus } from '../../services/api';
+import { apiGetEmployerApplications, apiUpdateApplicationStatus, apiCreateReview, apiSubmitReport } from '../../services/api';
 import { useNotifications } from '../../context/NotificationContext';
 import { Application } from '../../types';
 import {
@@ -16,7 +16,9 @@ import {
   Building2,
   MapPin,
   ExternalLink,
-  Filter
+  Filter,
+  Star,
+  Flag
 } from 'lucide-react';
 
 export const EmployerCandidates: React.FC = () => {
@@ -57,6 +59,42 @@ export const EmployerCandidates: React.FC = () => {
     }
   };
 
+  const rateWorker = async (application: Application) => {
+    const ratingInput = window.prompt('Rate this worker from 1 to 5 stars:');
+    if (ratingInput === null) return;
+    const rating = Number(ratingInput);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      window.alert('Please enter a whole number from 1 to 5.');
+      return;
+    }
+    const reviewText = window.prompt('Write a short review (at least 3 characters):');
+    if (!reviewText) return;
+    try {
+      const result = await apiCreateReview({ toUserId: application.workerId, jobId: application.jobId, rating, reviewText });
+      window.alert(result.message);
+    } catch (error: any) {
+      window.alert(error.message || 'Could not submit your rating.');
+    }
+  };
+
+  const reportWorker = async (application: Application) => {
+    const reasons = ['Fake listing', 'Unsafe behaviour', 'Harassment', 'Payment issue', 'Misleading information', 'Other'];
+    const reason = window.prompt('Report reason: ' + reasons.join(', '));
+    if (!reason) return;
+    if (!reasons.includes(reason)) {
+      window.alert('Choose one of the listed report reasons.');
+      return;
+    }
+    const details = window.prompt('Describe the issue (at least 5 characters):');
+    if (!details || details.trim().length < 5) return;
+    try {
+      const result = await apiSubmitReport({ targetType: 'worker', targetId: application.workerId, targetName: application.workerProfile?.fullName || 'Worker', reason, details });
+      window.alert(result.message);
+    } catch (error: any) {
+      window.alert(error.message || 'Could not submit your report.');
+    }
+  };
+
   return (
     <DashboardLayout
       title="Candidate Review & Skill Passports"
@@ -68,7 +106,7 @@ export const EmployerCandidates: React.FC = () => {
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-brand-muted" />
             <span className="text-xs font-bold uppercase tracking-wider text-brand-muted">Status:</span>
-            {['All', 'Applied', 'Shortlisted', 'Accepted', 'Rejected'].map((st) => (
+            {['All', 'Applied', 'Shortlisted', 'Accepted', 'Completed', 'Rejected'].map((st) => (
               <button
                 key={st}
                 onClick={() => setFilterStatus(st)}
@@ -118,6 +156,16 @@ export const EmployerCandidates: React.FC = () => {
                       : 'border-brand-border shadow-sm hover:shadow-card'
                   }`}
                 >
+                  {cand.status === 'Completed' && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <button onClick={() => rateWorker(cand)} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-xs font-bold">
+                        <Star className="w-3.5 h-3.5" /> Rate worker
+                      </button>
+                      <button onClick={() => reportWorker(cand)} className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">
+                        <Flag className="w-3.5 h-3.5" /> Report issue
+                      </button>
+                    </div>
+                  )}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     {/* Worker Info & Skill Passport Identity */}
                     <div className="flex items-start gap-4">
