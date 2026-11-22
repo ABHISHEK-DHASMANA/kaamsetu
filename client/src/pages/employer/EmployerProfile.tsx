@@ -14,6 +14,7 @@ export const EmployerProfilePage: React.FC = () => {
 
   const [companyName, setCompanyName] = useState('');
   const [businessType, setBusinessType] = useState('Small Business / Shop');
+  const [verificationStatus, setVerificationStatus] = useState('Registered');
   const [contactPerson, setContactPerson] = useState('');
   const [phone, setPhone] = useState('');
   const [industry, setIndustry] = useState('');
@@ -36,6 +37,7 @@ export const EmployerProfilePage: React.FC = () => {
           const ep = res.profile;
           setCompanyName(ep.companyName);
           setBusinessType(ep.businessType || 'Small Business / Shop');
+          setVerificationStatus(ep.verificationStatus || 'Registered');
           setContactPerson(ep.contactPerson);
           setPhone(ep.phone);
           setIndustry(ep.industry);
@@ -112,9 +114,9 @@ export const EmployerProfilePage: React.FC = () => {
               <span className="text-xs text-brand-muted">Registered Employer</span>
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-50 text-slate-700 border border-slate-200">
             <ShieldCheck className="w-4 h-4 text-emerald-700" />
-            <span>Identity Verified</span>
+            <span>{verificationStatus === 'Identity Verified' ? 'Identity Verified' : verificationStatus === 'Contact Verified' ? 'Contact Verified' : 'Verification Pending'}</span>
           </span>
         </div>
 
