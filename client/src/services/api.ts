@@ -57,6 +57,13 @@ export const apiRegister = async (payload: any) => {
   });
 };
 
+export const apiFirebaseLogin = async (idToken: string) => {
+  return request<{ success: boolean; token: string; user: User; profile: any }>('/auth/firebase', {
+    method: 'POST',
+    body: JSON.stringify({ idToken })
+  });
+};
+
 export const apiGetMe = async () => {
   return request<{ success: boolean; user: User; profile: any }>('/auth/me');
 };
