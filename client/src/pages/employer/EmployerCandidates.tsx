@@ -60,11 +60,14 @@ export const EmployerCandidates: React.FC = () => {
     }
   };
 
-  const lifecycleAction = async (application: Application, action: 'confirm_completion' | 'cancel') => {
+  const lifecycleAction = async (application: Application, action: 'confirm_completion' | 'cancel', paymentMode?: 'online' | 'offline') => {
     const reason = action === 'cancel' ? window.prompt('Please explain why you need to cancel (at least 5 characters):') : undefined;
     if (action === 'cancel' && (!reason || reason.trim().length < 5)) return;
-    try { await apiUpdateWorkLifecycle(application._id || (application as any).id || '', action, reason ?? undefined); showToast('Work status updated and worker notified.', 'success'); await fetchCandidates(); }
-    catch (error: any) { showToast(error.message || 'Could not update this job.', 'error'); }
+    try {
+      await apiUpdateWorkLifecycle(application._id || (application as any).id || '', action, reason ?? undefined, paymentMode);
+      showToast(paymentMode === 'offline' ? 'Work completed. Both sides can now rate each other.' : paymentMode === 'online' ? 'Online payment selected. Finish payment from the Payments page.' : 'Work status updated and worker notified.', 'success');
+      await fetchCandidates();
+    } catch (error: any) { showToast(error.message || 'Could not update this job.', 'error'); }
   };
 
   const rateWorker = async (application: Application) => {
@@ -80,6 +83,7 @@ export const EmployerCandidates: React.FC = () => {
     try {
       const result = await apiCreateReview({ toUserId: application.workerId, jobId: application.jobId, rating, reviewText });
       window.alert(result.message);
+      await fetchCandidates();
     } catch (error: any) {
       window.alert(error.message || 'Could not submit your rating.');
     }
@@ -114,7 +118,7 @@ export const EmployerCandidates: React.FC = () => {
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-brand-muted" />
             <span className="text-xs font-bold uppercase tracking-wider text-brand-muted">Status:</span>
-            {['All', 'Applied', 'Shortlisted', 'Accepted', 'InProgress', 'CompletionRequested', 'Completed', 'Cancelled', 'Rejected'].map((st) => (
+            {['All', 'Applied', 'Shortlisted', 'Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending', 'Completed', 'Cancelled', 'Rejected'].map((st) => (
               <button
                 key={st}
                 onClick={() => setFilterStatus(st)}
@@ -150,7 +154,7 @@ export const EmployerCandidates: React.FC = () => {
             candidates.map((cand) => {
               const wp = cand.workerProfile;
               const userRec = cand.workerUser;
-              const isAccepted = ['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(cand.status);
+              const isAccepted = ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending', 'Completed'].includes(cand.status);
               const isShortlisted = cand.status === 'Shortlisted';
               const workerDigits = (wp?.phone || userRec?.phone || '').replace(/\D/g, '');
               const workerPhone = workerDigits.length >= 10 ? `+91${workerDigits.slice(-10)}` : '';
@@ -165,9 +169,19 @@ export const EmployerCandidates: React.FC = () => {
                   }`}
                 >
                   {cand.status === 'CompletionRequested' && (
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      <button onClick={() => lifecycleAction(cand, 'confirm_completion')} className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Confirm work completed</button>
-                      <button onClick={() => lifecycleAction(cand, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel / raise issue</button>
+                    <div className="mb-4 space-y-2">
+                      <p className="text-xs font-semibold text-brand-dark">Choose payment type to finish this job:</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => lifecycleAction(cand, 'confirm_completion', 'offline')} className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Offline payment</button>
+                        <button onClick={() => lifecycleAction(cand, 'confirm_completion', 'online')} className="rounded-xl bg-blue-600 text-white px-3 py-2 text-xs font-bold">Online payment</button>
+                        <button onClick={() => lifecycleAction(cand, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel / raise issue</button>
+                      </div>
+                    </div>
+                  )}
+                  {cand.status === 'PaymentPending' && (
+                    <div className="mb-4 rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs text-blue-900 flex flex-wrap items-center justify-between gap-2">
+                      <span>Online payment selected. The job completes after the worker confirms receipt.</span>
+                      <Link to="/payments" className="rounded-lg bg-blue-600 text-white px-3 py-2 font-bold">Complete online payment</Link>
                     </div>
                   )}
                   {['Accepted', 'InProgress'].includes(cand.status) && (
@@ -178,12 +192,10 @@ export const EmployerCandidates: React.FC = () => {
                   {cand.status === 'Cancelled' && <p className="mb-3 text-xs text-red-700">Cancelled: {(cand as any).cancellationReason || 'Reason recorded'} {(cand as any).cancellationReviewRequired ? '• Flagged for admin review' : ''}</p>}
                   {cand.status === 'Completed' && (
                     <div className="flex flex-wrap gap-2 mb-4">
-                      <button onClick={() => rateWorker(cand)} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-xs font-bold">
+                      {!cand.employerReviewed && <button onClick={() => rateWorker(cand)} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-xs font-bold">
                         <Star className="w-3.5 h-3.5" /> Rate worker
-                      </button>
-                      <button onClick={() => reportWorker(cand)} className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">
-                        <Flag className="w-3.5 h-3.5" /> Report issue
-                      </button>
+                      </button>}
+                      {cand.employerReviewed && <span className="text-xs font-semibold text-emerald-700">You rated this worker</span>}
                     </div>
                   )}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">

@@ -127,9 +127,9 @@ export const apiGetEmployerApplications = async (jobId?: string, status?: string
   );
 };
 
-export const apiUpdateWorkLifecycle = async (appId: string, action: 'start_work' | 'request_completion' | 'confirm_completion' | 'cancel', reason?: string) => {
+export const apiUpdateWorkLifecycle = async (appId: string, action: 'start_work' | 'request_completion' | 'confirm_completion' | 'cancel', reason?: string, paymentMode?: 'online' | 'offline') => {
   return request<{ success: boolean; message: string; application: Application }>(`/applications/${appId}/lifecycle`, {
-    method: 'POST', body: JSON.stringify({ action, reason })
+    method: 'POST', body: JSON.stringify({ action, reason, paymentMode })
   });
 };
 

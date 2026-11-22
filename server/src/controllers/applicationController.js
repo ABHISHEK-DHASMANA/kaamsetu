@@ -1,4 +1,4 @@
-import { find, findOne, insert, update } from '../services/storage.js';
+import { find, findOne, insert, update, flushStorage } from '../services/storage.js';
 import { calculateJobMatch } from '../services/matchingEngine.js';
 
 const idOf = user => user?._id || user?.id;
@@ -39,10 +39,12 @@ export const getWorkerApplications = async (req, res) => {
     const hydrated = find('applications', a => a.workerId === workerUserId).map(app => {
       const job = findOne('jobs', j => j._id === app.jobId || j.id === app.jobId);
       const employer = findOne('employerProfiles', ep => ep.userId === app.employerId);
-      const unlocked = ['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(app.status);
+      const unlocked = ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending', 'Completed'].includes(app.status);
       const employerUser = unlocked ? findOne('users', u => idOf(u) === app.employerId) : null;
       return {
         ...app,
+        workerReviewed: findOne('reviews', r => r.jobId === app.jobId && r.fromUserId === app.workerId && r.toUserId === app.employerId) !== null,
+        employerReviewed: findOne('reviews', r => r.jobId === app.jobId && r.fromUserId === app.employerId && r.toUserId === app.workerId) !== null,
         job: job ? { ...job, employerContact: unlocked ? job.employerContact : { ...job.employerContact, phone: undefined } } : { title: 'Unknown Job', offeredWage: 0, location: {} },
         employer: employer ? { ...employer, phone: unlocked ? (employer.phone || employerUser?.phone) : undefined, email: unlocked ? employer.email : undefined } : { companyName: 'Employer', ...(unlocked && employerUser?.phone ? { phone: employerUser.phone } : {}) }
       };
@@ -65,9 +67,11 @@ export const getEmployerApplications = async (req, res) => {
       const workerProfile = findOne('workerProfiles', wp => wp.userId === app.workerId);
       const workerUser = findOne('users', u => idOf(u) === app.workerId);
       const job = findOne('jobs', j => j._id === app.jobId || j.id === app.jobId);
-      const unlocked = ['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(app.status);
+      const unlocked = ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending', 'Completed'].includes(app.status);
       return {
         ...app,
+        workerReviewed: findOne('reviews', r => r.jobId === app.jobId && r.fromUserId === app.workerId && r.toUserId === app.employerId) !== null,
+        employerReviewed: findOne('reviews', r => r.jobId === app.jobId && r.fromUserId === app.employerId && r.toUserId === app.workerId) !== null,
         workerProfile: workerProfile ? {
           ...workerProfile,
           phone: unlocked ? (workerProfile.phone || workerUser?.phone) : undefined,
@@ -137,18 +141,28 @@ export const updateWorkLifecycle = async (req, res) => {
       changes = { status: 'CompletionRequested', completionRequestedAt: now };
       recipient = application.employerId; title = 'Completion confirmation needed'; message = `The worker marked "${job?.title || 'the job'}" as finished. Please confirm the work before recording payment.`;
     } else if (action === 'confirm_completion') {
+      const paymentMode = String(req.body?.paymentMode || '').toLowerCase();
       if (!isEmployer || application.status !== 'CompletionRequested') return res.status(409).json({ success: false, message: 'The employer can confirm only after the worker requests completion.' });
-      changes = { status: 'Completed', completedAt: now, completionConfirmedAt: now };
-      recipient = application.workerId; title = 'Work completion confirmed'; message = `The employer confirmed "${job?.title || 'the job'}" as completed. Payment can now be recorded.`;
-      const workerProfile = findOne('workerProfiles', wp => wp.userId === application.workerId);
-      if (workerProfile) {
-        const passport = workerProfile.skillPassport || {};
-        update('workerProfiles', String(workerProfile._id || workerProfile.id), {
-          skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1, trustScore: Math.min(100, (passport.trustScore || 85) + 2) }
-        });
+      if (!['online', 'offline'].includes(paymentMode)) return res.status(400).json({ success: false, message: 'Choose Online or Offline payment to finish this job.' });
+      changes = paymentMode === 'offline'
+        ? { status: 'Completed', paymentMode, completedAt: now, completionConfirmedAt: now }
+        : { status: 'PaymentPending', paymentMode, completionConfirmedAt: now, paymentRequestedAt: now };
+      recipient = application.workerId;
+      title = paymentMode === 'offline' ? 'Work completed — please rate your experience' : 'Online payment is pending';
+      message = paymentMode === 'offline'
+        ? `The employer confirmed "${job?.title || 'the job'}" as completed with offline payment. You can now rate each other.`
+        : `The employer confirmed the work and selected online payment for "${job?.title || 'the job'}". The job will be completed after you confirm that the payment arrived.`;
+      if (paymentMode === 'offline') {
+        const workerProfile = findOne('workerProfiles', wp => wp.userId === application.workerId);
+        if (workerProfile) {
+          const passport = workerProfile.skillPassport || {};
+          update('workerProfiles', String(workerProfile._id || workerProfile.id), {
+            skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1, trustScore: Math.min(100, (passport.trustScore || 85) + 2) }
+          });
+        }
+        const otherActive = find('applications', a => a.jobId === application.jobId && (a._id || a.id) !== req.params.id && ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending'].includes(a.status));
+        if (job) update('jobs', job._id || job.id, { status: otherActive.length ? 'in_progress' : 'completed' });
       }
-      const otherActive = find('applications', a => a.jobId === application.jobId && (a._id || a.id) !== req.params.id && ['Accepted', 'InProgress', 'CompletionRequested'].includes(a.status));
-      if (job) update('jobs', job._id || job.id, { status: otherActive.length ? 'in_progress' : 'completed' });
     } else if (action === 'cancel') {
       const cancellationReason = String(reason || '').trim();
       if (cancellationReason.length < 5 || cancellationReason.length > 500) return res.status(400).json({ success: false, message: 'Provide a cancellation reason between 5 and 500 characters.' });
@@ -186,6 +200,7 @@ export const updateWorkLifecycle = async (req, res) => {
       });
     }
     if (recipient) insert('notifications', { userId: String(recipient), title, message, type: action === 'cancel' ? 'warning' : 'info', actionUrl: action === 'cancel' ? (isWorker ? '/employer/candidates' : '/worker/applications') : (action === 'request_completion' ? '/employer/candidates' : action === 'confirm_completion' ? '/worker/applications' : `/chats?applicationId=${encodeURIComponent(String(application._id || application.id))}`), isRead: false });
+    await flushStorage();
     res.json({ success: true, message: action === 'cancel' ? 'Cancellation recorded and the other party notified.' : 'Work status updated and the other party notified.', application: updated });
   } catch (error) {
     console.error('updateWorkLifecycle error:', error);

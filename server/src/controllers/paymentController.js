@@ -61,11 +61,9 @@ export const createPayment = async (req, res) => {
     if (!normalizedApplicationId || !Number.isFinite(numericAmount) || numericAmount <= 0 || numericAmount > 1000000) {
       return res.status(400).json({ success: false, message: 'Choose a completed job and enter a valid amount.' });
     }
-    if (!['cash', 'direct_upi'].includes(method)) {
-      return res.status(400).json({ success: false, message: 'Choose Cash or Direct UPI.' });
-    }
+    if (method !== 'direct_upi') return res.status(400).json({ success: false, message: 'Only Online UPI payment can be recorded here. Offline jobs go directly to ratings.' });
     const normalizedReference = String(transactionReference || '').trim();
-    if (method === 'direct_upi' && !/^[A-Za-z0-9._-]{6,100}$/.test(normalizedReference)) {
+    if (!/^[A-Za-z0-9._-]{6,100}$/.test(normalizedReference)) {
       return res.status(400).json({ success: false, message: 'Enter the UPI transaction reference/UTR shown by your payment app.' });
     }
 
@@ -73,8 +71,8 @@ export const createPayment = async (req, res) => {
     if (!application || idOf(application.employerId) !== employerId) {
       return res.status(404).json({ success: false, message: 'Completed job application not found for this employer.' });
     }
-    if (application.status !== 'Completed') {
-      return res.status(400).json({ success: false, message: 'Payments can only be recorded after the employer confirms work completion.' });
+    if (application.status !== 'PaymentPending' || application.paymentMode !== 'online') {
+      return res.status(400).json({ success: false, message: 'This job is not waiting for online payment. Offline jobs go directly to ratings.' });
     }
 
     const existing = findOne('payments', p =>
@@ -129,6 +127,10 @@ export const confirmPaymentReceived = async (req, res) => {
     }
 
     const now = new Date().toISOString();
+    const application = findOne('applications', a => idOf(a._id || a.id) === idOf(payment.applicationId));
+    if (!application || application.status !== 'PaymentPending' || application.paymentMode !== 'online') {
+      return res.status(409).json({ success: false, message: 'The job is no longer waiting for this online payment. Contact support before retrying.' });
+    }
     const updated = update('payments', idOf(payment._id || payment.id), {
       workerConfirmed: true,
       status: 'paid',
@@ -136,10 +138,21 @@ export const confirmPaymentReceived = async (req, res) => {
       events: [...(payment.events || []), { type: 'worker_confirmed_receipt', actorId: workerId, at: now }]
     });
     if (!updated) return res.status(409).json({ success: false, message: 'Payment could not be updated. Refresh and try again.' });
+    const completedApplication = update('applications', idOf(application._id || application.id), { status: 'Completed', completedAt: now, paymentConfirmedAt: now });
+    const workerProfile = findOne('workerProfiles', p => idOf(p.userId) === workerId);
+    if (workerProfile) {
+      const passport = workerProfile.skillPassport || {};
+      update('workerProfiles', idOf(workerProfile._id || workerProfile.id), {
+        skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1, trustScore: Math.min(100, (passport.trustScore || 85) + 2) }
+      });
+    }
+    const job = findOne('jobs', j => idOf(j._id || j.id) === idOf(application.jobId));
+    const otherActive = find('applications', a => idOf(a.jobId) === idOf(application.jobId) && idOf(a._id || a.id) !== idOf(application._id || application.id) && ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending'].includes(a.status));
+    if (job) update('jobs', idOf(job._id || job.id), { status: otherActive.length ? 'in_progress' : 'completed' });
     notify(payment.employerId, 'Worker confirmed payment',
       `The worker confirmed receipt of ₹${payment.amount} for ${hydratePayment(payment).jobTitle}.`, 'success');
     if (!await persistOrFail(res)) return;
-    return res.json({ success: true, message: 'Receipt confirmed. The employer can now see Paid · Confirmed.', payment: hydratePayment(updated) });
+    return res.json({ success: true, message: 'Online payment confirmed. The job is now completed and both sides can rate each other.', payment: hydratePayment(updated), application: completedApplication });
   } catch (error) {
     console.error('[Payments] confirmPaymentReceived failed:', error);
     return res.status(500).json({ success: false, message: 'Could not confirm payment receipt. Please refresh and try again.' });

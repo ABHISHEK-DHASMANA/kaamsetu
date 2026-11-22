@@ -61,6 +61,7 @@ export const WorkerApplications: React.FC = () => {
     try {
       const result = await apiCreateReview({ toUserId: app.employerId, jobId: app.jobId, rating, reviewText });
       window.alert(result.message);
+      await fetchApps();
     } catch (error: any) {
       window.alert(error.message || 'Could not submit your rating.');
     }
@@ -105,6 +106,13 @@ export const WorkerApplications: React.FC = () => {
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300">
             <Clock className="w-3.5 h-3.5 text-purple-700" />
             <span>Profile Viewed</span>
+          </span>
+        );
+      case 'PaymentPending':
+        return (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+            <Clock className="w-3.5 h-3.5" />
+            <span>Payment pending</span>
           </span>
         );
       case 'Completed':
@@ -241,7 +249,7 @@ export const WorkerApplications: React.FC = () => {
                     <button onClick={() => lifecycleAction(app, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Withdraw application</button>
                   </div>
                 )}
-                {['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(app.status) && (
+                {app.status === 'Accepted' && (
                   <div className="flex flex-wrap gap-2 border-t border-brand-border pt-3">
                     <button onClick={() => lifecycleAction(app, 'start_work')} className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Start work</button>
                     <button onClick={() => lifecycleAction(app, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel with reason</button>
@@ -253,21 +261,20 @@ export const WorkerApplications: React.FC = () => {
                     <button onClick={() => lifecycleAction(app, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel / raise issue</button>
                   </div>
                 )}
-                {app.status === 'CompletionRequested' && <p className="text-xs text-amber-700">Completion requested. Waiting for the employer to confirm the work.</p>}
+                {app.status === 'CompletionRequested' && <p className="text-xs text-amber-700">Completion requested. Waiting for the employer to choose Offline or Online payment.</p>}
+                {app.status === 'PaymentPending' && <p className="text-xs text-amber-700">Work confirmed. Waiting for the employer to complete online payment. You can rate each other once you confirm receipt.</p>}
                 {app.status === 'Cancelled' && <p className="text-xs text-red-700">Cancelled: {(app as any).cancellationReason || 'Reason recorded'} {(app as any).cancellationReviewRequired ? '• Flagged for review' : ''}</p>}
                 {app.status === 'Completed' && (
                   <div className="flex flex-wrap gap-2 border-t border-brand-border pt-3">
-                    <button onClick={() => submitRating(app)} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-xs font-bold">
+                    {!app.workerReviewed && <button onClick={() => submitRating(app)} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-xs font-bold">
                       <Star className="w-3.5 h-3.5" /> Rate employer
-                    </button>
-                    <button onClick={() => reportJob(app)} className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">
-                      <Flag className="w-3.5 h-3.5" /> Report issue
-                    </button>
+                    </button>}
+                    {app.workerReviewed && <span className="text-xs font-semibold text-emerald-700">You rated this employer</span>}
                   </div>
                 )}
 
                 {/* Unlocked Employer Contact Box for every hired-work stage */}
-                {['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(app.status) && (
+                {['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending', 'Completed'].includes(app.status) && (
                   <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-2 animate-in fade-in">
                     <div className="flex items-center gap-2 font-bold text-xs">
                       <CheckCircle2 className="w-4 h-4 text-emerald-700" />

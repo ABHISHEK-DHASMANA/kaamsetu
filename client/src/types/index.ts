@@ -170,7 +170,7 @@ export interface Job {
   createdAt: string;
 }
 
-export type ApplicationStatus = 'Applied' | 'Viewed' | 'Shortlisted' | 'Accepted' | 'InProgress' | 'CompletionRequested' | 'Rejected' | 'Completed' | 'Cancelled';
+export type ApplicationStatus = 'Applied' | 'Viewed' | 'Shortlisted' | 'Accepted' | 'InProgress' | 'CompletionRequested' | 'PaymentPending' | 'Rejected' | 'Completed' | 'Cancelled';
 
 export interface Application {
   _id: string;
@@ -196,6 +196,11 @@ export interface Application {
   startedAt?: string;
   completionRequestedAt?: string;
   completedAt?: string;
+  paymentMode?: 'online' | 'offline';
+  paymentRequestedAt?: string;
+  paymentConfirmedAt?: string;
+  workerReviewed?: boolean;
+  employerReviewed?: boolean;
   cancelledAt?: string;
   cancellationReason?: string;
   cancellationReviewRequired?: boolean;
