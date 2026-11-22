@@ -120,11 +120,16 @@ export const getSkillPassport = async (req, res) => {
     const user = findOne('users', u => u._id === workerProfile.userId || u.id === workerProfile.userId);
     const reviews = find('reviews', r => r.toUserId === workerProfile.userId);
     const completedApps = find('applications', a => a.workerId === workerProfile.userId && a.status === 'Completed');
+    const averageRating = reviews.length
+      ? Math.round((reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length) * 10) / 10
+      : null;
 
     res.status(200).json({
       success: true,
       skillPassport: {
         ...workerProfile.skillPassport,
+        rating: averageRating,
+        reviewsCount: reviews.length,
         workerName: workerProfile.fullName,
         workerId: workerProfile.workerId,
         avatar: workerProfile.avatar,
@@ -138,7 +143,7 @@ export const getSkillPassport = async (req, res) => {
         memberSince: user?.createdAt,
         verifiedWorkHistory: completedApps.length,
         reviewsSummary: {
-          averageRating: workerProfile.skillPassport?.rating || 4.9,
+          averageRating,
           totalReviews: reviews.length,
           reviews: reviews.slice(0, 5)
         }
@@ -173,7 +178,12 @@ export const getAllWorkers = async (req, res) => {
     res.status(200).json({
       success: true,
       count: workers.length,
-      workers: workers.map(profile => ({
+      workers: workers.map(profile => {
+        const profileReviews = find('reviews', review => review.toUserId === profile.userId);
+        const averageRating = profileReviews.length
+          ? Math.round((profileReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / profileReviews.length) * 10) / 10
+          : null;
+        return ({
         _id: profile._id,
         userId: profile.userId,
         fullName: profile.fullName,
@@ -190,15 +200,14 @@ export const getAllWorkers = async (req, res) => {
         skillPassport: profile.skillPassport ? {
           passportId: profile.skillPassport.passportId,
           verifiedSkillsCount: profile.skillPassport.verifiedSkillsCount,
-          trustScore: profile.skillPassport.trustScore,
-          completedJobsCount: profile.skillPassport.completedJobsCount,
-          rating: profile.skillPassport.rating,
-          reviewsCount: profile.skillPassport.reviewsCount,
+          completedJobsCount: profile.skillPassport.completedJobsCount || 0,
+          rating: averageRating,
+          reviewsCount: profileReviews.length,
           badges: profile.skillPassport.badges
         } : undefined,
         bio: profile.bio,
         isProfileComplete: profile.isProfileComplete
-      }))
+      });})
     });
   } catch (error) {
     console.error('getAllWorkers error:', error);
