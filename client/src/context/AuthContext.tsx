@@ -77,12 +77,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const idToken = await firebaseUser.getIdToken(true);
       const res = await apiFirebaseLogin(idToken);
-      if (res.success) {
-        sessionStorage.setItem('kaamsetu_token', res.token);
-        setToken(res.token);
-        setUser(res.user);
-        setProfile(res.profile);
+      if (!res.success || !res.token || !res.user) {
+        throw new Error('Your Google or phone identity is verified, but it is not linked to a KAAMSETU account. Register first or verify the mobile number already on your account.');
       }
+      sessionStorage.setItem('kaamsetu_token', res.token);
+      setToken(res.token);
+      setUser(res.user);
+      setProfile(res.profile);
     } finally {
       setIsLoading(false);
     }

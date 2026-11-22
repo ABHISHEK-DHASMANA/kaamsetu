@@ -241,7 +241,11 @@ export const login = async (req, res) => {
 
     const identifier = String(phone).trim();
     const normalizedIdentifier = identifier.toLowerCase();
-    const user = findOne('users', u => u.phone === identifier || String(u.email || '').trim().toLowerCase() === normalizedIdentifier);
+    const isEmailIdentifier = normalizedIdentifier.includes('@');
+    const user = findOne('users', u =>
+      normalizePhone(u.phone) === normalizePhone(identifier) ||
+      String(u.email || '').trim().toLowerCase() === normalizedIdentifier
+    );
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid phone number or password.' });
@@ -249,6 +253,13 @@ export const login = async (req, res) => {
 
     if (user.isActive === false) {
       return res.status(403).json({ success: false, message: 'This account has been suspended by administration.' });
+    }
+    if (isEmailIdentifier && user.emailVerified !== true) {
+      return res.status(403).json({
+        success: false,
+        code: 'EMAIL_NOT_VERIFIED',
+        message: 'This email has not been verified for your account yet. Sign in with your registered mobile number, or verify your email before using it to sign in.'
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
