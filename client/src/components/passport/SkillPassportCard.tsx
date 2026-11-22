@@ -26,6 +26,7 @@ export const SkillPassportCard: React.FC<SkillPassportCardProps> = ({
   isOwner = false
 }) => {
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const earnedBadges = (passport.badges || []).filter(badge => !['Top Rated Artisan', 'Zero Cancellation Record'].includes(badge));
 
   const getVerificationBadge = (status: string) => {
     switch (status) {
@@ -226,11 +227,7 @@ export const SkillPassportCard: React.FC<SkillPassportCardProps> = ({
               Verified Trust Credentials
             </h4>
             <div className="flex flex-wrap gap-2">
-              {(passport.badges && passport.badges.length > 0 ? passport.badges : [
-                'Identity Verified',
-                'Top Rated Artisan',
-                'Zero Cancellation Record'
-              ]).map((badge, idx) => (
+              {earnedBadges.length > 0 ? earnedBadges.map((badge, idx) => (
                 <span
                   key={idx}
                   className="px-3 py-1.5 rounded-xl bg-slate-100 text-brand-dark text-xs font-semibold flex items-center gap-1.5 border border-slate-200"
@@ -238,7 +235,7 @@ export const SkillPassportCard: React.FC<SkillPassportCardProps> = ({
                   <ShieldCheck className="w-3.5 h-3.5 text-brand-primary" />
                   <span>{badge}</span>
                 </span>
-              ))}
+              )) : <span className="text-xs text-brand-muted">No badges earned yet</span>}
             </div>
           </div>
 
