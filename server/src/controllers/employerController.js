@@ -15,6 +15,15 @@ export const getEmployerProfile = async (req, res) => {
     const employerAvatar = profile.avatar || user?.avatar || '';
     const activeJobs = find('jobs', j => j.employerId === profile.userId && j.status === 'active');
     const totalJobs = find('jobs', j => j.employerId === profile.userId);
+    const completedHires = find('applications', a =>
+      String(a.employerId) === String(profile.userId) && a.status === 'Completed'
+    );
+    const employerReviews = find('reviews', r =>
+      String(r.toUserId) === String(profile.userId) && String(r.fromUserId) !== String(profile.userId)
+    );
+    const employerTrustScore = completedHires.length > 0 && employerReviews.length > 0
+      ? Math.round((employerReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / employerReviews.length) * 20)
+      : null;
 
     res.status(200).json({
       success: true,
@@ -24,7 +33,10 @@ export const getEmployerProfile = async (req, res) => {
         avatar: employerAvatar,
         address: req.params.userId ? { ...profile.address, coordinates: undefined } : profile.address,
         activeJobsCount: activeJobs.length,
-        jobsPostedCount: totalJobs.length
+        jobsPostedCount: totalJobs.length,
+        completedHiresCount: completedHires.length,
+        trustScore: employerTrustScore,
+        trustReviewsCount: employerReviews.length
       },
       user: {
         name: user?.name,
