@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '../types';
-import { apiLogin, apiGetMe } from '../services/api';
+import { apiLogin, apiGetMe, apiFirebaseLogin } from '../services/api';
+import type { User as FirebaseUser } from 'firebase/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +12,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (phone: string, pass: string) => Promise<void>;
   quickLogin: (type: 'worker' | 'employer' | 'admin') => Promise<void>;
+  loginWithFirebase: (firebaseUser: FirebaseUser) => Promise<void>;
   logout: () => void;
   updateLocalProfile: (newProfile: any) => void;
 }
@@ -69,6 +71,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithFirebase = async (firebaseUser: FirebaseUser) => {
+    setIsLoading(true);
+    try {
+      const idToken = await firebaseUser.getIdToken(true);
+      const res = await apiFirebaseLogin(idToken);
+      if (res.success) {
+        sessionStorage.setItem('kaamsetu_token', res.token);
+        setToken(res.token);
+        setUser(res.user);
+        setProfile(res.profile);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const quickLogin = async (type: 'worker' | 'employer' | 'admin') => {
     const creds = DEMO_USERS[type];
     await login(creds.phone, creds.password);
@@ -97,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         login,
         quickLogin,
+        loginWithFirebase,
         logout,
         updateLocalProfile
       }}
