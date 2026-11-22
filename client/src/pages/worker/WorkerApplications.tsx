@@ -266,14 +266,15 @@ export const WorkerApplications: React.FC = () => {
                   </div>
                 )}
 
-                {/* Unlocked Employer Contact Box when ACCEPTED */}
-                {app.status === 'Accepted' && (
+                {/* Unlocked Employer Contact Box for every hired-work stage */}
+                {['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(app.status) && (
                   <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-2 animate-in fade-in">
                     <div className="flex items-center gap-2 font-bold text-xs">
                       <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                       <span>Direct Contact Unlocked! You have been accepted for this position.</span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-semibold pt-1">\n                      <Link to={`/chats?applicationId=${encodeURIComponent(app._id || (app as any).id || '')}`} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 text-white px-3 py-2 no-underline"><MessageCircle className="w-3.5 h-3.5" /> Message Employer</Link>
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-semibold pt-1">
+                      <Link to={`/chats?applicationId=${encodeURIComponent(app._id || (app as any).id || '')}`} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 text-white px-3 py-2 no-underline"><MessageCircle className="w-3.5 h-3.5" /> Message Employer</Link>
                       {employerPhone ? (
                         <>
                           <a
