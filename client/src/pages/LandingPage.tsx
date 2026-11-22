@@ -5,18 +5,17 @@ import { Footer } from '../components/layout/Footer';
 import { VoiceSearchModal } from '../components/voice/VoiceSearchModal';
 import { ExtractedJobPreferences } from '../types';
 import {
-  Mic,
-  Search,
-  MapPin,
-  ShieldCheck,
-  Award,
-  IndianRupee,
-  Sparkles,
-  CheckCircle2,
-  Briefcase,
-  ChevronRight,
-  Smartphone
+  ArrowUpRight, AudioLines, BadgeCheck, BriefcaseBusiness, Check, ChevronRight,
+  Clock3, Hammer, HardHat, HeartHandshake, MapPin, Mic, Search, ShieldCheck,
+  Sparkles, Users, Wallet, Wrench, Zap
 } from 'lucide-react';
+
+const categories = [
+  { name: 'Electrician', detail: 'Wiring, repairs & fitting', icon: Zap, tone: 'amber', query: 'Electrician' },
+  { name: 'Plumber', detail: 'Pipes, taps & maintenance', icon: Wrench, tone: 'blue', query: 'Plumber' },
+  { name: 'Carpenter', detail: 'Furniture & woodwork', icon: Hammer, tone: 'orange', query: 'Carpenter' },
+  { name: 'Construction', detail: 'Masonry & site work', icon: HardHat, tone: 'green', query: 'Mason' },
+];
 
 export const LandingPage: React.FC = () => {
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -26,410 +25,169 @@ export const LandingPage: React.FC = () => {
     navigate(`/jobs?search=${encodeURIComponent(prefs.skill)}&area=${encodeURIComponent(prefs.location)}&wage=${prefs.expected_wage}&distance=${prefs.preferred_distance}&availability=${encodeURIComponent(prefs.availability)}`);
   };
 
-  const categories = [
-    { name: 'Electrician', icon: '⚡', count: 'Browse jobs', query: 'Electrician' },
-    { name: 'Plumber', icon: '🔧', count: 'Browse jobs', query: 'Plumber' },
-    { name: 'Carpenter', icon: '🪚', count: 'Browse jobs', query: 'Carpenter' },
-    { name: 'Painter', icon: '🎨', count: 'Browse jobs', query: 'Painter' },
-    { name: 'Construction', icon: '🧱', count: 'Browse jobs', query: 'Mason' },
-    { name: 'Mechanic', icon: '⚙️', count: 'Browse jobs', query: 'Mechanic' },
-    { name: 'Delivery', icon: '🛵', count: 'Browse jobs', query: 'Delivery' },
-    { name: 'Cleaning', icon: '✨', count: 'Browse jobs', query: 'Cleaner' }
-  ];
-
   return (
-    <div className="min-h-screen bg-brand-bg flex flex-col">
+    <div className="ks-site min-h-screen flex flex-col">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28">
-        {/* Subtle decorative background gradient */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-brand-primary-light/60 to-transparent pointer-events-none -z-10" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left Content */}
-            <div className="lg:col-span-7 space-y-6">
-              {/* Top Announcement Pill */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-primary-light border border-brand-primary/20 text-xs font-semibold text-brand-primary">
-                <span className="w-2 h-2 rounded-full bg-brand-secondary animate-pulse" />
-                <span>Local work. Real people. Better connections.</span>
-              </div>
-
-              {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-brand-dark tracking-tight leading-[1.15]">
-                Good work should be <br />
-                <span className="text-brand-secondary relative">
-                  closer to home.
-                  <svg className="absolute -bottom-2 left-0 w-full h-3 text-brand-accent/40" viewBox="0 0 100 12" preserveAspectRatio="none">
-                    <path d="M0,8 Q50,0 100,8" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-                  </svg>
-                </span>
-              </h1>
-
-              {/* Supporting Text */}
-              <p className="text-base sm:text-lg text-brand-muted leading-relaxed max-w-2xl font-normal">
-                Find nearby jobs that fit your trade and schedule. Compare the pay and distance, then connect directly with the person hiring.
-              </p>
-
-              {/* Primary CTAs */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Link
-                  to="/jobs"
-                  className="px-6 py-3.5 rounded-2xl bg-brand-primary text-white text-sm font-bold hover:bg-brand-primary-dark transition-all shadow-lg shadow-brand-primary/25 flex items-center gap-2"
-                >
-                  <Search className="w-4 h-4 text-brand-accent" />
-                  <span>Find Work</span>
-                </Link>
-                <Link
-                  to="/workers"
-                  className="px-6 py-3.5 rounded-2xl bg-white border border-brand-border text-brand-dark text-sm font-bold hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
-                >
-                  <Briefcase className="w-4 h-4 text-brand-secondary" />
-                  <span>Hire Workers</span>
-                </Link>
-              </div>
-
-              {/* Voice-to-Work Banner Hero Bar */}
-              <div className="mt-8 p-4 sm:p-5 rounded-3xl bg-white border border-brand-border shadow-card">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-brand-accent animate-ping" />
-                    <span className="text-xs font-bold text-brand-dark uppercase tracking-wider">Find work by speaking</span>
-                  </div>
-                  <span className="text-[11px] font-semibold text-brand-secondary bg-brand-secondary-light px-2.5 py-0.5 rounded-full">
-                    Hindi & English
-                  </span>
+      <main className="flex-1">
+        <section className="ks-hero relative overflow-hidden">
+          <div className="ks-hero-orb ks-hero-orb-one" />
+          <div className="ks-hero-orb ks-hero-orb-two" />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-16 lg:pt-24 lg:pb-24">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 xl:gap-16 items-center">
+              <div className="lg:col-span-7 space-y-7">
+                <div className="ks-eyebrow"><span className="ks-live-dot" /> A better way to find local work</div>
+                <div className="space-y-5">
+                  <h1 className="ks-display">Good work.<br /><span>Closer to home.</span></h1>
+                  <p className="max-w-xl text-base sm:text-lg text-slate-600 leading-relaxed">
+                    Find nearby opportunities or connect with skilled people in your area. Clear work details, transparent pay and a more direct way to get started.
+                  </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setVoiceModalOpen(true)}
-                  className="mt-2 w-full text-left flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-brand-primary hover:bg-brand-primary-light/30 transition-all cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-md shadow-brand-primary/20">
-                      <Mic className="w-5 h-5 text-brand-accent" />
-                    </div>
-                    <div className="text-left overflow-hidden">
-                      <div className="text-xs font-bold text-brand-dark truncate">
-                        "Mujhe kal electrician ka kaam chahiye, mere aas paas."
-                      </div>
-                      <div className="text-[11px] text-brand-muted truncate">
-                        Tap the microphone and tell us what kind of work you need
-                      </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link to="/jobs" className="ks-button ks-button-primary">
+                    <Search size={17} /> Find work <ArrowUpRight size={16} />
+                  </Link>
+                  <Link to="/workers" className="ks-button ks-button-light">
+                    <Users size={17} /> Hire local talent <ArrowUpRight size={16} />
+                  </Link>
+                </div>
+
+                <div className="ks-voice-card">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="ks-voice-icon"><AudioLines size={21} /></div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900">Rather speak than type?</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Search in Hindi or English. No account needed.</p>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-brand-primary bg-white px-3 py-1.5 rounded-xl border border-brand-border shadow-sm flex-shrink-0 group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                    Speak your search
-                  </span>
-                </button>
-                <p className="mt-2 text-[11px] text-brand-muted">Search by voice without signing in. Sign in only when you are ready to apply.</p>
+                  <button type="button" onClick={() => setVoiceModalOpen(true)} className="ks-voice-action">
+                    <Mic size={15} /> Speak
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400">Browse freely. Sign in only when you want to apply, hire or contact someone.</p>
               </div>
-            </div>
 
-            {/* Right Visual Card */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-sm rounded-3xl bg-white border-2 border-brand-primary/10 shadow-card-hover p-6 overflow-hidden">
-                {/* Visual Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-brand-border">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-brand-primary text-white flex items-center justify-center font-bold">
-                      K
-                    </div>
+              <div className="lg:col-span-5">
+                <div className="ks-preview-wrap">
+                  <div className="ks-preview-top">
                     <div>
-                      <div className="text-xs font-bold text-brand-dark">A nearby work example</div>
-                      <div className="text-[10px] text-brand-secondary font-medium">Example location • distance varies</div>
+                      <p className="text-[11px] uppercase tracking-[.16em] font-bold text-emerald-700">The KaamSetu difference</p>
+                      <h2 className="text-xl font-extrabold text-slate-900 mt-2">Work that makes sense.</h2>
+                      <p className="text-xs text-slate-500 mt-1">A simpler path from search to connection.</p>
+                    </div>
+                    <div className="ks-preview-mark"><HeartHandshake size={23} /></div>
+                  </div>
+
+                  <div className="ks-preview-search">
+                    <Search size={16} className="text-slate-400" />
+                    <span>What work are you looking for?</span>
+                    <span className="ml-auto text-[10px] font-semibold text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1">Explore</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="ks-preview-tile">
+                      <span className="ks-tile-icon bg-amber-50 text-amber-700"><Zap size={18} /></span>
+                      <span className="text-sm font-bold text-slate-800">Find a trade</span>
+                      <span className="text-[11px] text-slate-500">Search by skill</span>
+                    </div>
+                    <div className="ks-preview-tile">
+                      <span className="ks-tile-icon bg-sky-50 text-sky-700"><MapPin size={18} /></span>
+                      <span className="text-sm font-bold text-slate-800">Stay nearby</span>
+                      <span className="text-[11px] text-slate-500">Explore local work</span>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Example listing
-                  </span>
-                </div>
 
-                {/* Worker Preview Card */}
-                <div className="mt-4 p-3.5 rounded-2xl bg-brand-primary-light/50 border border-brand-primary/10 flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden flex-shrink-0 border border-white shadow-sm">
-                    <img
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150"
-                      alt="Ramesh Kumar"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-brand-dark">Ramesh Kumar</span>
-                      <ShieldCheck className="w-3.5 h-3.5 text-brand-secondary" />
+                  <div className="ks-preview-list">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-slate-800">Built around real needs</span>
+                      <span className="text-[10px] text-slate-400">Platform features</span>
                     </div>
-                    <div className="text-[11px] text-brand-muted">Electrician • 3 Yrs Exp</div>
-                    <div className="text-[10px] font-bold text-brand-secondary mt-0.5">
-                      Work history & skills
-                    </div>
+                    {[
+                      { icon: BadgeCheck, label: 'Skill profiles & work history', desc: 'Show experience with a skill passport' },
+                      { icon: Wallet, label: 'Clear pay information', desc: 'Understand terms before applying' },
+                      { icon: ShieldCheck, label: 'Safer connections', desc: 'Tools to report and review concerns' },
+                    ].map((item) => (
+                      <div className="ks-feature-row" key={item.label}>
+                        <span className="ks-feature-icon"><item.icon size={17} /></span>
+                        <span className="min-w-0"><strong>{item.label}</strong><small>{item.desc}</small></span>
+                        <Check size={15} className="text-emerald-600 ml-auto shrink-0" />
+                      </div>
+                    ))}
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs font-black text-brand-primary">94%</span>
-                    <div className="text-[9px] text-brand-muted uppercase font-bold">Trust</div>
-                  </div>
+                  <div className="ks-preview-foot"><span><Sparkles size={13} /> Designed for everyday work</span><span>KaamSetu</span></div>
                 </div>
+                <div className="ks-floating-note"><span className="ks-floating-icon"><MapPin size={16} /></span><span><strong>Local by design</strong><small>Made for nearby connections</small></span></div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-                {/* Simulated Job Match Card */}
-                <div className="mt-4 p-4 rounded-2xl border border-brand-border shadow-sm bg-white space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
-                      Illustrative match
-                    </span>
-                    <span className="text-xs font-extrabold text-brand-primary">₹900 / Day</span>
-                  </div>
-                  <div className="text-xs font-bold text-brand-dark">Commercial Electrician Required</div>
-                  <div className="text-[11px] text-brand-muted">Sharma Electrical Services • Sector 63</div>
-                  
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                    <span className="text-sky-700 font-medium flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> 2.1 km away
-                    </span>
-                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Pay agreed directly
-                    </span>
-                  </div>
+        <section className="py-16 lg:py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 mb-8">
+              <div>
+                <p className="ks-section-kicker">Explore opportunities</p>
+                <h2 className="ks-section-title">Start with your skill.</h2>
+                <p className="text-sm text-slate-500 mt-2">Choose a trade to see relevant work around you.</p>
+              </div>
+              <Link to="/jobs" className="ks-text-link">Browse all jobs <ChevronRight size={16} /></Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {categories.map((category) => {
+                const Icon = category.icon;
+                return (
+                  <Link key={category.name} to={`/jobs?category=${encodeURIComponent(category.query)}`} className="ks-category-card">
+                    <span className={`ks-category-icon tone-${category.tone}`}><Icon size={21} /></span>
+                    <span className="block text-base font-bold text-slate-900 mt-5">{category.name}</span>
+                    <span className="block text-xs text-slate-500 mt-1">{category.detail}</span>
+                    <span className="ks-category-arrow"><ArrowUpRight size={16} /></span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="ks-how-section py-16 lg:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl mb-10">
+              <p className="ks-section-kicker">Simple from the start</p>
+              <h2 className="ks-section-title">Less searching around.<br />More getting things done.</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { n: '01', icon: Search, title: 'Explore', desc: 'Search local jobs by trade, location and work details. Employers can browse public skill profiles.' },
+                { n: '02', icon: BriefcaseBusiness, title: 'Connect', desc: 'Create an account when you are ready to apply, post a job or contact the other person.' },
+                { n: '03', icon: Clock3, title: 'Get to work', desc: 'Agree on the work and payment terms directly. Keep a record of progress and feedback.' },
+              ].map((step) => {
+                const Icon = step.icon;
+                return <article key={step.n} className="ks-step-card"><div className="flex items-center justify-between"><span className="ks-step-number">{step.n}</span><Icon size={21} className="text-emerald-700" /></div><h3>{step.title}</h3><p>{step.desc}</p></article>;
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16 lg:py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="ks-cta-panel">
+              <div className="relative z-10 max-w-2xl">
+                <p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-200">Your next step starts here</p>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-3 leading-tight">Good people. Honest work.<br />A connection that works.</h2>
+                <p className="text-sm text-emerald-50/80 mt-4 max-w-lg">Whether you are looking for your next opportunity or someone reliable for a job, start with KaamSetu.</p>
+                <div className="flex flex-wrap gap-3 mt-7">
+                  <Link to="/jobs" className="ks-button ks-button-cta">Explore jobs <ArrowUpRight size={16} /></Link>
+                  <Link to="/workers" className="ks-button ks-button-cta-outline">Find workers <ArrowUpRight size={16} /></Link>
                 </div>
-
-                {/* Mobile App Experience simulation pill */}
-                <div className="mt-4 text-center">
-                  <span className="text-[11px] text-brand-muted flex items-center justify-center gap-1">
-                    <Smartphone className="w-3.5 h-3.5 text-brand-primary" />
-                    Accessible across mobile and desktop
-                  </span>
-                </div>
               </div>
+              <div className="ks-cta-decoration"><HeartHandshake size={140} strokeWidth={0.8} /></div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* A. How It Works Section */}
-      <section className="py-16 bg-white border-y border-brand-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-secondary">Simple 4-Step Process</span>
-            <h2 className="text-3xl font-extrabold text-brand-dark tracking-tight mt-1">
-              How KAAMSETU Connects You
-            </h2>
-            <p className="text-sm text-brand-muted mt-2">
-              A straightforward way for workers and local employers to find each other.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              {
-                step: '01',
-                title: 'Create Your Profile',
-                desc: 'Add your skills, trade experience, expected wage, and preferred travel radius.'
-              },
-              {
-                step: '02',
-                title: 'Discover Nearby Jobs',
-                desc: 'Search in Hindi or English and narrow results by location, pay and availability.'
-              },
-              {
-                step: '03',
-                title: 'Connect With Employers',
-                desc: 'Apply to a listing and share your skills and work history with the employer.'
-              },
-              {
-                step: '04',
-                title: 'Get Hired & Paid Fairly',
-                desc: 'Agree on the work and payment directly with the employer. Build a record of completed work.'
-              }
-            ].map((step, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-2xl bg-brand-bg border border-brand-border hover:shadow-soft transition-all relative group"
-              >
-                <div className="text-3xl font-black text-brand-primary/20 group-hover:text-brand-accent transition-colors">
-                  {step.step}
-                </div>
-                <h3 className="text-base font-bold text-brand-dark mt-2 mb-1.5">{step.title}</h3>
-                <p className="text-xs text-brand-muted leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* B. Popular Categories Section */}
-      <section className="py-16 bg-brand-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-secondary">Skilled Trades</span>
-              <h2 className="text-3xl font-extrabold text-brand-dark tracking-tight mt-1">
-                Explore Popular Categories
-              </h2>
-            </div>
-            <Link
-              to="/jobs"
-              className="inline-flex items-center gap-1 text-xs font-bold text-brand-primary hover:text-brand-primary-dark"
-            >
-              <span>View All 20+ Job Categories</span>
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {categories.map((cat, idx) => (
-              <Link
-                key={idx}
-                to={`/jobs?category=${cat.query}`}
-                className="p-5 rounded-2xl bg-white border border-brand-border hover:border-brand-primary hover:shadow-card transition-all text-center group"
-              >
-                <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">{cat.icon}</div>
-                <div className="text-sm font-bold text-brand-dark group-hover:text-brand-primary transition-colors">
-                  {cat.name}
-                </div>
-                <div className="text-[11px] text-brand-muted mt-0.5">{cat.count}</div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* C. Why KAAMSETU Section */}
-      <section className="py-16 bg-white border-y border-brand-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-secondary">What makes KaamSetu useful</span>
-            <h2 className="text-3xl font-extrabold text-brand-dark tracking-tight mt-1">
-              Why KAAMSETU is Different
-            </h2>
-            <p className="text-sm text-brand-muted mt-2">
-              Practical tools for finding nearby work, checking job details and building a record of your skills.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-brand-bg border border-brand-border space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-brand-accent" />
-              </div>
-              <h3 className="text-base font-bold text-brand-dark">Jobs closer to home</h3>
-              <p className="text-xs text-brand-muted leading-relaxed">
-                Matches you with contractors and households within 2–10 km to reduce travel time, commute fatigue, and transportation expenses.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-brand-bg border border-brand-border space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center">
-                <Mic className="w-5 h-5 text-brand-accent" />
-              </div>
-              <h3 className="text-base font-bold text-brand-dark">Search in your language</h3>
-              <p className="text-xs text-brand-muted leading-relaxed">
-                Break literacy barriers. Speak naturally in Hindi or English, and our AI extracts your trade, preferred sector, and desired daily rate.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-brand-bg border border-brand-border space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center">
-                <Award className="w-5 h-5 text-brand-accent" />
-              </div>
-              <h3 className="text-base font-bold text-brand-dark">Digital Skill Passport</h3>
-              <p className="text-xs text-brand-muted leading-relaxed">
-                Your verifiable work identity. Builds proof of work, employer endorsements, and transparent trust score with shareable QR codes.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-brand-bg border border-brand-border space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center">
-                <IndianRupee className="w-5 h-5 text-brand-accent" />
-              </div>
-              <h3 className="text-base font-bold text-brand-dark">Fair Wage Transparency</h3>
-              <p className="text-xs text-brand-muted leading-relaxed">
-                Every job specifies exact offered salary, payment terms, and overtime guidelines. Clear warnings flag unfair or missing wage terms.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-brand-bg border border-brand-border space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-brand-accent" />
-              </div>
-              <h3 className="text-base font-bold text-brand-dark">Trust-Based Verified Hiring</h3>
-              <p className="text-xs text-brand-muted leading-relaxed">
-                3-tier identity and contact verification for workers and employers prevents fraudulent listings and ensures dignified treatment.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-brand-bg border border-brand-border space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-brand-accent" />
-              </div>
-              <h3 className="text-base font-bold text-brand-dark">Relevant matches, clearly explained</h3>
-              <p className="text-xs text-brand-muted leading-relaxed">
-                Weighted algorithmic scoring across skill fit (40%), location (25%), wage (20%), and availability (15%) with transparent explanations.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Practical trust and payment information */}
-      <section className="py-14 bg-white border-y border-brand-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mb-8">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-secondary">Straightforward by design</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-brand-dark mt-2">Know what you're agreeing to.</h2>
-            <p className="text-sm text-brand-muted mt-2">A job listing should make the important details easy to find before anyone commits.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
-            <div className="border-l-2 border-brand-primary pl-5 py-1">
-              <h3 className="text-base font-bold text-brand-dark">Pay shown upfront</h3>
-              <p className="text-sm text-brand-muted mt-2">See the offered amount, whether it is daily or monthly, and the stated payment terms before applying.</p>
-            </div>
-            <div className="border-l-2 border-brand-primary pl-5 py-1">
-              <h3 className="text-base font-bold text-brand-dark">Talk directly</h3>
-              <p className="text-sm text-brand-muted mt-2">Once an application is accepted, workers and employers can coordinate directly about the job.</p>
-            </div>
-            <div className="border-l-2 border-brand-primary pl-5 py-1">
-              <h3 className="text-base font-bold text-brand-dark">Choose how to settle</h3>
-              <p className="text-sm text-brand-muted mt-2">Payment is made directly by the employer to the worker, by UPI or cash. KaamSetu does not hold the money.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Bottom Banner */}
-      <section className="py-16 bg-gradient-to-r from-brand-primary to-brand-primary-dark text-white">
-        <div className="max-w-5xl mx-auto px-4 text-center space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Your next job could be nearby.
-          </h2>
-          <p className="text-slate-300 text-sm max-w-xl mx-auto">
-            Create a profile to find local work, or post a job if you need skilled help.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 pt-2">
-            <Link
-              to="/register"
-              className="px-6 py-3.5 rounded-2xl bg-brand-accent text-brand-dark text-xs font-extrabold hover:bg-amber-400 transition-all shadow-lg shadow-brand-accent/30"
-            >
-              Create Free Worker Profile
-            </Link>
-            <Link
-              to="/register?role=employer"
-              className="px-6 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white text-xs font-bold hover:bg-white/20 transition-all"
-            >
-              Post a Job as Employer
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <Footer />
-
-      {/* Voice Search Modal */}
-      <VoiceSearchModal
-        isOpen={voiceModalOpen}
-        onClose={() => setVoiceModalOpen(false)}
-        onConfirmPreferences={handleVoiceConfirmed}
-      />
+      <VoiceSearchModal isOpen={voiceModalOpen} onClose={() => setVoiceModalOpen(false)} onConfirmPreferences={handleVoiceConfirmed} />
     </div>
   );
 };
