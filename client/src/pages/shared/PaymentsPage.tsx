@@ -159,7 +159,7 @@ export const PaymentsPage: React.FC = () => {
               </div>
               <label className="text-xs font-semibold text-brand-muted">UPI transaction reference / UTR (required)
                 <input required value={reference} onChange={e => setReference(e.target.value)} minLength={6} maxLength={100} placeholder="Enter reference shown in PhonePe / GPay" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
-              </label>}
+              </label>
             </div>
             <label className="block text-xs font-semibold text-brand-muted">Note (optional)
               <input value={note} onChange={e => setNote(e.target.value)} maxLength={300} placeholder="Payment details" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
