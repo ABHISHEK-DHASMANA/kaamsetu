@@ -61,14 +61,16 @@ export const JobsExplorePage: React.FC = () => {
   const [selectedJobForExplanation, setSelectedJobForExplanation] = useState<Job | null>(null);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
 
-  const fetchJobsList = async () => {
+  const fetchJobsList = async (overrides: Record<string, string> = {}) => {
     setIsLoading(true);
     try {
-      const params: Record<string, string> = {};
-      if (searchQuery) params.search = searchQuery;
-      if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
-      if (selectedArea) params.area = selectedArea;
-      if (selectedWageType) params.wageType = selectedWageType;
+      const params: Record<string, string> = { ...overrides };
+      if (searchQuery && !params.search) params.search = searchQuery;
+      if (selectedCategory && selectedCategory !== 'All' && !params.category) params.category = selectedCategory;
+      if (selectedArea && !params.area) params.area = selectedArea;
+      if (selectedWageType && !params.wageType) params.wageType = selectedWageType;
+      const voiceWage = searchParams.get('wage');
+      if (voiceWage && !params.minWage) params.minWage = voiceWage;
 
       // If logged in as worker, fetch with intelligent matching scores
       if (isAuthenticated && user?.role === 'worker') {
@@ -99,10 +101,25 @@ export const JobsExplorePage: React.FC = () => {
   };
 
   const handleVoiceConfirmed = (prefs: ExtractedJobPreferences) => {
-    setSelectedCategory(prefs.skill);
+    const wageType = prefs.wage_type || 'daily';
+    const params: Record<string, string> = {
+      search: prefs.skill,
+      area: prefs.location,
+      wageType
+    };
+    if (Number(prefs.expected_wage) > 0) params.minWage = String(prefs.expected_wage);
+
+    setSelectedCategory('All');
     setSelectedArea(prefs.location);
     setSearchQuery(prefs.skill);
-    fetchJobsList();
+    setSelectedWageType(wageType);
+    setSearchParams({
+      search: prefs.skill,
+      area: prefs.location,
+      wage: String(prefs.expected_wage || ''),
+      distance: String(prefs.preferred_distance || 5)
+    });
+    void fetchJobsList(params);
   };
 
   const handleApply = async (job: Job) => {

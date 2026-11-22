@@ -58,6 +58,9 @@ export const PaymentsPage: React.FC = () => {
 
   const saveWorkerUpi = async (event: React.FormEvent) => {
     event.preventDefault(); setUpiSaving(true); setError(''); setMessage('');
+    if (!/^[A-Za-z0-9._-]{2,256}@[A-Za-z][A-Za-z0-9.-]{1,63}$/.test(workerUpiId.trim())) {
+      setError('Enter a valid UPI ID, for example name@bank.'); setUpiSaving(false); return;
+    }
     try { await apiUpdateWorkerProfile({ upiId: workerUpiId.trim() } as any); setMessage('Your UPI ID has been saved. Employers can see it only for accepted/completed work.'); }
     catch (e: any) { setError(e.message || 'Could not save UPI ID.'); }
     finally { setUpiSaving(false); }
@@ -65,6 +68,9 @@ export const PaymentsPage: React.FC = () => {
 
   const submitPayment = async (event: React.FormEvent) => {
     event.preventDefault(); setBusy(true); setError(''); setMessage('');
+    if (method === 'direct_upi' && reference.trim().length < 6) {
+      setError('Enter the UPI transaction reference/UTR from your payment app.'); setBusy(false); return;
+    }
     try {
       const result = await apiCreatePayment({ applicationId, amount: Number(amount), method, transactionReference: reference, note });
       setMessage(result.message); setApplicationId(''); setAmount(''); setReference(''); setNote('');
@@ -74,9 +80,13 @@ export const PaymentsPage: React.FC = () => {
     finally { setBusy(false); }
   };
 
-  const confirm = async (id: string) => {
+  const confirm = async (payment: Payment) => {
+    const check = payment.method === 'direct_upi'
+      ? `Confirm that ₹${payment.amount} for ${payment.jobTitle} is visible as received in your UPI app, and that the transaction details match.`
+      : `Confirm that you physically received ₹${payment.amount} in cash for ${payment.jobTitle}.`;
+    if (!window.confirm(`${check}\\n\\nOnly confirm after checking. Continue?`)) return;
     setBusy(true); setError(''); setMessage('');
-    try { const result = await apiConfirmPaymentReceived(id); setMessage(result.message); await refresh(); }
+    try { const result = await apiConfirmPaymentReceived(payment._id); setMessage(result.message); await refresh(); }
     catch (e: any) { setError(e.message || 'Could not confirm payment.'); }
     finally { setBusy(false); }
   };
@@ -126,8 +136,8 @@ export const PaymentsPage: React.FC = () => {
                   <option value="cash">Cash (offline)</option><option value="direct_upi">UPI (PhonePe / Google Pay / other UPI apps)</option>
                 </select>
               </label>
-              {method === 'direct_upi' && <label className="text-xs font-semibold text-brand-muted">UPI transaction reference (optional)
-                <input value={reference} onChange={e => setReference(e.target.value)} maxLength={100} placeholder="UTR / transaction ID" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
+              {method === 'direct_upi' && <label className="text-xs font-semibold text-brand-muted">UPI transaction reference / UTR (required)
+                <input required value={reference} onChange={e => setReference(e.target.value)} minLength={6} maxLength={100} placeholder="Enter reference shown in PhonePe / GPay" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
               </label>}
             </div>
             <label className="block text-xs font-semibold text-brand-muted">Note (optional)
@@ -139,7 +149,7 @@ export const PaymentsPage: React.FC = () => {
 
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
           <ShieldAlert className="w-5 h-5 text-blue-700 shrink-0" />
-          <div className="text-xs text-blue-900"><strong>Payment safety:</strong> Cash and direct UPI are paid from employer to worker. The worker alone confirms receipt in KaamSetu. This is a manual confirmation, not automatic bank verification. KaamSetu does not collect or hold the money.</div>
+          <div className="text-xs text-blue-900"><strong>Payment safety:</strong> UPI QR payments go directly from the employer's UPI app to the worker's saved UPI ID; cash is handed over directly. Employers must record the UPI reference after paying. The worker should independently check the amount and transaction in their own app before confirming. This is a two-party record, not automatic bank verification. KaamSetu does not collect or hold the money.</div>
         </div>
 
 
@@ -149,7 +159,7 @@ export const PaymentsPage: React.FC = () => {
             {payments.map(payment => <div key={payment._id} className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-start gap-3"><div className="w-10 h-10 rounded-xl bg-brand-primary-light text-brand-primary flex items-center justify-center">{payment.method === 'cash' ? <Banknote className="w-5 h-5" /> : payment.method === 'online' ? <Smartphone className="w-5 h-5" /> : <QrCode className="w-5 h-5" />}</div><div><div className="font-bold text-sm text-brand-dark">{payment.jobTitle}</div><div className="text-xs text-brand-muted mt-1">{isWorker ? payment.employerName : payment.workerName} · {payment.method === 'direct_upi' ? 'Direct UPI' : payment.method === 'cash' ? 'Cash' : 'Online'}</div>{payment.transactionReference && <div className="text-[11px] text-brand-muted mt-1">Ref: {payment.transactionReference}</div>}<div className="text-[11px] text-brand-muted mt-1">{new Date(payment.createdAt).toLocaleString('en-IN')}</div></div></div>
               <div className="flex flex-wrap items-center gap-3"><div className="font-black text-brand-dark">{money(payment.amount)}</div><span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${payment.status === 'paid' ? 'bg-emerald-50 text-emerald-700' : payment.status === 'disputed' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>{payment.status === 'paid' ? 'Paid · Confirmed' : payment.status === 'disputed' ? 'Disputed' : 'Awaiting worker confirmation'}</span>
-                {isWorker && payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => confirm(payment._id)} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold disabled:opacity-50"><CheckCircle2 className="w-3.5 h-3.5 inline mr-1" />Confirm received</button>}
+                {isWorker && payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => confirm(payment)} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold disabled:opacity-50"><CheckCircle2 className="w-3.5 h-3.5 inline mr-1" />Confirm received</button>}
                 {payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => dispute(payment._id)} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs font-bold disabled:opacity-50">Dispute</button>}
               </div>
             </div>)}

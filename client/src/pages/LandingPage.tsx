@@ -23,7 +23,7 @@ export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleVoiceConfirmed = (prefs: ExtractedJobPreferences) => {
-    navigate(`/jobs?search=${encodeURIComponent(prefs.skill)}&area=${encodeURIComponent(prefs.location)}&wage=${prefs.expected_wage}`);
+    navigate(`/jobs?search=${encodeURIComponent(prefs.skill)}&area=${encodeURIComponent(prefs.location)}&wage=${prefs.expected_wage}&distance=${prefs.preferred_distance}&availability=${encodeURIComponent(prefs.availability)}`);
   };
 
   const categories = [
@@ -102,9 +102,10 @@ export const LandingPage: React.FC = () => {
                   </span>
                 </div>
 
-                <div
+                <button
+                  type="button"
                   onClick={() => setVoiceModalOpen(true)}
-                  className="mt-2 flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-brand-primary hover:bg-brand-primary-light/30 transition-all cursor-pointer group"
+                  className="mt-2 w-full text-left flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-brand-primary hover:bg-brand-primary-light/30 transition-all cursor-pointer group"
                 >
                   <div className="flex items-center gap-3 overflow-hidden">
                     <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-md shadow-brand-primary/20">
@@ -122,7 +123,8 @@ export const LandingPage: React.FC = () => {
                   <span className="text-xs font-bold text-brand-primary bg-white px-3 py-1.5 rounded-xl border border-brand-border shadow-sm flex-shrink-0 group-hover:bg-brand-primary group-hover:text-white transition-colors">
                     Speak your search
                   </span>
-                </div>
+                </button>
+                <p className="mt-2 text-[11px] text-brand-muted">Search by voice without signing in. Sign in only when you are ready to apply.</p>
               </div>
             </div>
 

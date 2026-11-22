@@ -45,7 +45,11 @@ export const createPayment = (req, res) => {
     return res.status(400).json({ success: false, message: 'Choose a completed job and enter a valid amount.' });
   }
   if (!['cash', 'direct_upi'].includes(method)) {
-    return res.status(400).json({ success: false, message: 'Live online payments are not enabled yet. Use Cash or Direct UPI for now.' });
+    return res.status(400).json({ success: false, message: 'Use Cash or Direct UPI for worker-to-worker settlement.' });
+  }
+  const normalizedReference = String(transactionReference || '').trim();
+  if (method === 'direct_upi' && !/^[A-Za-z0-9._-]{6,100}$/.test(normalizedReference)) {
+    return res.status(400).json({ success: false, message: 'A valid UPI transaction reference/UTR is required for direct UPI payments.' });
   }
 
   const application = findOne('applications', a => (a._id || a.id) === applicationId);
@@ -68,7 +72,7 @@ export const createPayment = (req, res) => {
     amount: Math.round(numericAmount * 100) / 100,
     currency: 'INR',
     method,
-    transactionReference: method === 'direct_upi' ? String(transactionReference || '').trim().slice(0, 100) : '',
+    transactionReference: method === 'direct_upi' ? normalizedReference : '',
     note: String(note || '').trim().slice(0, 300),
     employerConfirmed: true,
     workerConfirmed: false,

@@ -42,6 +42,7 @@ export const VoiceSearchModal: React.FC<VoiceSearchModalProps> = ({
   const [editAvailability, setEditAvailability] = useState('Immediate');
 
   const recognitionRef = useRef<any>(null);
+  const transcriptRef = useRef('');
 
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -55,6 +56,8 @@ export const VoiceSearchModal: React.FC<VoiceSearchModalProps> = ({
   const startListening = () => {
     setErrorMsg(null);
     setExtractedData(null);
+    transcriptRef.current = '';
+    setTranscript('');
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setSpeechSupported(false);
@@ -66,6 +69,7 @@ export const VoiceSearchModal: React.FC<VoiceSearchModalProps> = ({
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
       recognition.lang = language;
 
       recognition.onstart = () => {
@@ -73,9 +77,13 @@ export const VoiceSearchModal: React.FC<VoiceSearchModalProps> = ({
       };
 
       recognition.onresult = (event: any) => {
-        const current = event.resultIndex;
-        const text = event.results[current][0].transcript;
-        setTranscript(text);
+        const completeTranscript = Array.from(event.results as ArrayLike<any>)
+          .map((result: any) => result?.[0]?.transcript || '')
+          .join(' ')
+          .replace(/\\s+/g, ' ')
+          .trim();
+        transcriptRef.current = completeTranscript;
+        setTranscript(completeTranscript);
       };
 
       recognition.onerror = (event: any) => {
@@ -90,6 +98,8 @@ export const VoiceSearchModal: React.FC<VoiceSearchModalProps> = ({
 
       recognition.onend = () => {
         setIsListening(false);
+        const spokenText = transcriptRef.current.trim();
+        if (spokenText) void handleProcessTranscript(spokenText);
       };
 
       recognitionRef.current = recognition;
@@ -137,8 +147,9 @@ export const VoiceSearchModal: React.FC<VoiceSearchModalProps> = ({
 
   const handleSamplePrompt = (sampleText: string, sampleLang: 'hi-IN' | 'en-IN') => {
     setLanguage(sampleLang);
+    transcriptRef.current = sampleText;
     setTranscript(sampleText);
-    handleProcessTranscript(sampleText);
+    void handleProcessTranscript(sampleText);
   };
 
   const handleConfirmAndSearch = () => {
