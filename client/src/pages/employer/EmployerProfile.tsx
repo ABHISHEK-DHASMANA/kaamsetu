@@ -27,6 +27,9 @@ export const EmployerProfilePage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [coordinates, setCoordinates] = useState({ lat: 28.6271, lng: 77.3820 });
   const [isSaving, setIsSaving] = useState(false);
+  const [trustScore, setTrustScore] = useState<number | null>(null);
+  const [trustReviewsCount, setTrustReviewsCount] = useState(0);
+  const [completedHiresCount, setCompletedHiresCount] = useState(0);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -35,6 +38,9 @@ export const EmployerProfilePage: React.FC = () => {
         if (res.success && res.profile) {
           const ep = res.profile;
           setCompanyName(ep.companyName);
+          setTrustScore(typeof ep.trustScore === 'number' ? ep.trustScore : null);
+          setTrustReviewsCount(Number(ep.trustReviewsCount || 0));
+          setCompletedHiresCount(Number(ep.completedHiresCount || 0));
           setBusinessType(ep.businessType || 'Small Business / Shop');
           setVerificationStatus(ep.verificationStatus || 'Registered');
           setContactPerson(ep.contactPerson);
@@ -117,6 +123,27 @@ export const EmployerProfilePage: React.FC = () => {
             <ShieldCheck className="w-4 h-4 text-emerald-700" />
             <span>{verificationStatus === 'Identity Verified' ? 'Identity Verified' : verificationStatus === 'Contact Verified' ? 'Contact Verified' : 'Verification Pending'}</span>
           </span>
+        </div>
+
+        <div className="rounded-2xl border border-brand-border bg-slate-50 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-brand-muted">Employer trust</p>
+              {trustScore === null ? (
+                <p className="mt-1 text-sm font-bold text-brand-dark">New to KaamSetu</p>
+              ) : (
+                <p className="mt-1 text-2xl font-black text-emerald-700">{trustScore}/100</p>
+              )}
+              <p className="mt-1 text-[11px] text-brand-muted">
+                {trustScore === null ? 'No verified worker feedback yet' : `Based on ${trustReviewsCount} worker review(s)`}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-black text-brand-dark">{completedHiresCount}</p>
+              <p className="text-[10px] font-bold uppercase text-brand-muted">Completed hires</p>
+            </div>
+          </div>
+          <p className="mt-3 text-[11px] text-brand-muted">Trust is based on feedback from workers after completed jobs. It is not a payment guarantee.</p>
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
