@@ -58,6 +58,9 @@ export const RegisterPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [preferredLanguage, setPreferredLanguage] = useState('Hindi');
   const [companyName, setCompanyName] = useState('');
+  const [businessType, setBusinessType] = useState('Home Owner');
+  const [industry, setIndustry] = useState('General household help');
+  const [aboutCompany, setAboutCompany] = useState('');
   const [avatar, setAvatar] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
@@ -141,7 +144,10 @@ export const RegisterPage: React.FC = () => {
           maxDistanceKm: Number(maxDistanceKm)
         };
       } else {
-        payload.companyName = companyName || `${name} Services`;
+        payload.companyName = businessType === 'Home Owner' ? `${name} - Home Hiring` : companyName.trim();
+        payload.businessType = businessType;
+        payload.industry = industry;
+        payload.aboutCompany = aboutCompany;
       }
 
       const res = await apiRegister(payload);
@@ -166,7 +172,7 @@ export const RegisterPage: React.FC = () => {
           {/* Header */}
           <div className="text-center space-y-1">
             <span className="text-xs font-bold uppercase tracking-wider text-brand-secondary">
-              Step {step} of 6 • {role === 'worker' ? 'Worker Skill Passport Onboarding' : 'Employer Profile Setup'}
+              Step {step} of {role === 'worker' ? 6 : 3} • {role === 'worker' ? 'Worker Skill Passport Onboarding' : 'Employer Setup'}
             </span>
             <h1 className="text-2xl font-black text-brand-dark tracking-tight">
               {role === 'worker' ? 'Create Your Digital Identity' : 'Register Your Hiring Business'}
@@ -199,7 +205,7 @@ export const RegisterPage: React.FC = () => {
           <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
             <div
               className="bg-brand-primary h-full transition-all duration-300"
-              style={{ width: `${(step / 6) * 100}%` }}
+              style={{ width: `${(step / (role === 'worker' ? 6 : 3)) * 100}%` }}
             />
           </div>
 
@@ -254,22 +260,6 @@ export const RegisterPage: React.FC = () => {
                 />
               </div>
 
-              {role === 'employer' && (
-                <div>
-                  <label className="text-xs font-semibold text-brand-dark block mb-1">
-                    Company / Firm Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Sharma Electrical Services"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark"
-                  />
-                </div>
-              )}
-
               <div>
                 <label className="text-xs font-semibold text-brand-dark block mb-1">
                   Email Address (Optional)
@@ -315,30 +305,17 @@ export const RegisterPage: React.FC = () => {
             </div>
           )}
 
-          {/* STEP 2: Skills Selection */}
-          {step === 2 && (
+          {/* STEP 2: Worker skills or employer business type */}
+          {step === 2 && (role === 'worker' ? (
             <div className="space-y-4 animate-in fade-in">
-              <h3 className="text-sm font-bold text-brand-dark border-b pb-2">
-                Step 2: Select Your Skills & Trades
-              </h3>
-              <p className="text-xs text-brand-muted">
-                Choose all trades you are proficient in. These will be logged onto your Digital Skill Passport.
-              </p>
-
+              <h3 className="text-sm font-bold text-brand-dark border-b pb-2">Step 2: Select Your Skills & Trades</h3>
+              <p className="text-xs text-brand-muted">Choose the work you can do. These skills become part of your Digital Skill Passport.</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {SKILLS_LIST.map((skill) => {
                   const isSelected = selectedSkills.includes(skill);
                   return (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => toggleSkill(skill)}
-                      className={`p-3 rounded-xl border text-xs font-bold text-left transition-all flex items-center justify-between ${
-                        isSelected
-                          ? 'border-brand-primary bg-brand-primary-light text-brand-primary shadow-sm'
-                          : 'border-brand-border bg-slate-50 text-brand-dark hover:bg-slate-100'
-                      }`}
-                    >
+                    <button key={skill} type="button" onClick={() => toggleSkill(skill)}
+                      className={`p-3 rounded-xl border text-xs font-bold text-left transition-all flex items-center justify-between ${isSelected ? 'border-brand-primary bg-brand-primary-light text-brand-primary shadow-sm' : 'border-brand-border bg-slate-50 text-brand-dark hover:bg-slate-100'}`}>
                       <span>{skill}</span>
                       {isSelected && <CheckCircle2 className="w-4 h-4 text-brand-primary flex-shrink-0" />}
                     </button>
@@ -346,10 +323,50 @@ export const RegisterPage: React.FC = () => {
                 })}
               </div>
             </div>
-          )}
-
-          {/* STEP 3: Experience */}
-          {step === 3 && (
+          ) : (
+            <div className="space-y-4 animate-in fade-in">
+              <div>
+                <h3 className="text-sm font-bold text-brand-dark border-b pb-2">Step 2: Who is hiring?</h3>
+                <p className="text-xs text-brand-muted mt-2">Choose the type that best describes you. You do not need to add any worker skills.</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { value: 'Home Owner', title: 'Homeowner', detail: 'I need someone for work at my home' },
+                  { value: 'Individual Contractor', title: 'Individual / Contractor', detail: 'I hire workers for individual projects' },
+                  { value: 'Small Business / Shop', title: 'Small business / Shop', detail: 'I hire for my shop or local business' },
+                  { value: 'Construction Company', title: 'Company / Firm', detail: 'I represent a company or firm' },
+                  { value: 'Facility Management', title: 'Facility management', detail: 'I manage buildings or multiple sites' }
+                ].map(option => (
+                  <button key={option.value} type="button" onClick={() => setBusinessType(option.value)}
+                    className={`rounded-xl border p-4 text-left transition-colors ${businessType === option.value ? 'border-brand-primary bg-brand-primary-light' : 'border-brand-border bg-white hover:bg-slate-50'}`}>
+                    <span className="block text-sm font-bold text-brand-dark">{option.title}</span>
+                    <span className="block text-xs text-brand-muted mt-1">{option.detail}</span>
+                  </button>
+                ))}
+              </div>
+              {businessType !== 'Home Owner' && (
+                <div className="space-y-3 rounded-xl border border-brand-border p-4">
+                  <div>
+                    <label className="text-xs font-semibold text-brand-dark block mb-1">Business / Firm name *</label>
+                    <input type="text" required value={companyName} onChange={e => setCompanyName(e.target.value)}
+                      placeholder="e.g. Sharma Electrical Services" className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-brand-dark block mb-1">Business activity</label>
+                    <input type="text" value={industry} onChange={e => setIndustry(e.target.value)}
+                      placeholder="e.g. Construction, retail, facility services" className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-brand-dark block mb-1">About your business (optional)</label>
+                    <textarea rows={2} value={aboutCompany} onChange={e => setAboutCompany(e.target.value)}
+                      placeholder="Briefly describe your business or the work you hire for" className="w-full text-sm p-3 rounded-xl border border-brand-border bg-slate-50" />
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {/* STEP 3: Worker experience or employer hiring location */}
+          {step === 3 && (role === 'worker' ? (
             <div className="space-y-4 animate-in fade-in">
               <h3 className="text-sm font-bold text-brand-dark border-b pb-2">
                 Step 3: Trade Experience Level
@@ -376,10 +393,29 @@ export const RegisterPage: React.FC = () => {
                 ))}
               </div>
             </div>
-          )}
-
+          ) : (
+            <div className="space-y-4 animate-in fade-in">
+              <div>
+                <h3 className="text-sm font-bold text-brand-dark border-b pb-2">Step 3: Where do you need workers?</h3>
+                <p className="text-xs text-brand-muted mt-2">Set your home, shop or worksite area. You can add an exact pin later when posting a job.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-semibold text-brand-dark block mb-1">State</label><input value={state} onChange={e=>setState(e.target.value)} className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50"/></div>
+                <div><label className="text-xs font-semibold text-brand-dark block mb-1">City</label><input value={city} onChange={e=>setCity(e.target.value)} className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50"/></div>
+                <div><label className="text-xs font-semibold text-brand-dark block mb-1">Area / Sector</label><input value={area} onChange={e=>setArea(e.target.value)} className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50"/></div>
+                <div><label className="text-xs font-semibold text-brand-dark block mb-1">Pincode</label><input value={pincode} onChange={e=>setPincode(e.target.value)} className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50"/></div>
+              </div>
+              <button type="button" onClick={requestGeolocation} className="w-full py-3 rounded-xl border border-brand-primary text-brand-primary text-sm font-semibold hover:bg-brand-primary-light flex items-center justify-center gap-2">
+                <MapPin className="w-4 h-4"/> Use my current location
+              </button>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs text-brand-muted">
+                <p className="font-semibold text-brand-dark">{businessType === 'Home Owner' ? 'Home hiring profile' : companyName}</p>
+                <p>{area}, {city}, {state} · {pincode}</p>
+              </div>
+            </div>
+          ))}
           {/* STEP 4: Location */}
-          {step === 4 && (
+          {role === 'worker' && step === 4 && (
             <div className="space-y-4 animate-in fade-in">
               <h3 className="text-sm font-bold text-brand-dark border-b pb-2">
                 Step 4: Location & Work Vicinity
@@ -441,7 +477,7 @@ export const RegisterPage: React.FC = () => {
           )}
 
           {/* STEP 5: Work Preferences */}
-          {step === 5 && (
+          {role === 'worker' && step === 5 && (
             <div className="space-y-4 animate-in fade-in">
               <h3 className="text-sm font-bold text-brand-dark border-b pb-2">
                 Step 5: Wage Expectations & Travel Preferences
@@ -508,7 +544,7 @@ export const RegisterPage: React.FC = () => {
           )}
 
           {/* STEP 6: Profile Confirmation */}
-          {step === 6 && (
+          {role === 'worker' && step === 6 && (
             <div className="space-y-4 animate-in fade-in">
               <h3 className="text-sm font-bold text-brand-dark border-b pb-2">
                 Step 6: Confirm & Generate Digital Skill Passport
@@ -562,14 +598,15 @@ export const RegisterPage: React.FC = () => {
               <div />
             )}
 
-            {step < 6 ? (
+            {step < (role === 'worker' ? 6 : 3) ? (
               <button
                 type="button"
                 onClick={() => {
-                  if (step === 1 && (!name || !phone || !password)) {
+                  if (step === 1 && (!name.trim() || !phone.trim() || !password)) {
                     setErrorMsg('Please complete all required fields.');
                     return;
                   }
+                  if (role === 'employer' && step === 2 && businessType !== 'Home Owner' && !companyName.trim()) { setErrorMsg('Please enter your business or firm name.'); return; }
                   setErrorMsg(null);
                   setStep(step + 1);
                 }}
@@ -593,7 +630,7 @@ export const RegisterPage: React.FC = () => {
                 ) : (
                   <>
                     <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
-                    <span>Generate Skill Passport</span>
+                    <span>{role === 'worker' ? 'Generate Skill Passport' : 'Create Hiring Account'}</span>
                   </>
                 )}
               </button>
