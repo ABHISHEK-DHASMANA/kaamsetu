@@ -98,7 +98,7 @@ export const updateApplicationStatus = async (req, res) => {
     if (application.employerId !== idOf(req.user) && req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Unauthorized to manage this application.' });
     if (!['Applied', 'Viewed', 'Shortlisted'].includes(application.status)) return res.status(409).json({ success: false, message: 'This application can no longer be changed using this action.' });
     const updated = update('applications', id, { status, employerNotes: employerNotes !== undefined ? employerNotes : application.employerNotes });
-    const job = findOne('jobs', j => (j._id || j.id) === application.jobId);
+    const job = findOne('jobs', j => String(j._id || j.id) === String(application.jobId));
     if (status === 'Accepted') {
       if (job) update('jobs', job._id || job.id, { acceptedWorkerId: application.workerId, status: 'in_progress' });
       notify(application.workerId, 'You have been hired', `Your application for "${job?.title || 'the job'}" was accepted. You can now message the employer.`, 'success', `/chats?applicationId=${encodeURIComponent(String(application._id || application.id))}`);
@@ -116,10 +116,10 @@ export const updateWorkLifecycle = async (req, res) => {
   try {
     const actorId = idOf(req.user);
     const { action, reason } = req.body || {};
-    const application = findOne('applications', a => (a._id || a.id) === req.params.id);
+    const application = findOne('applications', a => String(a._id || a.id) === String(req.params.id));
     if (!application) return res.status(404).json({ success: false, message: 'Application not found.' });
-    const isWorker = application.workerId === actorId && req.user.role === 'worker';
-    const isEmployer = application.employerId === actorId && req.user.role === 'employer';
+    const isWorker = String(application.workerId) === String(actorId) && req.user.role === 'worker';
+    const isEmployer = String(application.employerId) === String(actorId) && req.user.role === 'employer';
     if (!isWorker && !isEmployer && req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Only the worker or employer on this job can update it.' });
     const job = findOne('jobs', j => (j._id || j.id) === application.jobId);
     const now = new Date().toISOString();
@@ -143,7 +143,7 @@ export const updateWorkLifecycle = async (req, res) => {
       const workerProfile = findOne('workerProfiles', wp => wp.userId === application.workerId);
       if (workerProfile) {
         const passport = workerProfile.skillPassport || {};
-        update('workerProfiles', workerProfile._id || workerProfile.id, {
+        update('workerProfiles', String(workerProfile._id || workerProfile.id), {
           skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1, trustScore: Math.min(100, (passport.trustScore || 85) + 2) }
         });
       }
@@ -170,7 +170,8 @@ export const updateWorkLifecycle = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Unknown work lifecycle action.' });
     }
 
-    const updated = update('applications', req.params.id, changes);
+    const updated = update('applications', String(application._id || application.id), changes);
+    if (!updated) return res.status(409).json({ success: false, message: 'The application changed before this update could be saved. Refresh and try again.' });
     if (action === 'cancel' && changes.cancellationReviewRequired) {
       insert('reports', {
         reportedBy: actorId,
@@ -184,7 +185,7 @@ export const updateWorkLifecycle = async (req, res) => {
         createdAt: now
       });
     }
-    if (recipient) insert('notifications', { userId: recipient, title, message, type: action === 'cancel' ? 'warning' : 'info', actionUrl: action === 'cancel' ? (isWorker ? '/employer/candidates' : '/worker/applications') : `/chats?applicationId=${encodeURIComponent(String(application._id || application.id))}`, isRead: false });
+    if (recipient) insert('notifications', { userId: String(recipient), title, message, type: action === 'cancel' ? 'warning' : 'info', actionUrl: action === 'cancel' ? (isWorker ? '/employer/candidates' : '/worker/applications') : (action === 'request_completion' ? '/employer/candidates' : action === 'confirm_completion' ? '/worker/applications' : `/chats?applicationId=${encodeURIComponent(String(application._id || application.id))}`), isRead: false });
     res.json({ success: true, message: action === 'cancel' ? 'Cancellation recorded and the other party notified.' : 'Work status updated and the other party notified.', application: updated });
   } catch (error) {
     console.error('updateWorkLifecycle error:', error);
