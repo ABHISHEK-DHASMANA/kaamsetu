@@ -54,9 +54,8 @@ const workerProfileSchema = new mongoose.Schema({
     passportId: { type: String, unique: true },
     qrCodeString: { type: String },
     verifiedSkillsCount: { type: Number, default: 0 },
-    trustScore: { type: Number, default: 85 }, // 0 - 100
     completedJobsCount: { type: Number, default: 0 },
-    rating: { type: Number, default: 4.8 },
+    rating: { type: Number, default: null },
     reviewsCount: { type: Number, default: 0 },
     badges: [{ type: String }],
     issueDate: { type: Date, default: Date.now }
