@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { HeartHandshake, Zap } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -267,14 +266,6 @@ export const RibbonStage: React.FC = () => {
       <div className="ks-ribbon-caption">
         <span>MOVE YOUR CURSOR</span>
         <span>KAAMSETU / LOCAL CONNECTIONS</span>
-      </div>
-      <div className="ks-ribbon-card ks-ribbon-card-top">
-        <span className="ks-ribbon-card-icon"><Zap size={16} /></span>
-        <span><b>Work, nearby.</b><small>Opportunities around you</small></span>
-      </div>
-      <div className="ks-ribbon-card ks-ribbon-card-bottom">
-        <span className="ks-ribbon-card-icon"><HeartHandshake size={16} /></span>
-        <span><b>People, connected.</b><small>Skills meet local needs</small></span>
       </div>
     </div>
   );
