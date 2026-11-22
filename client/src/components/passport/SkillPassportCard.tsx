@@ -165,26 +165,25 @@ export const SkillPassportCard: React.FC<SkillPassportCardProps> = ({
               </div>
             </div>
 
-            {/* Trust Score & Rating Box */}
+            {/* Worker reputation: employer ratings only; no worker trust score */}
             <div className="flex items-center gap-3 bg-brand-primary-light/50 p-3.5 rounded-2xl border border-brand-primary/10">
-              <div className="text-center px-2">
-                <div className="text-2xl font-black text-brand-primary">{passport.trustScore}%</div>
-                <div className="text-[10px] font-bold text-brand-muted uppercase">Trust Score</div>
-              </div>
-              <div className="w-px h-8 bg-brand-border" />
-              <div className="text-center px-2">
-                <div className="text-2xl font-black text-brand-accent flex items-center justify-center gap-1">
-                  <Star className="w-4 h-4 fill-brand-accent" />
-                  <span>{passport.rating}</span>
-                </div>
+              <div className="text-center px-3">
+                {passport.reviewsCount > 0 ? (
+                  <div className="text-2xl font-black text-brand-accent flex items-center justify-center gap-1">
+                    <Star className="w-4 h-4 fill-brand-accent" />
+                    <span>{Number(passport.rating || 0).toFixed(1)}/5</span>
+                  </div>
+                ) : (
+                  <div className="text-sm font-bold text-brand-muted">New to KaamSetu</div>
+                )}
                 <div className="text-[10px] font-bold text-brand-muted uppercase">
-                  {passport.reviewsCount} Reviews
+                  {passport.reviewsCount > 0 ? `${passport.reviewsCount} Employer Reviews` : 'No ratings yet'}
                 </div>
               </div>
               <div className="w-px h-8 bg-brand-border" />
-              <div className="text-center px-2">
-                <div className="text-2xl font-black text-brand-secondary">{passport.completedJobsCount}</div>
-                <div className="text-[10px] font-bold text-brand-muted uppercase">Completed</div>
+              <div className="text-center px-3">
+                <div className="text-2xl font-black text-brand-secondary">{passport.completedJobsCount || 0}</div>
+                <div className="text-[10px] font-bold text-brand-muted uppercase">Completed Jobs</div>
               </div>
             </div>
           </div>
