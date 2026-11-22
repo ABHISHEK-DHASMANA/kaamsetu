@@ -105,6 +105,9 @@ export interface EmployerProfile {
   jobsPostedCount: number;
   activeJobsCount: number;
   hiredWorkersCount: number;
+  trustScore?: number | null;
+  trustReviewsCount?: number;
+  completedHiresCount?: number;
   aboutCompany: string;
   avatar?: string;
   maxHiringDistanceKm?: number;
