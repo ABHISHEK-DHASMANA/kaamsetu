@@ -1,14 +1,88 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { findOne, insert, update } from '../services/storage.js';
+import { getFirebaseAdminAuth } from '../config/firebaseAdmin.js';
 
 const generateToken = (user) => {
-  const secret = process.env.JWT_SECRET || 'kaamsetu_super_secure_jwt_secret_key_2026_hackathon';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET is not configured.');
   return jwt.sign(
     { id: user._id || user.id, role: user.role, name: user.name, phone: user.phone },
     secret,
     { expiresIn: '30d' }
   );
+};
+
+const normalizePhone = value => {
+  let digits = String(value || '').replace(/\D/g, '');
+  if (digits.startsWith('0091')) digits = digits.slice(4);
+  else if (digits.startsWith('91') && digits.length === 12) digits = digits.slice(2);
+  else if (digits.startsWith('0') && digits.length === 11) digits = digits.slice(1);
+  return digits;
+};
+
+export const firebaseLogin = async (req, res) => {
+  try {
+    const authorization = req.headers.authorization || '';
+    const idToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+    if (!idToken) {
+      return res.status(401).json({ success: false, message: 'A Firebase ID token is required.' });
+    }
+
+    const decoded = await getFirebaseAdminAuth().verifyIdToken(idToken, true);
+    if (!decoded.phone_number || decoded.phone_number_verified !== true) {
+      return res.status(403).json({
+        success: false,
+        message: 'Verify your mobile number with Firebase before signing in.'
+      });
+    }
+
+    const verifiedPhone = normalizePhone(decoded.phone_number);
+    if (verifiedPhone.length < 10) {
+      return res.status(400).json({ success: false, message: 'Firebase returned an invalid phone number.' });
+    }
+
+    const user = findOne('users', candidate => normalizePhone(candidate.phone) === verifiedPhone);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        code: 'ACCOUNT_NOT_FOUND',
+        message: 'No KAAMSETU account is linked to this verified phone number. Please register first.'
+      });
+    }
+
+    if (user.isActive === false) {
+      return res.status(403).json({ success: false, message: 'This account has been suspended by administration.' });
+    }
+
+    const token = generateToken(user);
+    const userSafe = { ...user };
+    delete userSafe.password;
+
+    let profile = null;
+    if (user.role === 'worker') {
+      profile = findOne('workerProfiles', item => item.userId === user._id || item.userId === user.id);
+    } else if (user.role === 'employer') {
+      profile = findOne('employerProfiles', item => item.userId === user._id || item.userId === user.id);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Firebase phone verification successful.',
+      token,
+      user: userSafe,
+      profile
+    });
+  } catch (error) {
+    console.error('[Auth] Firebase sign-in failed:', error.message);
+    const isTokenError = error.code?.startsWith('auth/');
+    return res.status(isTokenError ? 401 : 503).json({
+      success: false,
+      message: isTokenError
+        ? 'Firebase sign-in token is invalid, expired, or revoked.'
+        : 'Firebase authentication is temporarily unavailable.'
+    });
+  }
 };
 
 export const register = async (req, res) => {
@@ -34,12 +108,11 @@ export const register = async (req, res) => {
       email: email || '',
       password: passwordHash,
       role: role || 'worker',
-      verificationStatus: 'Contact Verified', // Phone verified upon registration
+      verificationStatus: 'Contact Verified',
       avatar: avatar || '',
       isActive: true
     });
 
-    // Create profile
     if (newUser.role === 'worker') {
       const parsedSkills = (skills && Array.isArray(skills) ? skills : ['General Worker']).map(s => ({
         skillName: typeof s === 'string' ? s : s.skillName,
@@ -159,7 +232,6 @@ export const login = async (req, res) => {
     const userSafe = { ...user };
     delete userSafe.password;
 
-    // Fetch associated profile
     let profile = null;
     if (user.role === 'worker') {
       profile = findOne('workerProfiles', wp => wp.userId === user._id);
