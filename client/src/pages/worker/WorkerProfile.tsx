@@ -23,6 +23,7 @@ export const WorkerProfilePage: React.FC = () => {
   const [avatar, setAvatar] = useState('');
   const [maxDistanceKm, setMaxDistanceKm] = useState(8);
   const [coordinates, setCoordinates] = useState({ lat: 28.6280, lng: 77.3649 });
+  const [locationPinConfirmed, setLocationPinConfirmed] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -43,6 +44,7 @@ export const WorkerProfilePage: React.FC = () => {
           setAvatar(wp.avatar || user?.avatar || '');
           setMaxDistanceKm(wp.preferences?.maxDistanceKm || 8);
           if (wp.location?.coordinates) setCoordinates(wp.location.coordinates);
+          setLocationPinConfirmed(wp.location?.pinConfirmed === true);
         }
       } catch (err) {
         console.error(err);
@@ -67,7 +69,8 @@ export const WorkerProfilePage: React.FC = () => {
           city,
           area,
           pincode: profile?.location?.pincode || '201309',
-          coordinates
+          coordinates,
+          pinConfirmed: locationPinConfirmed
         },
         preferences: {
           expectedDailyWage: Number(dailyWage),
@@ -132,7 +135,8 @@ export const WorkerProfilePage: React.FC = () => {
             />
           </div>
 
-          <LocationPicker coordinates={coordinates} onChange={setCoordinates} title="Your work location" />
+          <LocationPicker coordinates={coordinates} onChange={value => { setCoordinates(value); setLocationPinConfirmed(true); }} title="Your work location" />
+          <p className={`text-xs ${locationPinConfirmed ? "text-emerald-700" : "text-amber-700"}`}>{locationPinConfirmed ? "Your location pin is confirmed for distance matching." : "Your saved location is not confirmed yet. Use the location button above to set your current location before relying on job distances."}</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-brand-dark block mb-1">Area / Sector</label>

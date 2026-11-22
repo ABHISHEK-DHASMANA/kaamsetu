@@ -240,6 +240,9 @@ export const createJob = async (req, res) => {
     if (!title || !offeredWage || !description) {
       return res.status(400).json({ success: false, message: 'Please provide job title, description, and offered wage.' });
     }
+    const pin = location?.coordinates;
+    const validPin = location?.pinConfirmed === true && Number.isFinite(Number(pin?.lat)) && Number.isFinite(Number(pin?.lng)) && Math.abs(Number(pin.lat)) <= 90 && Math.abs(Number(pin.lng)) <= 180;
+    if (!validPin) return res.status(400).json({ success: false, message: 'Confirm the actual worksite map pin using GPS or valid coordinates before publishing.' });
 
     // Fair Wage Transparency automated checks
     const wageWarnings = [];
@@ -273,14 +276,7 @@ export const createJob = async (req, res) => {
       overtimeTerms: overtimeTerms || '₹120/hr overtime.',
       wageTransparencyWarnings: wageWarnings,
       hiringRadiusKm: Math.min(100, Math.max(1, Number(hiringRadiusKm ?? employerProfile?.maxHiringDistanceKm ?? 10))),
-      location: location || employerProfile?.address || {
-        address: 'Sector 63',
-        area: 'Sector 63',
-        city: 'Noida',
-        state: 'Uttar Pradesh',
-        pincode: '201301',
-        coordinates: { lat: 28.6271, lng: 77.3820 }
-      },
+      location: { ...location, coordinates: { lat: Number(pin.lat), lng: Number(pin.lng) }, pinConfirmed: true },
       startDate: startDate || new Date(Date.now() + 86400000).toISOString(),
       workTimings: workTimings || '9:00 AM - 6:00 PM',
       employerContact: employerContact || {
@@ -335,6 +331,12 @@ export const updateJob = async (req, res) => {
     const safeUpdates = Object.fromEntries(
       editableFields.filter(field => req.body?.[field] !== undefined).map(field => [field, req.body[field]])
     );
+    if (safeUpdates.location !== undefined) {
+      const pin = safeUpdates.location?.coordinates;
+      const validPin = safeUpdates.location?.pinConfirmed === true && Number.isFinite(Number(pin?.lat)) && Number.isFinite(Number(pin?.lng)) && Math.abs(Number(pin.lat)) <= 90 && Math.abs(Number(pin.lng)) <= 180;
+      if (!validPin) return res.status(400).json({ success: false, message: 'Confirm the actual worksite map pin before saving the location.' });
+      safeUpdates.location = { ...safeUpdates.location, coordinates: { lat: Number(pin.lat), lng: Number(pin.lng) }, pinConfirmed: true };
+    }
     if (safeUpdates.offeredWage !== undefined && (!Number.isFinite(Number(safeUpdates.offeredWage)) || Number(safeUpdates.offeredWage) <= 0)) {
       return res.status(400).json({ success: false, message: 'Enter a valid positive wage.' });
     }

@@ -94,8 +94,9 @@ export const calculateLocationScore = (workerLoc = {}, jobLoc = {}, maxDistanceK
   const wCoords = workerLoc.coordinates;
   const jCoords = jobLoc.coordinates;
 
-  const hasCoordinates = [wCoords?.lat, wCoords?.lng, jCoords?.lat, jCoords?.lng]
-    .every(value => value !== undefined && value !== null && String(value).trim() !== '' && Number.isFinite(Number(value)));
+  const hasCoordinates = workerLoc.pinConfirmed === true && jobLoc.pinConfirmed === true &&
+    [wCoords?.lat, wCoords?.lng, jCoords?.lat, jCoords?.lng]
+      .every(value => value !== undefined && value !== null && String(value).trim() !== '' && Number.isFinite(Number(value)));
 
   if (hasCoordinates) {
     const distanceKm = calculateDistanceKm(wCoords.lat, wCoords.lng, jCoords.lat, jCoords.lng);

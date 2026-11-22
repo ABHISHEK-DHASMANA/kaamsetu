@@ -55,6 +55,9 @@ export const PaymentsPage: React.FC = () => {
   const selectedApplication = applications.find(a => a._id === applicationId);
   const selectedWorkerUpiId = selectedApplication?.workerProfile?.upiId;
   const upiQrValue = selectedWorkerUpiId && amount && Number(amount) > 0 ? 'upi://pay?pa=' + encodeURIComponent(selectedWorkerUpiId) + '&pn=' + encodeURIComponent(selectedApplication?.workerProfile?.fullName || 'KaamSetu Worker') + '&am=' + encodeURIComponent(amount) + '&cu=INR&tn=KaamSetu%20job%20payment' : '';
+  const upiAppParams = selectedWorkerUpiId && amount && Number(amount) > 0 ? new URLSearchParams({ pa: selectedWorkerUpiId, pn: selectedApplication?.workerProfile?.fullName || 'KaamSetu Worker', am: amount, cu: 'INR', tn: 'KaamSetu job payment' }).toString() : '';
+  const phonePeLink = upiAppParams ? 'phonepe://pay?' + upiAppParams : '';
+  const googlePayLink = upiAppParams ? 'tez://upi/pay?' + upiAppParams : '';
 
   const saveWorkerUpi = async (event: React.FormEvent) => {
     event.preventDefault(); setUpiSaving(true); setError(''); setMessage('');
@@ -129,7 +132,7 @@ export const PaymentsPage: React.FC = () => {
                 <input required type="number" min="1" max="1000000" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 800" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
               </label>
             </div>
-            {method === "direct_upi" && selectedWorkerUpiId && upiQrValue && <div className="rounded-xl border border-brand-border p-4 flex flex-col sm:flex-row items-center gap-4"><QRCodeSVG value={upiQrValue} size={160} level="M"/><div className="text-xs text-brand-muted"><strong className="block text-brand-dark text-sm mb-1">Scan to pay worker directly</strong>{selectedWorkerUpiId}<p className="mt-1">Amount: {money(Number(amount))}. Scan using a supported UPI app and verify the payee name and amount before paying.</p><a href={upiQrValue} className="inline-flex mt-3 rounded-lg bg-brand-primary text-white px-3 py-2 font-bold">Open UPI app</a></div></div>}
+            {method === "direct_upi" && selectedWorkerUpiId && upiQrValue && <div className="rounded-xl border border-brand-border p-4 flex flex-col sm:flex-row items-center gap-4"><QRCodeSVG value={upiQrValue} size={160} level="M"/><div className="text-xs text-brand-muted"><strong className="block text-brand-dark text-sm mb-1">Scan to pay worker directly</strong>{selectedWorkerUpiId}<p className="mt-1">Amount: {money(Number(amount))}. Scan using a supported UPI app and verify the payee name and amount before paying.</p><div className="mt-3 flex flex-wrap gap-2"><a href={phonePeLink} className="inline-flex rounded-lg bg-purple-700 text-white px-3 py-2 font-bold">Open PhonePe</a><a href={googlePayLink} className="inline-flex rounded-lg bg-blue-700 text-white px-3 py-2 font-bold">Open Google Pay</a><a href={upiQrValue} className="inline-flex rounded-lg border border-brand-border text-brand-dark px-3 py-2 font-bold">Other UPI apps</a></div><p className="mt-2 text-[10px] text-brand-muted">Open a supported UPI app if installed. Check the payee name and amount before authorizing payment.</p></div></div>}
             <div className="grid md:grid-cols-2 gap-3">
               <label className="text-xs font-semibold text-brand-muted">Payment method
                 <select value={method} onChange={e => setMethod(e.target.value as 'cash' | 'direct_upi')} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">

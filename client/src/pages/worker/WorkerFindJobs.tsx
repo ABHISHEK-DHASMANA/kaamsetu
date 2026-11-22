@@ -257,7 +257,7 @@ export const WorkerFindJobs: React.FC = () => {
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5 text-brand-primary" />
                       <span>{job.location?.area || 'Sector 63'}, {job.location?.city || 'Noida'}</span>
-                      {job.location?.coordinates && <a target="_blank" rel="noreferrer" className="ml-1 text-brand-primary underline" href={"https://www.openstreetmap.org/?mlat=" + job.location.coordinates.lat + "&mlon=" + job.location.coordinates.lng + "#map=16/" + job.location.coordinates.lat + "/" + job.location.coordinates.lng}>Map</a>}
+                      {job.location?.coordinates && <><a target="_blank" rel="noreferrer" className="ml-1 text-brand-primary underline" href={"https://www.openstreetmap.org/?mlat=" + job.location.coordinates.lat + "&mlon=" + job.location.coordinates.lng + "#map=16/" + job.location.coordinates.lat + "/" + job.location.coordinates.lng}>Map</a><a target="_blank" rel="noreferrer" className="ml-2 text-brand-primary underline" href={"https://www.google.com/maps/dir/?api=1&destination=" + job.location.coordinates.lat + "," + job.location.coordinates.lng + "&travelmode=driving"}>Driving route</a></>}
                     </span>
                     {job.distanceKm !== undefined && job.distanceKm !== null ? (
                       <span className="font-semibold text-sky-700">

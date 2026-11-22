@@ -36,7 +36,8 @@ export const EmployerPostJob: React.FC = () => {
   const [overtimeTerms, setOvertimeTerms] = useState('₹140/hour overtime compensation for work beyond 8 hours');
   const [area, setArea] = useState('Sector 63');
   const [city, setCity] = useState('Noida');
-  const [coordinates, setCoordinates] = useState({ lat: 28.6271, lng: 77.3820 });
+  const [coordinates, setCoordinates] = useState({ lat: '', lng: '' });
+  const [locationPinConfirmed, setLocationPinConfirmed] = useState(false);
   const [hiringRadiusKm, setHiringRadiusKm] = useState(profile?.maxHiringDistanceKm || 10);
   const [workTimings, setWorkTimings] = useState('9:00 AM - 6:00 PM (1 hr lunch)');
 
@@ -66,6 +67,12 @@ export const EmployerPostJob: React.FC = () => {
       return;
     }
 
+    const lat = Number(coordinates.lat);
+    const lng = Number(coordinates.lng);
+    if (!locationPinConfirmed || !coordinates.lat || !coordinates.lng || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      showToast('Confirm the actual worksite pin using GPS or enter valid map coordinates before publishing.', 'error');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const res = await apiCreateJob({
@@ -89,7 +96,8 @@ export const EmployerPostJob: React.FC = () => {
           city,
           state: 'Uttar Pradesh',
           pincode: '201301',
-          coordinates
+          coordinates: { lat, lng },
+          pinConfirmed: true
         },
         workTimings
       });
@@ -182,12 +190,17 @@ export const EmployerPostJob: React.FC = () => {
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between gap-2"><label className="text-xs font-bold">Worksite location pin</label>
-                <button type="button" onClick={() => { if (!navigator.geolocation) { showToast("Location is not supported.", "error"); return; } navigator.geolocation.getCurrentPosition(pos => setCoordinates({ lat: pos.coords.latitude, lng: pos.coords.longitude }), () => showToast("Location permission was not granted.", "error"), { enableHighAccuracy: true, timeout: 10000 }); }} className="text-xs font-bold text-brand-primary">Use my current location</button>
+              <div className="flex items-center justify-between gap-2"><label className="text-xs font-bold">Confirm the actual worksite pin <span className="text-red-500">*</span></label>
+                <button type="button" onClick={() => { if (!navigator.geolocation) { showToast("Location is not supported.", "error"); return; } navigator.geolocation.getCurrentPosition(pos => { setCoordinates({ lat: String(pos.coords.latitude), lng: String(pos.coords.longitude) }); setLocationPinConfirmed(true); }, () => showToast("Location permission was not granted. Enter coordinates manually.", "error"), { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }); }} className="text-xs font-bold text-brand-primary">Use current location</button>
               </div>
-              <p className="text-[11px] text-brand-muted">Set the actual worksite pin. Avoid using a private home address if the work is elsewhere.</p>
-              <div className="text-[11px] text-brand-muted">Pin: {coordinates.lat.toFixed(5)}, {coordinates.lng.toFixed(5)}</div>
-              <a target="_blank" rel="noreferrer" href={"https://www.openstreetmap.org/?mlat=" + coordinates.lat + "&mlon=" + coordinates.lng + "#map=16/" + coordinates.lat + "/" + coordinates.lng} className="text-xs text-brand-primary underline">Open pin in OpenStreetMap</a>
+              <p className="text-[11px] text-brand-muted">Use GPS while at the worksite, or enter its coordinates from a map. Do not use your home location if the job is elsewhere.</p>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-[11px] font-semibold text-brand-muted">Latitude<input type="number" step="any" min="-90" max="90" value={coordinates.lat} onChange={e => { setCoordinates(v => ({ ...v, lat: e.target.value })); setLocationPinConfirmed(false); }} placeholder="28.6..." className="mt-1 w-full rounded-lg border border-brand-border bg-white p-2 text-xs text-brand-dark"/></label>
+                <label className="text-[11px] font-semibold text-brand-muted">Longitude<input type="number" step="any" min="-180" max="180" value={coordinates.lng} onChange={e => { setCoordinates(v => ({ ...v, lng: e.target.value })); setLocationPinConfirmed(false); }} placeholder="77.3..." className="mt-1 w-full rounded-lg border border-brand-border bg-white p-2 text-xs text-brand-dark"/></label>
+              </div>
+              {coordinates.lat && coordinates.lng && <a target="_blank" rel="noreferrer" href={"https://www.openstreetmap.org/?mlat=" + coordinates.lat + "&mlon=" + coordinates.lng + "#map=16/" + coordinates.lat + "/" + coordinates.lng} className="text-xs text-brand-primary underline">Preview this pin on OpenStreetMap</a>}
+              <label className="flex items-center gap-2 text-[11px] font-semibold text-brand-dark"><input type="checkbox" checked={locationPinConfirmed} disabled={!coordinates.lat || !coordinates.lng} onChange={e => setLocationPinConfirmed(e.target.checked)} /> I confirm these coordinates are the actual worksite</label>
+              <div className="text-[11px] font-semibold">{locationPinConfirmed ? "✓ Worksite pin confirmed" : "Pin not confirmed — use GPS or confirm the entered coordinates before publishing."}</div>
               <div><div className="flex justify-between text-xs font-bold"><span>Maximum worker distance for this job</span><span>{hiringRadiusKm} km</span></div>
                 <input type="range" min="1" max="50" value={hiringRadiusKm} onChange={e => setHiringRadiusKm(Number(e.target.value))} className="w-full accent-brand-primary" /></div>
             </div>
