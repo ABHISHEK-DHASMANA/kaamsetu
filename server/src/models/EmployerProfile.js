@@ -30,7 +30,7 @@ const employerProfileSchema = new mongoose.Schema({
     }
   },
 
-  rating: { type: Number, default: 4.9 },
+  rating: { type: Number, default: null },
   jobsPostedCount: { type: Number, default: 0 },
   activeJobsCount: { type: Number, default: 0 },
   hiredWorkersCount: { type: Number, default: 0 },
