@@ -26,6 +26,7 @@ export const PaymentsPage: React.FC = () => {
   const [reference, setReference] = useState('');
   const [note, setNote] = useState('');
   const [workerUpiId, setWorkerUpiId] = useState('');
+  const [selectedUpiApp, setSelectedUpiApp] = useState<'phonepe' | 'gpay' | 'paytm' | 'other'>('other');
   const [upiSaving, setUpiSaving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -78,6 +79,8 @@ export const PaymentsPage: React.FC = () => {
   const upiAppParams = selectedWorkerUpiId && amount && Number(amount) > 0 ? new URLSearchParams({ pa: selectedWorkerUpiId, pn: selectedApplication?.workerProfile?.fullName || 'KaamSetu Worker', am: amount, cu: 'INR', tn: 'KaamSetu job payment' }).toString() : '';
   const phonePeLink = upiAppParams ? 'phonepe://pay?' + upiAppParams : '';
   const googlePayLink = upiAppParams ? 'tez://upi/pay?' + upiAppParams : '';
+  const paytmLink = upiAppParams ? 'paytmmp://pay?' + upiAppParams : '';
+  const selectedUpiLink = selectedUpiApp === 'phonepe' ? phonePeLink : selectedUpiApp === 'gpay' ? googlePayLink : selectedUpiApp === 'paytm' ? paytmLink : upiQrValue;
 
   const saveWorkerUpi = async (event: React.FormEvent) => {
     event.preventDefault(); setUpiSaving(true); setError(''); setMessage('');
@@ -152,7 +155,7 @@ export const PaymentsPage: React.FC = () => {
                 <input required type="number" min="1" max="1000000" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 800" className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark" />
               </label>
             </div>
-            {method === "direct_upi" && selectedWorkerUpiId && upiQrValue && <div className="rounded-xl border border-brand-border p-4 flex flex-col sm:flex-row items-center gap-4"><QRCodeSVG value={upiQrValue} size={160} level="M"/><div className="text-xs text-brand-muted"><strong className="block text-brand-dark text-sm mb-1">Scan to pay worker directly</strong>{selectedWorkerUpiId}<p className="mt-1">Amount: {money(Number(amount))}. Scan using a supported UPI app and verify the payee name and amount before paying.</p><div className="mt-3 flex flex-wrap gap-2"><a href={phonePeLink} className="inline-flex rounded-lg bg-purple-700 text-white px-3 py-2 font-bold">Open PhonePe</a><a href={googlePayLink} className="inline-flex rounded-lg bg-blue-700 text-white px-3 py-2 font-bold">Open Google Pay</a><a href={upiQrValue} className="inline-flex rounded-lg border border-brand-border text-brand-dark px-3 py-2 font-bold">Other UPI apps</a></div><p className="mt-2 text-[10px] text-brand-muted">Open a supported UPI app if installed. Check the payee name and amount before authorizing payment.</p></div></div>}
+            {method === "direct_upi" && selectedWorkerUpiId && upiQrValue && <div className="rounded-xl border border-brand-border p-4 flex flex-col sm:flex-row items-center gap-4"><QRCodeSVG value={upiQrValue} size={160} level="M"/><div className="text-xs text-brand-muted"><strong className="block text-brand-dark text-sm mb-1">Scan to pay worker directly</strong>{selectedWorkerUpiId}<p className="mt-1">Amount: {money(Number(amount))}. Scan using a supported UPI app and verify the payee name and amount before paying.</p><div className="mt-3 grid sm:grid-cols-[1fr_auto] gap-2 items-end"><label className="block text-[11px] font-semibold text-brand-muted">Choose your payment app<select value={selectedUpiApp} onChange={e => setSelectedUpiApp(e.target.value as 'phonepe' | 'gpay' | 'paytm' | 'other')} className="mt-1 w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark"><option value="other">Other UPI apps (show app chooser)</option><option value="phonepe">PhonePe</option><option value="gpay">Google Pay</option><option value="paytm">Paytm</option></select></label><a href={selectedUpiLink || undefined} onClick={e => { if (!selectedUpiLink) e.preventDefault(); }} className="inline-flex justify-center rounded-lg bg-brand-primary text-white px-4 py-2.5 font-bold text-xs">Continue to payment app</a></div><p className="mt-2 text-[10px] text-brand-muted">Your phone opens the selected installed UPI app. If it is unavailable, choose “Other UPI apps”. Verify the worker's UPI ID, payee name and amount inside the payment app before approving.</p></div></div>}
             <div className="grid md:grid-cols-2 gap-3">
               <div className="text-xs font-semibold text-brand-muted">Payment method
                 <div className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark bg-slate-50">Online UPI (PhonePe / Google Pay / other UPI apps)</div>
