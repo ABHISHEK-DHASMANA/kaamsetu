@@ -143,7 +143,7 @@ export const confirmPaymentReceived = async (req, res) => {
     if (workerProfile) {
       const passport = workerProfile.skillPassport || {};
       update('workerProfiles', idOf(workerProfile._id || workerProfile.id), {
-        skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1, trustScore: Math.min(100, (passport.trustScore || 85) + 2) }
+        skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1 }
       });
     }
     const job = findOne('jobs', j => idOf(j._id || j.id) === idOf(application.jobId));
