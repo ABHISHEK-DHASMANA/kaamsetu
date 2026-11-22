@@ -13,15 +13,17 @@ export const protect = async (req, res, next) => {
   }
 
   try {
-    const secret = process.env.JWT_SECRET || 'kaamsetu_super_secure_jwt_secret_key_2026_hackathon';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(503).json({ success: false, message: 'Authentication is not configured on this server.' });
+    }
     const decoded = jwt.verify(token, secret);
 
-    // Check user in storage/Mongoose
     let user = null;
     try {
       user = await User.findById(decoded.id).select('-password');
     } catch {
-      // Fallback
+      // Fallback to the application's storage layer.
     }
 
     if (!user) {
@@ -38,7 +40,7 @@ export const protect = async (req, res, next) => {
 
     req.user = user;
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ success: false, message: 'Authentication token invalid or expired.' });
   }
 };
