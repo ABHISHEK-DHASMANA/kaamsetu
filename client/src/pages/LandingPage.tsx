@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { RibbonStage } from '../components/visual/RibbonStage';
+import { ScrollExperience } from '../components/visual/ScrollExperience';
 import { VoiceSearchModal } from '../components/voice/VoiceSearchModal';
 import { ExtractedJobPreferences } from '../types';
 import {
@@ -129,6 +130,8 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+
+        <ScrollExperience />
 
         <section className="py-16 lg:py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

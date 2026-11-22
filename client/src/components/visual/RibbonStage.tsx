@@ -125,6 +125,15 @@ export const RibbonStage: React.FC = () => {
         let resize = () => {};
 
         const onScroll = () => {
+          const experience = host.closest('.ks-scroll-experience');
+          if (experience) {
+            const rect = experience.getBoundingClientRect();
+            const progress = Math.max(0, Math.min(1,
+              (window.innerHeight - rect.top) / Math.max(window.innerHeight, rect.height),
+            ));
+            scrollProgress = progress * 2 - 1;
+            return;
+          }
           const rect = host.getBoundingClientRect();
           scrollProgress = Math.max(-1, Math.min(
             1,
