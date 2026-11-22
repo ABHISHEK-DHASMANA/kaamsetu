@@ -3,8 +3,8 @@ import { calculateJobMatch } from '../services/matchingEngine.js';
 
 const idOf = user => user?._id || user?.id;
 
-const notify = (userId, title, message, type = 'info') => insert('notifications', {
-  userId, title, message, type, actionUrl: '/worker/applications', isRead: false
+const notify = (userId, title, message, type = 'info', actionUrl = '/worker/applications') => insert('notifications', {
+  userId, title, message, type, actionUrl, isRead: false
 });
 
 export const applyJob = async (req, res) => {
@@ -101,7 +101,7 @@ export const updateApplicationStatus = async (req, res) => {
     const job = findOne('jobs', j => (j._id || j.id) === application.jobId);
     if (status === 'Accepted') {
       if (job) update('jobs', job._id || job.id, { acceptedWorkerId: application.workerId, status: 'in_progress' });
-      notify(application.workerId, 'Application accepted', `Your application for "${job?.title || 'the job'}" was accepted. Contact details are unlocked.`, 'success');
+      notify(application.workerId, 'You have been hired', `Your application for "${job?.title || 'the job'}" was accepted. You can now message the employer.`, 'success', `/chats?applicationId=${encodeURIComponent(String(application._id || application.id))}`);
     } else {
       notify(application.workerId, status === 'Rejected' ? 'Application not selected' : 'Application update', `Your application for "${job?.title || 'the job'}" is now ${status.toLowerCase()}.`);
     }
@@ -184,7 +184,7 @@ export const updateWorkLifecycle = async (req, res) => {
         createdAt: now
       });
     }
-    if (recipient) insert('notifications', { userId: recipient, title, message, type: action === 'cancel' ? 'warning' : 'info', actionUrl: isWorker ? '/employer/candidates' : '/worker/applications', isRead: false });
+    if (recipient) insert('notifications', { userId: recipient, title, message, type: action === 'cancel' ? 'warning' : 'info', actionUrl: action === 'cancel' ? (isWorker ? '/employer/candidates' : '/worker/applications') : `/chats?applicationId=${encodeURIComponent(String(application._id || application.id))}`, isRead: false });
     res.json({ success: true, message: action === 'cancel' ? 'Cancellation recorded and the other party notified.' : 'Work status updated and the other party notified.', application: updated });
   } catch (error) {
     console.error('updateWorkLifecycle error:', error);
