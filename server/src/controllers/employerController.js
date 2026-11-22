@@ -19,7 +19,7 @@ export const getEmployerProfile = async (req, res) => {
       String(a.employerId) === String(profile.userId) && a.status === 'Completed'
     );
     const employerReviews = find('reviews', r =>
-      String(r.toUserId) === String(profile.userId) && String(r.fromUserId) !== String(profile.userId)
+      String(r.toUserId) === String(profile.userId) && r.fromRole === 'worker' && r.isVerifiedWork === true
     );
     const averageEmployerRating = employerReviews.length
       ? Math.round((employerReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / employerReviews.length) * 10) / 10
