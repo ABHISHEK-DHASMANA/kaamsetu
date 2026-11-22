@@ -9,7 +9,7 @@ import { Search, MapPin, Users, Briefcase, ShieldCheck } from 'lucide-react';
 type PublicWorker = {
   _id: string; fullName: string; avatar?: string; primarySkill: string; experienceYearsNum: number;
   skills?: Array<{ skillName: string }>; location?: { city?: string; area?: string };
-  skillPassport?: { passportId?: string }; bio?: string;
+  skillPassport?: { passportId?: string; rating?: number | null; reviewsCount?: number; completedJobsCount?: number }; bio?: string;
 };
 
 export const WorkersExplorePage: React.FC = () => {
@@ -60,6 +60,10 @@ export const WorkersExplorePage: React.FC = () => {
           <article key={worker._id} className="rounded-3xl border border-brand-border bg-white p-5 flex flex-col gap-4">
             <div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-brand-primary-light overflow-hidden flex items-center justify-center text-brand-primary font-black">{worker.avatar ? <img src={worker.avatar} alt="" className="w-full h-full object-cover" /> : worker.fullName?.charAt(0) || 'W'}</div><div className="min-w-0"><h2 className="font-bold text-brand-dark truncate">{worker.fullName}</h2><p className="text-xs text-brand-secondary font-semibold">{worker.primarySkill || 'Skilled worker'}</p></div></div>
             <div className="flex flex-wrap gap-2 text-[11px] text-brand-muted"><span className="inline-flex items-center gap-1"><Briefcase className="w-3 h-3" /> {worker.experienceYearsNum || 0} years experience</span><span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" /> {[worker.location?.area, worker.location?.city].filter(Boolean).join(', ') || 'Location not shared'}</span></div>
+            <div className="text-xs font-semibold text-brand-dark">
+              {worker.skillPassport?.reviewsCount ? `★ ${Number(worker.skillPassport.rating || 0).toFixed(1)}/5 · ${worker.skillPassport.reviewsCount} employer review(s)` : 'New to KaamSetu · No ratings yet'}
+              {typeof worker.skillPassport?.completedJobsCount === 'number' ? ` · ${worker.skillPassport.completedJobsCount} completed job(s)` : ''}
+            </div>
             {worker.bio && <p className="text-xs text-brand-muted line-clamp-3">{worker.bio}</p>}
             {worker.skills?.length ? <div className="flex flex-wrap gap-1.5">{worker.skills.slice(0,4).map((s,i) => <span key={i} className="px-2 py-1 rounded-lg bg-slate-100 text-[10px] text-slate-600">{s.skillName}</span>)}</div> : null}
             <div className="mt-auto pt-3 border-t border-brand-border flex items-center justify-between gap-2">{worker.skillPassport?.passportId ? <Link to={'/passport/' + worker.skillPassport.passportId} className="text-xs font-semibold text-brand-secondary hover:underline inline-flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> View profile</Link> : <span className="text-[11px] text-brand-muted">Public profile</span>}<button onClick={hire} className="px-3 py-2 rounded-xl bg-brand-primary text-white text-[11px] font-bold">Hire / Post work</button></div>
