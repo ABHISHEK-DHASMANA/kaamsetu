@@ -213,8 +213,9 @@ export const WorkerApplications: React.FC = () => {
                       <Building2 className="w-3.5 h-3.5 text-brand-secondary" />
                       <span>{app.employer?.companyName || 'Employer'}</span>
                       <span>•</span>
-                      <span className="font-bold text-emerald-700">
-                        {app.employer?.trustScore != null ? `Trusted employer · ${app.employer.trustScore}/100` : 'New to KaamSetu'}
+                      <span className="font-bold text-amber-700 inline-flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-current" />
+                        {typeof app.employer?.rating === 'number' ? `${app.employer.rating.toFixed(1)}/5 · ${app.employer.reviewsCount || 0} worker review(s)` : 'New to KaamSetu · No worker reviews'}
                       </span>
                       <span>•</span>
                       <span>Applied on {new Date(app.createdAt).toLocaleDateString()}</span>
