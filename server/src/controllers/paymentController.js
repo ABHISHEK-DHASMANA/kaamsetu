@@ -97,6 +97,7 @@ export const confirmPaymentReceived = (req, res) => {
   if (payment.workerId !== workerId) return res.status(403).json({ success: false, message: 'Only the assigned worker can confirm receipt.' });
   if (payment.status === 'disputed') return res.status(409).json({ success: false, message: 'This payment is under dispute.' });
   if (payment.status === 'paid') return res.json({ success: true, message: 'Payment was already confirmed.', payment: hydratePayment(payment) });
+  if (payment.status !== 'awaiting_worker_confirmation') return res.status(409).json({ success: false, message: 'This payment is not awaiting confirmation.' });
 
   const updated = update('payments', payment._id, {
     workerConfirmed: true,
