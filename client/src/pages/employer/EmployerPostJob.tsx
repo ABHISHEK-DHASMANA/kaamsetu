@@ -107,8 +107,8 @@ export const EmployerPostJob: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Post a New Job Opening"
-      subtitle="Publish your trade requirement with fair wage transparency"
+      title={profile?.businessType === "Home Owner" ? "Post a Home Job" : "Post a Job Opening"}
+      subtitle="Tell local workers what help you need and what you will pay"
     >
       <div className="max-w-3xl bg-white rounded-3xl border border-brand-border shadow-sm p-6 sm:p-8 space-y-6">
         <form onSubmit={handlePostJob} className="space-y-6">
@@ -126,7 +126,7 @@ export const EmployerPostJob: React.FC = () => {
               <input
                 type="text"
                 required
-                placeholder="e.g. Commercial Electrician Required for Office Rewiring"
+                placeholder="e.g. Need a plumber to fix a kitchen tap"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark font-medium"
@@ -198,7 +198,7 @@ export const EmployerPostJob: React.FC = () => {
               <textarea
                 rows={3}
                 required
-                placeholder="Explain the work: tools required, physical site conditions, tools provided on site, safety equipment..."
+                placeholder="Describe the work clearly, where it is needed, and anything the worker should bring. Avoid sharing private details publicly."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full text-xs p-3.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark leading-relaxed"
