@@ -4,49 +4,76 @@ import { calculateJobMatch } from '../services/matchingEngine.js';
 export const getJobs = async (req, res) => {
   try {
     const { category, search, city, area, wageType, minWage, maxWage } = req.query;
-    let jobs = find('jobs', j => j.status === 'active');
+    const normalize = value => String(value || '').toLowerCase().trim();
+    const originalJobs = find('jobs', job => job.status === 'active');
+    let jobs = [...originalJobs];
+    const searchMeta = { searchMatched: true, categoryMatched: true, areaMatched: true, wageMatched: true };
+
+    // Treat spoken/typed preferences as ranking hints when an exact match is
+    // unavailable. Never turn "near me" into a literal area requirement.
+    const genericNearby = /^(nearby|near me|around me|aas paas|mere aas paas|पास में|आस पास)$/i.test(normalize(area));
+    if (search) {
+      const stopWords = new Set(['near', 'me', 'nearby', 'around', 'the', 'in', 'at', 'for', 'job', 'jobs', 'work', 'kaam', 'chahiye', 'mujhe', 'kal', 'today', 'tomorrow', 'aas', 'paas']);
+      const terms = normalize(search).split(/\s+/).filter(term => term.length > 1 && !stopWords.has(term));
+      if (terms.length) {
+        const matched = jobs.filter(job => {
+          const searchable = [
+            job.title, job.description, job.companyName, job.category,
+            job.location?.area, job.location?.city, ...(job.requiredSkills || [])
+          ].map(normalize).join(' ');
+          return terms.some(term => searchable.includes(term));
+        });
+        searchMeta.searchMatched = matched.length > 0;
+        if (matched.length) jobs = matched;
+      }
+    }
 
     if (category && category !== 'All') {
-      jobs = jobs.filter(j => 
-        (j.category && j.category.toLowerCase() === category.toLowerCase()) ||
-        (j.requiredSkills && j.requiredSkills.some(s => s.toLowerCase().includes(category.toLowerCase())))
+      const term = normalize(category);
+      const matched = jobs.filter(job =>
+        normalize(job.category).includes(term) ||
+        (job.requiredSkills || []).some(skill => normalize(skill).includes(term))
       );
+      searchMeta.categoryMatched = matched.length > 0;
+      if (matched.length) jobs = matched;
     }
 
     if (city) {
-      jobs = jobs.filter(j => j.location?.city?.toLowerCase() === city.toLowerCase());
+      const matched = jobs.filter(job => normalize(job.location?.city) === normalize(city));
+      if (matched.length) jobs = matched;
     }
 
-    if (area) {
-      jobs = jobs.filter(j => j.location?.area?.toLowerCase().includes(area.toLowerCase()));
+    if (area && !genericNearby) {
+      const term = normalize(area);
+      const matched = jobs.filter(job =>
+        normalize(job.location?.area).includes(term) ||
+        normalize(job.location?.city).includes(term)
+      );
+      searchMeta.areaMatched = matched.length > 0;
+      if (matched.length) jobs = matched;
     }
 
     if (wageType) {
-      jobs = jobs.filter(j => j.wageType === wageType);
+      const matched = jobs.filter(job => normalize(job.wageType) === normalize(wageType));
+      if (matched.length) jobs = matched;
+      else searchMeta.wageMatched = false;
     }
 
     if (minWage) {
-      jobs = jobs.filter(j => j.offeredWage >= Number(minWage));
+      const matched = jobs.filter(job => Number(job.offeredWage) >= Number(minWage));
+      if (matched.length) jobs = matched;
+      else searchMeta.wageMatched = false;
     }
-
     if (maxWage) {
-      jobs = jobs.filter(j => j.offeredWage <= Number(maxWage));
-    }
-
-    if (search) {
-      const q = search.toLowerCase();
-      jobs = jobs.filter(j => 
-        j.title.toLowerCase().includes(q) ||
-        j.description.toLowerCase().includes(q) ||
-        j.companyName.toLowerCase().includes(q) ||
-        j.location?.area?.toLowerCase().includes(q) ||
-        j.requiredSkills?.some(s => s.toLowerCase().includes(q))
-      );
+      const matched = jobs.filter(job => Number(job.offeredWage) <= Number(maxWage));
+      if (matched.length) jobs = matched;
+      else searchMeta.wageMatched = false;
     }
 
     res.status(200).json({
       success: true,
       count: jobs.length,
+      searchMeta,
       jobs: jobs.map(({ employerContact, ...publicJob }) => publicJob)
     });
   } catch (error) {
@@ -54,7 +81,6 @@ export const getJobs = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error retrieving job listings.' });
   }
 };
-
 export const getJobById = async (req, res) => {
   try {
     const { id } = req.params;

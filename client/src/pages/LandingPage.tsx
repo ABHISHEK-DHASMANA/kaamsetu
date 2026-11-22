@@ -22,7 +22,11 @@ export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleVoiceConfirmed = (prefs: ExtractedJobPreferences) => {
-    navigate(`/jobs?search=${encodeURIComponent(prefs.skill)}&area=${encodeURIComponent(prefs.location)}&wage=${prefs.expected_wage}&distance=${prefs.preferred_distance}&availability=${encodeURIComponent(prefs.availability)}`);
+    const spokenArea = (prefs.location || '').trim();
+    const genericNearby = /^(nearby|near me|around me|aas paas|mere aas paas|पास में|आस पास|noida sector 62)$/i.test(spokenArea);
+    const params = new URLSearchParams({ search: prefs.skill });
+    if (spokenArea && !genericNearby) params.set('area', spokenArea);
+    navigate(`/jobs?${params.toString()}`);
   };
 
   return (

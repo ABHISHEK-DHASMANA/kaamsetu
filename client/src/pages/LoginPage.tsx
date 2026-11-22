@@ -49,11 +49,13 @@ export const LoginPage: React.FC = () => {
       setConfirmation(result);
       setNotice('OTP sent. Enter the verification code received on your phone.');
     } catch (err: any) {
-      setErrorMsg(err.code === 'auth/credential-already-in-use'
-        ? 'This phone number is already linked to another Firebase account. Sign in using that phone number instead.'
-        : err.code === 'auth/too-many-requests'
-          ? 'Too many attempts. Please wait before requesting another OTP.'
-          : err.message || 'Could not send OTP. Check the number and try again.');
+      setErrorMsg(err.code === 'auth/unauthorized-domain'
+        ? `Firebase is blocking this website (${window.location.hostname}). Add this exact hostname in Firebase Console → Authentication → Settings → Authorized domains, then reload the site.`
+        : err.code === 'auth/credential-already-in-use'
+          ? 'This phone number is already linked to another Firebase account. Sign in using that phone number instead.'
+          : err.code === 'auth/too-many-requests'
+            ? 'Too many attempts. Please wait before requesting another OTP.'
+            : err.message || 'Could not send OTP. Check the number and try again.');
       recaptcha.current?.clear(); recaptcha.current = null;
     } finally { setBusy(false); }
   };
@@ -77,7 +79,9 @@ export const LoginPage: React.FC = () => {
       setGoogleUser(current);
       setNotice('Google verified. Now verify your mobile number to continue.');
     } catch (err: any) {
-      setErrorMsg(err.code === 'auth/popup-closed-by-user' ? 'Google sign-in was cancelled.' : err.message || 'Google sign-in failed.');
+      setErrorMsg(err.code === 'auth/unauthorized-domain'
+        ? `Firebase is blocking this website (${window.location.hostname}). Add this exact hostname in Firebase Console → Authentication → Settings → Authorized domains, then reload the site.`
+        : err.code === 'auth/popup-closed-by-user' ? 'Google sign-in was cancelled.' : err.message || 'Google sign-in failed.');
     } finally { setBusy(false); }
   };
   const handleManualLogin = async (e: React.FormEvent) => {

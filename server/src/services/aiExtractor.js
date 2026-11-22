@@ -99,7 +99,7 @@ export const extractWithDeterministicNLP = (raw) => {
   }
 
   // 2. Location Extraction
-  let location = 'Noida Sector 62';
+  let location = 'Nearby';
   const locationPatterns = [
     { name: 'Sector 62', patterns: ['sector 62', 'sec 62', 'सेक्टर 62', 'sector-62'] },
     { name: 'Sector 63', patterns: ['sector 63', 'sec 63', 'सेक्टर 63', 'sector-63'] },

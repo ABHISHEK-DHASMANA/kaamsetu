@@ -54,7 +54,7 @@ export const JobsExplorePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All');
   const [selectedArea, setSelectedArea] = useState(searchParams.get('area') || '');
-  const [selectedWageType, setSelectedWageType] = useState('daily');
+  const [selectedWageType, setSelectedWageType] = useState('all');
 
   // Modals state
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -65,27 +65,39 @@ export const JobsExplorePage: React.FC = () => {
     setIsLoading(true);
     try {
       const params: Record<string, string> = { ...overrides };
+      const areaValue = (params.area ?? selectedArea).trim();
+      const genericNearby = /^(nearby|near me|around me|aas paas|mere aas paas|पास में|आस पास)$/i.test(areaValue);
       if (searchQuery && !params.search) params.search = searchQuery;
       if (selectedCategory && selectedCategory !== 'All' && !params.category) params.category = selectedCategory;
-      if (selectedArea && !params.area) params.area = selectedArea;
-      if (selectedWageType && !params.wageType) params.wageType = selectedWageType;
-      const voiceWage = searchParams.get('wage');
-      if (voiceWage && !params.minWage) params.minWage = voiceWage;
+      if (areaValue && !genericNearby && !params.area) params.area = areaValue;
+      if (selectedWageType && selectedWageType !== 'all' && !params.wageType) params.wageType = selectedWageType;
 
-      // If logged in as worker, fetch with intelligent matching scores
+      // Wage and distance spoken as preferences must not become hard filters.
+      // A visitor should still see relevant active jobs if the exact preference
+      // cannot be met by the current listings.
+      const publicParams = { ...params };
+      delete publicParams.minWage;
+      delete publicParams.maxWage;
+
       if (isAuthenticated && user?.role === 'worker') {
-        const res = await apiGetMatchingJobs(params);
-        if (res.success) {
-          setJobs(res.jobs);
-        }
-      } else {
-        const res = await apiGetJobs(params);
-        if (res.success) {
-          setJobs(res.jobs);
+        const matchingParams: Record<string, string> = {};
+        if (publicParams.search) matchingParams.search = publicParams.search;
+        if (publicParams.category && publicParams.category !== 'All') matchingParams.skill = publicParams.category;
+        if (publicParams.area) matchingParams.location = publicParams.area;
+        const matching = await apiGetMatchingJobs(matchingParams);
+        if (matching.success && matching.jobs?.length) {
+          setJobs(matching.jobs);
+          return;
         }
       }
+
+      // Public discovery is the reliable fallback for guests and workers whose
+      // profile/matching preferences do not yet produce any scored results.
+      const res = await apiGetJobs(publicParams);
+      if (res.success) setJobs(res.jobs || []);
     } catch (err) {
-      console.error(err);
+      console.error('[Jobs] Could not load listings:', err);
+      // Keep the previous results visible rather than replacing them with a blank screen.
     } finally {
       setIsLoading(false);
     }
@@ -101,23 +113,18 @@ export const JobsExplorePage: React.FC = () => {
   };
 
   const handleVoiceConfirmed = (prefs: ExtractedJobPreferences) => {
-    const wageType = prefs.wage_type || 'daily';
-    const params: Record<string, string> = {
-      search: prefs.skill,
-      area: prefs.location,
-      wageType
-    };
-    if (Number(prefs.expected_wage) > 0) params.minWage = String(prefs.expected_wage);
+    const spokenArea = (prefs.location || '').trim();
+    const genericNearby = /^(nearby|near me|around me|aas paas|mere aas paas|पास में|आस पास|noida sector 62)$/i.test(spokenArea);
+    const params: Record<string, string> = { search: prefs.skill };
+    if (spokenArea && !genericNearby) params.area = spokenArea;
 
     setSelectedCategory('All');
-    setSelectedArea(prefs.location);
+    setSelectedArea(genericNearby ? '' : spokenArea);
     setSearchQuery(prefs.skill);
-    setSelectedWageType(wageType);
+    setSelectedWageType('all');
     setSearchParams({
       search: prefs.skill,
-      area: prefs.location,
-      wage: String(prefs.expected_wage || ''),
-      distance: String(prefs.preferred_distance || 5)
+      ...(genericNearby || !spokenArea ? {} : { area: spokenArea })
     });
     void fetchJobsList(params);
   };
@@ -300,6 +307,8 @@ export const JobsExplorePage: React.FC = () => {
                     setSelectedCategory('All');
                     setSelectedArea('');
                     setSearchQuery('');
+                    setSelectedWageType('all');
+                    setSearchParams({});
                   }}
                   className="px-4 py-2 rounded-xl bg-brand-primary text-white text-xs font-semibold"
                 >
