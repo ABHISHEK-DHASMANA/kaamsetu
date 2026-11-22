@@ -41,8 +41,8 @@ export const getWorkerApplications = async (req, res) => {
       const employer = findOne('employerProfiles', ep => ep.userId === app.employerId);
       const employerReviews = find('reviews', review => review.toUserId === app.employerId);
       const completedEmployerHires = find('applications', item => item.employerId === app.employerId && item.status === 'Completed');
-      const employerTrustScore = employerReviews.length && completedEmployerHires.length
-        ? Math.round((employerReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / employerReviews.length) * 20)
+      const employerAverageRating = employerReviews.length
+        ? Math.round((employerReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / employerReviews.length) * 10) / 10
         : null;
       const unlocked = ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending', 'Completed'].includes(app.status);
       const employerUser = unlocked ? findOne('users', u => idOf(u) === app.employerId) : null;
@@ -51,7 +51,7 @@ export const getWorkerApplications = async (req, res) => {
         workerReviewed: findOne('reviews', r => r.jobId === app.jobId && r.fromUserId === app.workerId && r.toUserId === app.employerId) !== null,
         employerReviewed: findOne('reviews', r => r.jobId === app.jobId && r.fromUserId === app.employerId && r.toUserId === app.workerId) !== null,
         job: job ? { ...job, employerContact: unlocked ? job.employerContact : { ...job.employerContact, phone: undefined } } : { title: 'Unknown Job', offeredWage: 0, location: {} },
-        employer: employer ? { ...employer, trustScore: employerTrustScore, trustReviewsCount: employerReviews.length, completedHiresCount: completedEmployerHires.length, phone: unlocked ? (employer.phone || employerUser?.phone) : undefined, email: unlocked ? employer.email : undefined } : { companyName: 'Employer', trustScore: null, trustReviewsCount: 0, completedHiresCount: 0, ...(unlocked && employerUser?.phone ? { phone: employerUser.phone } : {}) }
+        employer: employer ? { ...employer, rating: employerAverageRating, reviewsCount: employerReviews.length, completedHiresCount: completedEmployerHires.length, phone: unlocked ? (employer.phone || employerUser?.phone) : undefined, email: unlocked ? employer.email : undefined } : { companyName: 'Employer', rating: null, reviewsCount: 0, completedHiresCount: 0, ...(unlocked && employerUser?.phone ? { phone: employerUser.phone } : {}) }
       };
     }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     res.json({ success: true, count: hydrated.length, applications: hydrated });
