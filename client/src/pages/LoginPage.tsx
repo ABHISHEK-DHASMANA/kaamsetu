@@ -75,7 +75,16 @@ export const LoginPage: React.FC = () => {
     try {
       const result = await signInWithPopup(firebaseAuth, googleProvider);
       const current = result.user;
-      await completeLogin(current);
+      try {
+        await completeLogin(current);
+      } catch (loginError: any) {
+        if ((loginError?.message || '').toLowerCase().includes('no kaamsetu account is linked')) {
+          setGoogleUser(current);
+          setNotice('Google verified. Link your existing KaamSetu account by verifying its registered mobile number.');
+          return;
+        }
+        throw loginError;
+      }
     } catch (err: any) {
       setErrorMsg(err.code === 'auth/unauthorized-domain'
         ? `Firebase is blocking this website (${window.location.hostname}). Add this exact hostname in Firebase Console → Authentication → Settings → Authorized domains, then reload the site.`
@@ -130,7 +139,7 @@ export const LoginPage: React.FC = () => {
             </button>
             {googleUser && !confirmation && (
               <div className="space-y-2">
-                <p className="text-xs text-brand-muted">Signed in as {googleUser.email}. Verify your mobile number to link it to this account.</p>
+                <p className="text-xs text-brand-muted">Google verified as {googleUser.email}. Verify the mobile number already registered on your KaamSetu account to link it securely.</p>
                 <div className="relative"><Phone className="w-4 h-4 text-brand-muted absolute left-3 top-3" /><input aria-label="Mobile number" inputMode="numeric" placeholder="10-digit mobile number" value={phone} onChange={e => setPhone(e.target.value)} className="w-full text-sm pl-10 pr-3 py-3 rounded-xl border border-brand-border" /></div>
                 <button type="button" onClick={sendPhoneOtp} disabled={busy} className="w-full py-3 rounded-xl bg-brand-primary text-white text-xs font-bold disabled:opacity-60">{busy ? 'Sending OTP…' : 'Send phone OTP'}</button>
               </div>
@@ -159,7 +168,7 @@ export const LoginPage: React.FC = () => {
             <button type="submit" disabled={isLoading} className="w-full py-3 rounded-xl bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-60"><LogIn className="w-4 h-4" />Sign In with Password</button>
           </form>
           <div className="text-center text-xs text-brand-muted pt-2 border-t border-brand-border">Don't have an account? <Link to="/register" className="font-bold text-brand-primary hover:underline">Create Profile Free</Link></div>
-          <p className="text-[10px] leading-relaxed text-center text-brand-muted">Sign in with your registered phone and password, email and password, Google account linked to your registered email, or phone OTP.</p>
+          <p className="text-[10px] leading-relaxed text-center text-brand-muted">Sign in with your registered phone and password, email and password, Google sign-in with a previously verified account, phone OTP, or phone/email and password.</p>
         </div>
       </div>
       <Footer />

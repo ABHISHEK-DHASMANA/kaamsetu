@@ -41,7 +41,12 @@ export const firebaseLogin = async (req, res) => {
     let user = null;
     if (hasVerifiedGoogleEmail) {
       const verifiedEmail = String(decoded.email).trim().toLowerCase();
-      user = findOne('users', candidate => String(candidate.email || '').trim().toLowerCase() === verifiedEmail);
+      // A Google-verified address may only match an app account after that
+      // address was independently verified during the app's registration flow.
+      user = findOne('users', candidate =>
+        candidate.emailVerified === true &&
+        String(candidate.email || '').trim().toLowerCase() === verifiedEmail
+      );
     }
     if (!user && hasVerifiedPhoneProvider && decoded.phone_number) {
       const verifiedPhone = normalizePhone(decoded.phone_number);
@@ -57,7 +62,7 @@ export const firebaseLogin = async (req, res) => {
       return res.status(404).json({
         success: false,
         code: 'ACCOUNT_NOT_FOUND',
-        message: 'No KAAMSETU account is linked to this verified phone number. Please register first.'
+        message: 'No KAAMSETU account is linked to this verified Google email or phone number. Register first, or link your registered phone using OTP.'
       });
     }
 
@@ -111,9 +116,13 @@ export const register = async (req, res) => {
     }
 
     const cleanPhone = phone.trim();
-    const existing = findOne('users', u => u.phone === cleanPhone);
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const existing = findOne('users', u => normalizePhone(u.phone) === normalizePhone(cleanPhone));
     if (existing) {
-      return res.status(400).json({ success: false, message: 'An account with this phone number already exists.' });
+      return res.status(400).json({ success: false, message: 'An account with this phone number already exists. Please sign in instead.' });
+    }
+    if (cleanEmail && findOne('users', u => String(u.email || '').trim().toLowerCase() === cleanEmail)) {
+      return res.status(400).json({ success: false, message: 'An account with this email already exists. Please sign in with that email or use another one.' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -122,10 +131,11 @@ export const register = async (req, res) => {
     const newUser = insert('users', {
       name,
       phone: cleanPhone,
-      email: email || '',
+      email: cleanEmail,
+      emailVerified: false,
       password: passwordHash,
       role: role || 'worker',
-      verificationStatus: 'Contact Verified',
+      verificationStatus: 'Registered',
       avatar: avatar || '',
       isActive: true
     });
@@ -143,7 +153,7 @@ export const register = async (req, res) => {
         userId: newUser._id,
         fullName: name,
         phone: cleanPhone,
-        email: email || '',
+        email: cleanEmail,
         avatar: newUser.avatar,
         preferredLanguage: preferredLanguage || 'Hindi',
         workerId: `KS-W-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -169,11 +179,11 @@ export const register = async (req, res) => {
           passportId: `KSP-NEW-${Math.floor(1000 + Math.random() * 9000)}`,
           qrCodeString: `https://kaamsetu.in/passport/new-${newUser._id}`,
           verifiedSkillsCount: 0,
-          trustScore: 80,
+          trustScore: null,
           completedJobsCount: 0,
-          rating: 5.0,
+          rating: null,
           reviewsCount: 0,
-          badges: ['New Joiner', 'Contact Verified'],
+          badges: ['New Joiner'],
           issueDate: new Date().toISOString()
         },
         bio: 'Ready to work on verified local projects.',
@@ -185,7 +195,7 @@ export const register = async (req, res) => {
         companyName: req.body.companyName || `${name}'s Services`,
         contactPerson: name,
         phone: cleanPhone,
-        email: email || '',
+        email: cleanEmail,
         industry: req.body.industry || 'Contracting',
         businessType: req.body.businessType || 'Small Business / Shop',
         verificationStatus: 'Contact Verified',
@@ -197,7 +207,7 @@ export const register = async (req, res) => {
           pincode: '201301',
           coordinates: { lat: 28.6271, lng: 77.3820 }
         },
-        rating: 5.0,
+        rating: null,
         jobsPostedCount: 0,
         activeJobsCount: 0,
         hiredWorkersCount: 0,
