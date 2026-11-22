@@ -11,12 +11,20 @@ export const getWorkerProfile = async (req, res) => {
 
     const user = findOne('users', u => u._id === workerProfile.userId || u.id === workerProfile.userId);
     const reviews = find('reviews', r => r.toUserId === workerProfile.userId);
+    const averageRating = reviews.length
+      ? Math.round((reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length) * 10) / 10
+      : null;
+    const { trustScore: _legacyTrustScore, ...passportWithoutLegacyTrust } = workerProfile.skillPassport || {};
+    const workerProfileWithReputation = {
+      ...workerProfile,
+      skillPassport: { ...passportWithoutLegacyTrust, rating: averageRating, reviewsCount: reviews.length }
+    };
 
     res.status(200).json({
       success: true,
       workerProfile: req.params.userId
-        ? { ...workerProfile, phone: undefined, email: undefined, upiId: undefined, location: { ...workerProfile.location, coordinates: undefined } }
-        : workerProfile,
+        ? { ...workerProfileWithReputation, phone: undefined, email: undefined, upiId: undefined, location: { ...workerProfile.location, coordinates: undefined } }
+        : workerProfileWithReputation,
       user: {
         name: user?.name,
         phone: req.params.userId ? undefined : user?.phone,
