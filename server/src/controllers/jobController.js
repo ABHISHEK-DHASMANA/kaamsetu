@@ -93,17 +93,20 @@ export const getMatchingJobsForWorker = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Worker profile not found. Please complete profile.' });
     }
 
-    // Optional query overrides (e.g. from Voice-to-Work extraction!)
-    const { skill, location, expected_wage, expected_wage_type, max_distance } = req.query;
+    const { skill, search, location, expected_wage, expected_wage_type, max_distance } = req.query;
     const requestedWage = Number(expected_wage);
     const hasRequestedWage = expected_wage !== undefined && Number.isFinite(requestedWage) && requestedWage > 0;
     const requestedDistance = Number(max_distance);
     const hasRequestedDistance = max_distance !== undefined && Number.isFinite(requestedDistance) && requestedDistance > 0;
+    const normalize = value => String(value || '').toLowerCase().trim();
+    const requestedSkill = normalize(skill);
+    const searchTerms = normalize(search).split(/\\s+/).filter(Boolean);
 
-    // Construct effective worker preferences (merging voice-search overrides with saved profile settings).
     const effectiveProfile = {
       ...workerProfile,
-      skills: skill ? [{ skillName: skill, category: 'Extracted' }, ...(workerProfile.skills || [])] : workerProfile.skills,
+      skills: skill
+        ? [{ skillName: String(skill).trim(), category: 'Voice search' }, ...(workerProfile.skills || [])]
+        : workerProfile.skills,
       preferences: {
         ...workerProfile.preferences,
         expectedDailyWage: hasRequestedWage && expected_wage_type !== 'monthly' ? requestedWage : workerProfile.preferences?.expectedDailyWage,
@@ -112,26 +115,60 @@ export const getMatchingJobsForWorker = async (req, res) => {
       }
     };
 
-    const allActiveJobs = find('jobs', j => j.status === 'active');
-    const requestedLocation = String(location || '').trim().toLowerCase();
-    const activeJobs = requestedLocation && requestedLocation !== 'nearby'
-      ? allActiveJobs.filter(job => {
-          const area = String(job.location?.area || '').toLowerCase();
-          const city = String(job.location?.city || '').toLowerCase();
-          return area.includes(requestedLocation) || city.includes(requestedLocation);
-        })
-      : allActiveJobs;
-    
-    // Check which jobs worker already applied to
-    const existingApplications = find('applications', a => a.workerId === workerUserId);
-    const appliedJobIds = new Set(existingApplications.map(a => a.jobId));
+    let activeJobs = find('jobs', job => job.status === 'active');
 
+    // Apply text search to the same fields used by public job discovery.
+    if (searchTerms.length) {
+      activeJobs = activeJobs.filter(job => {
+        const searchableText = [
+          job.title, job.description, job.companyName, job.category,
+          job.location?.area, job.location?.city, ...(job.requiredSkills || [])
+        ].map(normalize).join(' ');
+        return searchTerms.some(term => searchableText.includes(term));
+      });
+    }
+
+    // Prefer the requested area/city. If there are no exact area results, keep
+    // other active jobs visible rather than showing an empty dashboard.
+    const requestedLocation = normalize(location);
+    let locationMatched = true;
+    if (requestedLocation && requestedLocation !== 'nearby') {
+      const locationJobs = activeJobs.filter(job => {
+        const area = normalize(job.location?.area);
+        const city = normalize(job.location?.city);
+        return area.includes(requestedLocation) || city.includes(requestedLocation);
+      });
+      if (locationJobs.length) {
+        activeJobs = locationJobs;
+      } else {
+        locationMatched = false;
+      }
+    }
+
+    const existingApplications = find('applications', application => application.workerId === workerUserId);
+    const appliedJobIds = new Set(existingApplications.map(application => application.jobId));
     const configuredWorkerRadius = Number(effectiveProfile.preferences?.maxDistanceKm);
-    const workerRadius = Number.isFinite(configuredWorkerRadius) && configuredWorkerRadius > 0 ? configuredWorkerRadius : 10;
+    const workerRadius = Number.isFinite(configuredWorkerRadius) && configuredWorkerRadius > 0
+      ? configuredWorkerRadius
+      : 10;
+
     const scoredJobs = activeJobs.map(job => {
       const matchResult = calculateJobMatch(effectiveProfile, job);
       const employerUser = findOne('users', user => user._id === job.employerId || user.id === job.employerId);
       const employerProfile = findOne('employerProfiles', profile => profile.userId === job.employerId);
+      const employerRadiusValue = Number(job.hiringRadiusKm);
+      const employerRadius = Number.isFinite(employerRadiusValue) && employerRadiusValue > 0 ? employerRadiusValue : 10;
+      const hasMeasuredDistance = Number.isFinite(matchResult.distanceKm);
+      const withinWorkerRadius = !hasMeasuredDistance || matchResult.distanceKm <= workerRadius;
+      const withinEmployerRadius = !hasMeasuredDistance || matchResult.distanceKm <= employerRadius;
+      const searchableText = [
+        job.title, job.description, job.companyName, job.category,
+        job.location?.area, job.location?.city, ...(job.requiredSkills || [])
+      ].map(normalize).join(' ');
+      const textRelevance = searchTerms.length
+        ? searchTerms.filter(term => searchableText.includes(term)).length
+        : 0;
+
       return {
         ...job,
         employerContact: undefined,
@@ -141,27 +178,32 @@ export const getMatchingJobsForWorker = async (req, res) => {
         matchBreakdown: matchResult.breakdown,
         distanceKm: matchResult.distanceKm,
         matchExplanations: matchResult.explanations,
+        withinPreferredDistance: withinWorkerRadius && withinEmployerRadius,
+        withinWorkerRadius,
+        withinEmployerRadius,
         hasApplied: appliedJobIds.has(job._id || job.id),
-        applicationStatus: existingApplications.find(a => a.jobId === (job._id || job.id))?.status || null
+        applicationStatus: existingApplications.find(application => application.jobId === (job._id || job.id))?.status || null,
+        _searchRelevance: textRelevance
       };
     });
 
-    // Respect both sides' distance preferences. Distances are straight-line estimates from saved map coordinates.
-    const withinBothDistancePreferences = scoredJobs.filter(job => {
-      if (job.distanceKm === null || job.distanceKm === undefined) return true;
-      const configuredEmployerRadius = Number(job.hiringRadiusKm);
-      const employerRadius = Number.isFinite(configuredEmployerRadius) && configuredEmployerRadius > 0 ? configuredEmployerRadius : 10;
-      return job.distanceKm <= workerRadius && job.distanceKm <= employerRadius;
+    // Keep suitable jobs discoverable; rank jobs inside both preferred radii first.
+    // Missing map pins never create a fake distance or hide a job.
+    scoredJobs.sort((a, b) => {
+      const aPreferred = a.withinPreferredDistance ? 1 : 0;
+      const bPreferred = b.withinPreferredDistance ? 1 : 0;
+      if (aPreferred !== bPreferred) return bPreferred - aPreferred;
+      if (b._searchRelevance !== a._searchRelevance) return b._searchRelevance - a._searchRelevance;
+      return b.matchScore - a.matchScore;
     });
 
-    // Sort by match score descending
-    withinBothDistancePreferences.sort((a, b) => b.matchScore - a.matchScore);
-
+    const jobs = scoredJobs.map(({ _searchRelevance, ...job }) => job);
     res.status(200).json({
       success: true,
-      count: withinBothDistancePreferences.length,
+      count: jobs.length,
       workerLocation: workerProfile.location,
-      jobs: withinBothDistancePreferences
+      locationMatched,
+      jobs
     });
   } catch (error) {
     console.error('getMatchingJobsForWorker error:', error);
