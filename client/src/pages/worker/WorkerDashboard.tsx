@@ -158,13 +158,17 @@ export const WorkerDashboard: React.FC = () => {
           <div className="p-5 rounded-3xl bg-white border border-brand-border shadow-sm flex items-center justify-between">
             <div>
               <div className="text-[11px] font-bold text-brand-muted uppercase tracking-wider">
-                Skill Passport
+                Worker Rating
               </div>
-              <div className="text-2xl font-black text-brand-accent mt-1 flex items-center gap-1">
-                <span>{profile?.skillPassport?.trustScore || 94}%</span>
-              </div>
+              {profile?.skillPassport?.reviewsCount ? (
+                <div className="text-2xl font-black text-brand-accent mt-1 flex items-center gap-1">
+                  <span>★ {Number(profile.skillPassport.rating || 0).toFixed(1)}/5</span>
+                </div>
+              ) : (
+                <div className="text-sm font-bold text-brand-muted mt-1">New to KaamSetu</div>
+              )}
               <div className="text-[10px] text-brand-muted mt-0.5">
-                {profile?.skillPassport?.completedJobsCount || 14} Verified Jobs
+                {profile?.skillPassport?.reviewsCount || 0} employer reviews · {profile?.skillPassport?.completedJobsCount || 0} completed jobs
               </div>
             </div>
             <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-brand-accent">
