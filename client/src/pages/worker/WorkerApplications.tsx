@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { apiGetWorkerApplications, apiCreateReview, apiSubmitReport, apiUpdateWorkLifecycle } from '../../services/api';
 import { Application } from '../../types';
@@ -145,7 +146,7 @@ export const WorkerApplications: React.FC = () => {
           </div>
           <div className="p-4 rounded-2xl bg-white border border-brand-border text-center">
             <div className="text-2xl font-black text-emerald-600">
-              {applications.filter(a => a.status === 'Accepted').length}
+              {applications.filter(a => ['Accepted', 'InProgress', 'CompletionRequested'].includes(a.status)).length}
             </div>
             <div className="text-[11px] text-emerald-700 uppercase font-bold mt-0.5">Accepted & Hired</div>
           </div>
@@ -240,7 +241,7 @@ export const WorkerApplications: React.FC = () => {
                     <button onClick={() => lifecycleAction(app, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Withdraw application</button>
                   </div>
                 )}
-                {app.status === 'Accepted' && (
+                {['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(app.status) && (
                   <div className="flex flex-wrap gap-2 border-t border-brand-border pt-3">
                     <button onClick={() => lifecycleAction(app, 'start_work')} className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Start work</button>
                     <button onClick={() => lifecycleAction(app, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel with reason</button>
@@ -272,7 +273,7 @@ export const WorkerApplications: React.FC = () => {
                       <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                       <span>Direct Contact Unlocked! You have been accepted for this position.</span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-semibold pt-1">
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-semibold pt-1">\n                      <Link to={`/chats?applicationId=${encodeURIComponent(app._id || (app as any).id || '')}`} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 text-white px-3 py-2 no-underline"><MessageCircle className="w-3.5 h-3.5" /> Message Employer</Link>
                       {employerPhone ? (
                         <>
                           <a

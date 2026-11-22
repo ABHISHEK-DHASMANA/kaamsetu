@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { apiGetEmployerApplications, apiUpdateApplicationStatus, apiCreateReview, apiSubmitReport, apiUpdateWorkLifecycle } from '../../services/api';
 import { useNotifications } from '../../context/NotificationContext';
@@ -113,7 +114,7 @@ export const EmployerCandidates: React.FC = () => {
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-brand-muted" />
             <span className="text-xs font-bold uppercase tracking-wider text-brand-muted">Status:</span>
-            {['All', 'Applied', 'Shortlisted', 'Accepted', 'Completed', 'Rejected'].map((st) => (
+            {['All', 'Applied', 'Shortlisted', 'Accepted', 'InProgress', 'CompletionRequested', 'Completed', 'Cancelled', 'Rejected'].map((st) => (
               <button
                 key={st}
                 onClick={() => setFilterStatus(st)}
@@ -149,7 +150,7 @@ export const EmployerCandidates: React.FC = () => {
             candidates.map((cand) => {
               const wp = cand.workerProfile;
               const userRec = cand.workerUser;
-              const isAccepted = cand.status === 'Accepted';
+              const isAccepted = ['Accepted', 'InProgress', 'CompletionRequested', 'Completed'].includes(cand.status);
               const isShortlisted = cand.status === 'Shortlisted';
               const workerDigits = (wp?.phone || userRec?.phone || '').replace(/\D/g, '');
               const workerPhone = workerDigits.length >= 10 ? `+91${workerDigits.slice(-10)}` : '';
@@ -270,8 +271,9 @@ export const EmployerCandidates: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 px-3.5 py-1.5 rounded-xl border border-emerald-300">
                             <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                            <span>Accepted Candidate</span>
+                            <span>{cand.status === 'Accepted' ? 'Hired' : cand.status === 'InProgress' ? 'Work in progress' : cand.status === 'CompletionRequested' ? 'Completion requested' : 'Work completed'}</span>
                           </span>
+                          <Link to={`/chats?applicationId=${encodeURIComponent(cand._id || (cand as any).id || '')}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors"><MessageCircle className="w-3.5 h-3.5" />Messages</Link>
                           {workerPhone && (
                             <>
                               <a
