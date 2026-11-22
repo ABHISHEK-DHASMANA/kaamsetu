@@ -36,11 +36,11 @@ export const EmployerDashboard: React.FC = () => {
 
         if (jobsRes.success) {
           // Filter jobs belonging to this employer
-          const myJobs = jobsRes.jobs.filter(j => j.employerId === user?._id || j.companyName === profile?.companyName);
+          const myJobs = jobsRes.jobs.filter(j => (j.employerId === user?._id || j.companyName === profile?.companyName) && !['completed', 'cancelled'].includes(j.status));
           setActiveJobs(myJobs);
         }
         if (appsRes.success) {
-          setApplications(appsRes.applications);
+          setApplications(appsRes.applications.filter(application => application.status !== 'Completed'));
         }
       } catch (err) {
         console.error(err);
