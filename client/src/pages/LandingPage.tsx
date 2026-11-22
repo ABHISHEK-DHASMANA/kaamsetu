@@ -19,7 +19,17 @@ const categories = [
 
 export const LandingPage: React.FC = () => {
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  const [quickSkill, setQuickSkill] = useState('');
+  const [quickArea, setQuickArea] = useState('');
   const navigate = useNavigate();
+
+  const handleQuickSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const params = new URLSearchParams();
+    if (quickSkill.trim()) params.set('search', quickSkill.trim());
+    if (quickArea.trim()) params.set('area', quickArea.trim());
+    navigate(`/jobs${params.toString() ? `?${params.toString()}` : ''}`);
+  };
 
   const handleVoiceConfirmed = (prefs: ExtractedJobPreferences) => {
     const spokenArea = (prefs.location || '').trim();
@@ -83,10 +93,22 @@ export const LandingPage: React.FC = () => {
                     <div className="ks-preview-mark"><HeartHandshake size={23} /></div>
                   </div>
 
-                  <div className="ks-preview-search">
-                    <Search size={16} className="text-slate-400" />
-                    <span>What work are you looking for?</span>
-                    <span className="ml-auto text-[10px] font-semibold text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1">Explore</span>
+                  <form onSubmit={handleQuickSearch} className="ks-preview-search !p-2 !gap-2 focus-within:border-emerald-300 focus-within:ring-4 focus-within:ring-emerald-50">
+                    <Search size={16} className="text-slate-400 shrink-0 ml-1" />
+                    <input
+                      aria-label="Search for work"
+                      value={quickSkill}
+                      onChange={(event) => setQuickSkill(event.target.value)}
+                      placeholder="What work are you looking for?"
+                      className="min-w-0 flex-1 bg-transparent border-0 !rounded-none !p-1 text-xs text-slate-700 placeholder:text-slate-400 focus:!border-0 focus:!ring-0"
+                    />
+                    <button type="submit" className="shrink-0 text-[10px] font-bold text-white bg-emerald-800 hover:bg-emerald-900 rounded-lg px-3 py-2 transition-colors">Search</button>
+                  </form>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <span className="text-[10px] text-slate-400 font-semibold">Popular:</span>
+                    {['Electrician', 'Plumber', 'Painter'].map((skill) => (
+                      <button key={skill} type="button" onClick={() => { setQuickSkill(skill); navigate('/jobs?search=' + encodeURIComponent(skill)); }} className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-full px-2.5 py-1 transition-colors">{skill}</button>
+                    ))}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
