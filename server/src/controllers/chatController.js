@@ -17,7 +17,7 @@ export const listChats = async (req, res) => {
   const applications = find('applications', a => canAccess(a, userId));
   const chats = applications.map(application => {
     const job = findOne('jobs', j => String(j._id || j.id) === String(application.jobId));
-    const otherId = application.workerId === userId ? application.employerId : application.workerId;
+    const otherId = String(application.workerId) === userId ? String(application.employerId) : String(application.workerId);
     const other = findOne('users', u => String(u._id || u.id) === otherId);
     const messages = find('messages', m => String(m.applicationId) === String(application._id || application.id));
     const lastMessage = messages.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt))[0] || null;
@@ -27,16 +27,16 @@ export const listChats = async (req, res) => {
 };
 
 export const getMessages = async (req, res) => {
-  const userId = req.user._id || req.user.id;
-  const application = findOne('applications', a => a._id === req.params.applicationId || a.id === req.params.applicationId);
+  const userId = String(req.user._id || req.user.id);
+  const application = findOne('applications', a => String(a._id || a.id) === String(req.params.applicationId));
   if (!canAccess(application, userId)) return res.status(403).json({ success:false, message:'Chat is available only to the accepted parties.' });
   const messages = find('messages', m => String(m.applicationId) === String(application._id || application.id)).sort((a,b) => new Date(a.createdAt)-new Date(b.createdAt));
   messages.forEach(message => {
-    if (message.senderId !== userId && !(message.readBy || []).includes(userId)) {
-      update('messages', message._id, { readBy: [...(message.readBy || []), userId] });
+    if (String(message.senderId) !== userId && !(message.readBy || []).map(String).includes(userId)) {
+      update('messages', message._id || message.id, { readBy: [...new Set([...(message.readBy || []).map(String), userId])] });
     }
   });
-  res.json({ success:true, messages: messages.map(message => ({ ...message, readBy: message.senderId === userId ? (findOne('messages', m => m._id === message._id)?.readBy || []) : [...(message.readBy || []), userId] })) });
+  res.json({ success:true, messages: messages.map(message => ({ ...message, readBy: String(message.senderId) === userId ? (findOne('messages', m => (m._id || m.id) === (message._id || message.id))?.readBy || []) : [...new Set([...(message.readBy || []).map(String), userId])] })) });
 };
 
 export const sendMessage = async (req, res) => {

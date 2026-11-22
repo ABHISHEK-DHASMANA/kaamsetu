@@ -22,6 +22,9 @@ export const getUserNotifications = async (req, res) => {
 export const markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = String(req.user._id || req.user.id);
+    const notification = findOne('notifications', n => String(n._id || n.id) === String(id) && String(n.userId) === userId);
+    if (!notification) return res.status(404).json({ success: false, message: 'Notification not found.' });
     const updated = update('notifications', id, { isRead: true });
     res.status(200).json({ success: true, notification: updated });
   } catch (error) {
