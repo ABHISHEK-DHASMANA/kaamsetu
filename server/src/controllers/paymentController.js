@@ -1,11 +1,11 @@
-import { find, findOne, insert, update } from '../services/storage.js';
+import { find, findOne, insert, update, flushStorage } from '../services/storage.js';
 
-const userId = user => user?._id || user?.id;
+const idOf = value => String(value?._id || value?.id || value || '');
 
 const hydratePayment = payment => {
-  const job = findOne('jobs', j => (j._id || j.id) === payment.jobId);
-  const worker = findOne('workerProfiles', p => p.userId === payment.workerId);
-  const employer = findOne('employerProfiles', p => p.userId === payment.employerId);
+  const job = findOne('jobs', j => idOf(j._id || j.id) === idOf(payment.jobId));
+  const worker = findOne('workerProfiles', p => idOf(p.userId) === idOf(payment.workerId));
+  const employer = findOne('employerProfiles', p => idOf(p.userId) === idOf(payment.employerId));
   return {
     ...payment,
     jobTitle: job?.title || 'Completed job',
@@ -14,134 +14,164 @@ const hydratePayment = payment => {
   };
 };
 
+const notify = (userId, title, message, type = 'info') => insert('notifications', {
+  userId: idOf(userId), title, message, type, actionUrl: '/payments', isRead: false
+});
+
+const persistOrFail = async res => {
+  try {
+    await flushStorage();
+    return true;
+  } catch (error) {
+    console.error('[Payments] Persistence failed:', error.message);
+    res.status(503).json({ success: false, message: 'The payment record could not be safely saved. Refresh the page before trying again.' });
+    return false;
+  }
+};
+
 export const listMyPayments = (req, res) => {
-  const id = userId(req.user);
-  const payments = find('payments', p => p.workerId === id || p.employerId === id)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .map(hydratePayment);
+  const id = idOf(req.user);
   const isWorker = req.user.role === 'worker';
-  const own = payments.filter(p => isWorker ? p.workerId === id : p.employerId === id);
+  const own = find('payments', p =>
+    isWorker ? idOf(p.workerId) === id : idOf(p.employerId) === id
+  ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(hydratePayment);
+
   const paid = own.filter(p => p.status === 'paid');
-  const pending = own.filter(p => p.status !== 'paid' && p.status !== 'disputed');
+  const pending = own.filter(p => p.status === 'awaiting_worker_confirmation');
   res.json({
     success: true,
     payments: own,
     summary: {
-      paidTotal: paid.reduce((sum, p) => sum + p.amount, 0),
-      directUpiTotal: paid.filter(p => p.method === 'direct_upi').reduce((sum, p) => sum + p.amount, 0),
-      cashTotal: paid.filter(p => p.method === 'cash').reduce((sum, p) => sum + p.amount, 0),
-      pendingTotal: pending.reduce((sum, p) => sum + p.amount, 0),
+      paidTotal: paid.reduce((sum, p) => sum + Number(p.amount || 0), 0),
+      directUpiTotal: paid.filter(p => p.method === 'direct_upi').reduce((sum, p) => sum + Number(p.amount || 0), 0),
+      cashTotal: paid.filter(p => p.method === 'cash').reduce((sum, p) => sum + Number(p.amount || 0), 0),
+      pendingTotal: pending.reduce((sum, p) => sum + Number(p.amount || 0), 0),
       paidCount: paid.length
     }
   });
 };
 
-export const createPayment = (req, res) => {
-  const employerId = userId(req.user);
-  const { applicationId, amount, method, transactionReference, note } = req.body || {};
-  const numericAmount = Number(amount);
+export const createPayment = async (req, res) => {
+  try {
+    const employerId = idOf(req.user);
+    const { applicationId, amount, method, transactionReference, note } = req.body || {};
+    const numericAmount = Number(amount);
+    const normalizedApplicationId = idOf(applicationId);
 
-  if (!applicationId || !Number.isFinite(numericAmount) || numericAmount <= 0 || numericAmount > 1000000) {
-    return res.status(400).json({ success: false, message: 'Choose a completed job and enter a valid amount.' });
-  }
-  if (!['cash', 'direct_upi'].includes(method)) {
-    return res.status(400).json({ success: false, message: 'Use Cash or Direct UPI for worker-to-worker settlement.' });
-  }
-  const normalizedReference = String(transactionReference || '').trim();
-  if (method === 'direct_upi' && !/^[A-Za-z0-9._-]{6,100}$/.test(normalizedReference)) {
-    return res.status(400).json({ success: false, message: 'A valid UPI transaction reference/UTR is required for direct UPI payments.' });
-  }
+    if (!normalizedApplicationId || !Number.isFinite(numericAmount) || numericAmount <= 0 || numericAmount > 1000000) {
+      return res.status(400).json({ success: false, message: 'Choose a completed job and enter a valid amount.' });
+    }
+    if (!['cash', 'direct_upi'].includes(method)) {
+      return res.status(400).json({ success: false, message: 'Choose Cash or Direct UPI.' });
+    }
+    const normalizedReference = String(transactionReference || '').trim();
+    if (method === 'direct_upi' && !/^[A-Za-z0-9._-]{6,100}$/.test(normalizedReference)) {
+      return res.status(400).json({ success: false, message: 'Enter the UPI transaction reference/UTR shown by your payment app.' });
+    }
 
-  const application = findOne('applications', a => (a._id || a.id) === applicationId);
-  if (!application || application.employerId !== employerId) {
-    return res.status(404).json({ success: false, message: 'Completed job application not found for this employer.' });
-  }
-  if (application.status !== 'Completed') {
-    return res.status(400).json({ success: false, message: 'Payments can only be recorded after the employer marks the job completed.' });
-  }
-  const existing = findOne('payments', p => p.applicationId === applicationId && p.status !== 'cancelled');
-  if (existing) {
-    return res.status(409).json({ success: false, message: 'A payment record already exists for this job.' });
-  }
+    const application = findOne('applications', a => idOf(a._id || a.id) === normalizedApplicationId);
+    if (!application || idOf(application.employerId) !== employerId) {
+      return res.status(404).json({ success: false, message: 'Completed job application not found for this employer.' });
+    }
+    if (application.status !== 'Completed') {
+      return res.status(400).json({ success: false, message: 'Payments can only be recorded after the employer confirms work completion.' });
+    }
 
-  const payment = insert('payments', {
-    applicationId,
-    jobId: application.jobId,
-    employerId,
-    workerId: application.workerId,
-    amount: Math.round(numericAmount * 100) / 100,
-    currency: 'INR',
-    method,
-    transactionReference: method === 'direct_upi' ? normalizedReference : '',
-    note: String(note || '').trim().slice(0, 300),
-    employerConfirmed: true,
-    workerConfirmed: false,
-    status: 'awaiting_worker_confirmation',
-    verificationType: 'two_party_confirmation',
-    confirmedAt: null,
-    events: [{ type: 'employer_recorded_payment', actorId: employerId, at: new Date().toISOString() }]
-  });
+    const existing = findOne('payments', p =>
+      idOf(p.applicationId) === normalizedApplicationId && p.status !== 'cancelled'
+    );
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'A payment record already exists for this completed job. Open payment history to check its status.' });
+    }
 
-  insert('notifications', {
-    userId: application.workerId,
-    title: 'Payment confirmation requested',
-    message: `Your employer recorded ₹${payment.amount} for a completed job. Please confirm only if you received it.`,
-    type: 'info',
-    actionUrl: '/payments',
-    isRead: false
-  });
+    const payment = insert('payments', {
+      applicationId: normalizedApplicationId,
+      jobId: idOf(application.jobId),
+      employerId,
+      workerId: idOf(application.workerId),
+      amount: Math.round(numericAmount * 100) / 100,
+      currency: 'INR',
+      method,
+      transactionReference: method === 'direct_upi' ? normalizedReference : '',
+      note: String(note || '').trim().slice(0, 300),
+      employerConfirmed: true,
+      workerConfirmed: false,
+      status: 'awaiting_worker_confirmation',
+      verificationType: 'two_party_confirmation',
+      confirmedAt: null,
+      events: [{ type: 'employer_recorded_payment', actorId: employerId, at: new Date().toISOString() }]
+    });
 
-  res.status(201).json({ success: true, message: 'Payment recorded. Waiting for the worker to confirm receipt.', payment: hydratePayment(payment) });
+    notify(application.workerId, 'Payment confirmation requested',
+      `Your employer recorded ₹${payment.amount} for a completed job. Check your cash or UPI account, then confirm only if you received it.`);
+    if (!await persistOrFail(res)) return;
+    return res.status(201).json({
+      success: true,
+      message: 'Payment recorded and the worker has been notified. It will show as confirmed only after the worker confirms receipt.',
+      payment: hydratePayment(payment)
+    });
+  } catch (error) {
+    console.error('[Payments] createPayment failed:', error);
+    return res.status(500).json({ success: false, message: 'Could not record this payment. Please refresh and try again.' });
+  }
 };
 
-export const confirmPaymentReceived = (req, res) => {
-  const workerId = userId(req.user);
-  const payment = findOne('payments', p => (p._id || p.id) === req.params.id);
-  if (!payment) return res.status(404).json({ success: false, message: 'Payment record not found.' });
-  if (payment.workerId !== workerId) return res.status(403).json({ success: false, message: 'Only the assigned worker can confirm receipt.' });
-  if (payment.status === 'disputed') return res.status(409).json({ success: false, message: 'This payment is under dispute.' });
-  if (payment.status === 'paid') return res.json({ success: true, message: 'Payment was already confirmed.', payment: hydratePayment(payment) });
-  if (payment.status !== 'awaiting_worker_confirmation') return res.status(409).json({ success: false, message: 'This payment is not awaiting confirmation.' });
+export const confirmPaymentReceived = async (req, res) => {
+  try {
+    const workerId = idOf(req.user);
+    const payment = findOne('payments', p => idOf(p._id || p.id) === idOf(req.params.id));
+    if (!payment) return res.status(404).json({ success: false, message: 'Payment record not found.' });
+    if (idOf(payment.workerId) !== workerId) return res.status(403).json({ success: false, message: 'Only the assigned worker can confirm receipt.' });
+    if (payment.status === 'disputed') return res.status(409).json({ success: false, message: 'This payment is under dispute.' });
+    if (payment.status === 'paid') return res.json({ success: true, message: 'Payment was already confirmed.', payment: hydratePayment(payment) });
+    if (payment.status !== 'awaiting_worker_confirmation' || payment.employerConfirmed !== true) {
+      return res.status(409).json({ success: false, message: 'This payment is not awaiting worker confirmation.' });
+    }
 
-  const updated = update('payments', payment._id, {
-    workerConfirmed: true,
-    status: 'paid',
-    confirmedAt: new Date().toISOString(),
-    events: [...(payment.events || []), { type: 'worker_confirmed_receipt', actorId: workerId, at: new Date().toISOString() }]
-  });
-  insert('notifications', {
-    userId: payment.employerId,
-    title: 'Worker confirmed payment',
-    message: `The worker confirmed receipt of ₹${payment.amount}.`,
-    type: 'success',
-    actionUrl: '/payments',
-    isRead: false
-  });
-  res.json({ success: true, message: 'Receipt confirmed. Earnings have been updated.', payment: hydratePayment(updated) });
+    const now = new Date().toISOString();
+    const updated = update('payments', idOf(payment._id || payment.id), {
+      workerConfirmed: true,
+      status: 'paid',
+      confirmedAt: now,
+      events: [...(payment.events || []), { type: 'worker_confirmed_receipt', actorId: workerId, at: now }]
+    });
+    if (!updated) return res.status(409).json({ success: false, message: 'Payment could not be updated. Refresh and try again.' });
+    notify(payment.employerId, 'Worker confirmed payment',
+      `The worker confirmed receipt of ₹${payment.amount} for ${hydratePayment(payment).jobTitle}.`, 'success');
+    if (!await persistOrFail(res)) return;
+    return res.json({ success: true, message: 'Receipt confirmed. The employer can now see Paid · Confirmed.', payment: hydratePayment(updated) });
+  } catch (error) {
+    console.error('[Payments] confirmPaymentReceived failed:', error);
+    return res.status(500).json({ success: false, message: 'Could not confirm payment receipt. Please refresh and try again.' });
+  }
 };
 
-export const disputePayment = (req, res) => {
-  const id = userId(req.user);
-  const payment = findOne('payments', p => (p._id || p.id) === req.params.id);
-  if (!payment) return res.status(404).json({ success: false, message: 'Payment record not found.' });
-  if (payment.workerId !== id && payment.employerId !== id) {
-    return res.status(403).json({ success: false, message: 'You are not part of this payment.' });
+export const disputePayment = async (req, res) => {
+  try {
+    const actorId = idOf(req.user);
+    const payment = findOne('payments', p => idOf(p._id || p.id) === idOf(req.params.id));
+    if (!payment) return res.status(404).json({ success: false, message: 'Payment record not found.' });
+    if (idOf(payment.workerId) !== actorId && idOf(payment.employerId) !== actorId) {
+      return res.status(403).json({ success: false, message: 'You are not part of this payment.' });
+    }
+    if (payment.status === 'paid') return res.status(409).json({ success: false, message: 'A confirmed payment cannot be disputed here. Contact support for assistance.' });
+    if (payment.status === 'disputed') return res.status(409).json({ success: false, message: 'This payment is already disputed.' });
+
+    const reason = String(req.body?.reason || '').trim().slice(0, 500);
+    if (reason.length < 5) return res.status(400).json({ success: false, message: 'Please explain the payment issue (at least 5 characters).' });
+    const now = new Date().toISOString();
+    const updated = update('payments', idOf(payment._id || payment.id), {
+      status: 'disputed',
+      dispute: { reason, raisedBy: actorId, raisedAt: now },
+      events: [...(payment.events || []), { type: 'payment_disputed', actorId, at: now }]
+    });
+    if (!updated) return res.status(409).json({ success: false, message: 'Payment could not be updated. Refresh and try again.' });
+    const otherParty = idOf(payment.workerId) === actorId ? payment.employerId : payment.workerId;
+    notify(otherParty, 'Payment disputed', 'A payment has been disputed. Please review the payment record.', 'warning');
+    if (!await persistOrFail(res)) return;
+    return res.json({ success: true, message: 'Payment marked as disputed. The other party has been notified.', payment: hydratePayment(updated) });
+  } catch (error) {
+    console.error('[Payments] disputePayment failed:', error);
+    return res.status(500).json({ success: false, message: 'Could not update the payment dispute. Please refresh and try again.' });
   }
-  if (payment.status === 'paid') return res.status(409).json({ success: false, message: 'A confirmed payment cannot be disputed here. Contact support for assistance.' });
-  const reason = String(req.body?.reason || '').trim().slice(0, 500);
-  if (reason.length < 5) return res.status(400).json({ success: false, message: 'Please explain the payment issue (at least 5 characters).' });
-  const updated = update('payments', payment._id, {
-    status: 'disputed',
-    dispute: { reason, raisedBy: id, raisedAt: new Date().toISOString() },
-    events: [...(payment.events || []), { type: 'payment_disputed', actorId: id, at: new Date().toISOString() }]
-  });
-  insert('notifications', {
-    userId: id === payment.workerId ? payment.employerId : payment.workerId,
-    title: 'Payment disputed',
-    message: 'A payment has been disputed. Please review the payment record.',
-    type: 'warning',
-    actionUrl: '/payments',
-    isRead: false
-  });
-  res.json({ success: true, message: 'Payment marked as disputed.', payment: hydratePayment(updated) });
 };

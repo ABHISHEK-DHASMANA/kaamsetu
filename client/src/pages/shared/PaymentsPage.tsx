@@ -38,17 +38,37 @@ export const PaymentsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    refresh().catch(e => setError(e.message || 'Unable to load payments.'));
+    let active = true;
+    const loadApplications = () => {
+      if (!isWorker) {
+        apiGetEmployerApplications().then(data => {
+          if (active) setApplications((data.applications || []).filter((a: ApplicationOption) => a.status === 'Completed'));
+        }).catch(e => { if (active) setError(e.message || 'Unable to load completed jobs.'); });
+      } else {
+        apiGetWorkerApplications().then(data => {
+          if (active) setApplications((data.applications || []).filter((a: any) => a.status === 'Completed'));
+        }).catch(() => undefined);
+      }
+    };
+    const load = () => {
+      refresh().catch(e => { if (active) setError(e.message || 'Unable to load payments.'); });
+      loadApplications();
+    };
+    load();
     if (isWorker) {
-      apiGetWorkerProfile().then(data => setWorkerUpiId((data.workerProfile as any)?.upiId || '')).catch(() => undefined);
+      apiGetWorkerProfile().then(data => {
+        if (active) setWorkerUpiId((data.workerProfile as any)?.upiId || '');
+      }).catch(() => undefined);
     }
-    if (!isWorker) {
-      apiGetEmployerApplications().then(data => setApplications((data.applications || []).filter((a: ApplicationOption) => a.status === 'Completed')))
-        .catch(e => setError(e.message || 'Unable to load completed jobs.'));
-    } else {
-      apiGetWorkerApplications().then(data => setApplications((data.applications || []).filter((a: any) => a.status === 'Completed')))
-        .catch(() => undefined);
-    }
+    // Keep both sides in sync: employer sees worker confirmation and worker sees new payment requests.
+    const interval = window.setInterval(load, 12000);
+    const onFocus = () => { if (document.visibilityState === 'visible') load(); };
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
   }, [isWorker]);
 
   const pending = useMemo(() => payments.filter(p => p.status === 'awaiting_worker_confirmation'), [payments]);
