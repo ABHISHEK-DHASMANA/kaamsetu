@@ -118,7 +118,7 @@ export const getMatchingJobsForWorker = async (req, res) => {
     let activeJobs = find('jobs', job => job.status === 'active');
 
     // Apply text search to the same fields used by public job discovery.
-    if (searchTerms.length) {
+    if (searchTerms.length && !requestedSkill) {
       activeJobs = activeJobs.filter(job => {
         const searchableText = [
           job.title, job.description, job.companyName, job.category,
@@ -165,7 +165,7 @@ export const getMatchingJobsForWorker = async (req, res) => {
         job.title, job.description, job.companyName, job.category,
         job.location?.area, job.location?.city, ...(job.requiredSkills || [])
       ].map(normalize).join(' ');
-      const textRelevance = searchTerms.length
+      const textRelevance = searchTerms.length && !requestedSkill
         ? searchTerms.filter(term => searchableText.includes(term)).length
         : 0;
 
