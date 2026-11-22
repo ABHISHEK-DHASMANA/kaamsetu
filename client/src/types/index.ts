@@ -49,7 +49,6 @@ export interface SkillPassport {
   passportId: string;
   qrCodeString: string;
   verifiedSkillsCount: number;
-  trustScore: number;
   completedJobsCount: number;
   rating: number;
   reviewsCount: number;
