@@ -201,7 +201,7 @@ export const RibbonStage: React.FC = () => {
           draw(reducedMotion ? 0 : clock.getElapsedTime());
         };
 
-        if ('ResizeObserver' in window) {
+        if (typeof ResizeObserver !== 'undefined') {
           resizeObserver = new ResizeObserver(resize);
           resizeObserver.observe(host);
         } else {
