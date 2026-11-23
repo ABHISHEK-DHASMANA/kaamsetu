@@ -39,7 +39,7 @@ app.use(cors({
   origin(origin, callback) {
     // Requests without an Origin header (health checks, server-to-server calls)
     if (!origin || allowedOrigins.has(origin.replace(/\/+$/, ''))) return callback(null, true);
-    if (!origin || allowedOrigins.has(origin.replace(/\\/+$/, ''))) return callback(null, true);
+    // are not browser CORS requests and remain allowed.
     return callback(new Error('Origin is not allowed by KaamSetu CORS policy.'));
   },
   credentials: true
