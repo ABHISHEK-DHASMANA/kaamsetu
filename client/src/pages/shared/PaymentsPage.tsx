@@ -106,7 +106,7 @@ export const PaymentsPage: React.FC = () => {
       .then(async result => {
         if (!active) return;
         const state = result.payment?.status;
-        setMessage(state === 'paid' ? 'Payment verified successfully. The worker has been notified.' : state === 'failed' ? 'PhonePe reports that this payment failed. You can retry checkout.' : 'Payment is not confirmed yet. We will keep checking its status.');
+        setMessage(state === 'paid' ? 'Payment collection verified by PhonePe. Worker payout remains pending the approved settlement process.' : state === 'failed' ? 'PhonePe reports that this payment failed. You can retry checkout.' : 'Payment is not confirmed yet. We will keep checking its status.');
         await refresh();
         await loadApplications();
       })
@@ -129,15 +129,14 @@ export const PaymentsPage: React.FC = () => {
     return () => window.clearInterval(timer);
   }, [refresh, syncGatewayStatuses]);
 
-  const selectedApplication = applications.find(a => a._id === applicationId);
   const paidTotal = useMemo(
     () => legacyPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount || 0), 0)
-      + phonePePayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount || 0), 0),
+      + phonePePayments.filter(p => p.status === 'paid' && (!isWorker || p.payoutStatus === 'paid')).reduce((sum, p) => sum + Number(p.amount || 0), 0),
     [legacyPayments, phonePePayments]
   );
   const pendingTotal = useMemo(
     () => legacyPayments.filter(p => p.status === 'awaiting_worker_confirmation').reduce((sum, p) => sum + Number(p.amount || 0), 0)
-      + phonePePayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + Number(p.amount || 0), 0),
+      + phonePePayments.filter(p => p.status === 'pending' || (isWorker && p.status === 'paid' && p.payoutStatus !== 'paid')).reduce((sum, p) => sum + Number(p.amount || 0), 0),
     [legacyPayments, phonePePayments]
   );
 
@@ -181,7 +180,7 @@ export const PaymentsPage: React.FC = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl border border-brand-border p-4">
-            <div className="text-xs text-brand-muted">Confirmed payments</div>
+            <div className="text-xs text-brand-muted">{isWorker ? 'Payouts completed' : 'Payments collected'}</div>
             <div className="text-xl font-black text-emerald-600 mt-1">{money(paidTotal)}</div>
           </div>
           <div className="bg-white rounded-2xl border border-brand-border p-4">
@@ -236,7 +235,7 @@ export const PaymentsPage: React.FC = () => {
 
         <section className="bg-white rounded-2xl border border-brand-border overflow-hidden">
           <div className="p-5 border-b border-brand-border flex items-center justify-between gap-3">
-            <div><h2 className="font-bold text-brand-dark">{isWorker ? 'Verified earnings' : 'Gateway payment history'}</h2><p className="text-xs text-brand-muted mt-1">{phonePePayments.length} gateway record(s)</p></div>
+            <div><h2 className="font-bold text-brand-dark">{isWorker ? 'Payment and payout history' : 'Gateway payment history'}</h2><p className="text-xs text-brand-muted mt-1">{phonePePayments.length} gateway record(s)</p></div>
             <button onClick={() => { refresh().catch(() => undefined); syncGatewayStatuses().catch(() => undefined); }} disabled={refreshing} className="rounded-lg border border-brand-border p-2 text-brand-muted disabled:opacity-50" aria-label="Refresh payments"><RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}/></button>
           </div>
           {phonePePayments.length === 0 ? <div className="p-8 text-center text-sm text-brand-muted">No gateway payments yet.</div> : <div className="divide-y divide-brand-border">
