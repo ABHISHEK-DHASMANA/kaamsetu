@@ -180,5 +180,20 @@ Email registration is unavailable until all three values are configured and Rese
 ### Account deletion and retained records
 Workers and employers can request deletion from their profile page after confirming their current password and typing `DELETE`. The backend removes profile and private conversation data, closes active employer jobs, and anonymizes the account record. Application, job, review, and payment records remain for audit, reconciliation, and dispute handling. Firebase identity deletion is attempted when the linked UID is available.
 
+### PhonePe payment collection and webhook setup
+
+The employer checkout uses PhonePe PG V2. The backend verifies order status and keeps merchant collection separate from worker payout. Configure the following only on the Render backend after the authorised business administrator completes PhonePe merchant onboarding:
+
+- `PHONEPE_ENV`: `sandbox` for UAT or `production` after PhonePe approves go-live.
+- `PHONEPE_CLIENT_ID`, `PHONEPE_CLIENT_SECRET`, `PHONEPE_CLIENT_VERSION`: PhonePe PG V2 credentials.
+- `PHONEPE_WEBHOOK_USERNAME` and `PHONEPE_WEBHOOK_PASSWORD`: credentials created for the PhonePe SHA webhook configuration. Keep them private and do not add them to Vercel or frontend variables.
+- `CLIENT_URL`: the production KaamSetu frontend origin used for the checkout return URL.
+
+Create a PhonePe webhook for the same environment and subscribe to `checkout.order.completed` and `checkout.order.failed`. Set its HTTPS endpoint to `https://kaamsetu-wby0.onrender.com/api/phonepe/webhook`, choose SHA (username/password) authentication, and use the same username/password configured in Render. The endpoint authenticates the callback, checks the merchant order ID and exact amount against the stored payment intent, and handles repeated events idempotently. The customer return/status endpoint remains the fallback if a webhook is not delivered.
+
+**Worker payout is not yet automated.** A successful PG checkout means funds were collected by the KaamSetu merchant account; it does not prove that the worker received money. Automated worker disbursement requires PhonePe to approve and enable the applicable payout or split-settlement product for the merchant, plus a separately implemented and tested payout workflow. Until that is approved and configured, the UI deliberately keeps worker payout pending and does not mark the job paid out.
+
+Do not switch to production or run real-money tests until the authorised business administrator has completed PhonePe's go-live/UAT requirements and reviewed the merchant settlement arrangement.
+
 ### UPI and bank details
 KaamSetu currently collects a worker UPI ID only. It checks the input format but does **not** verify that the UPI ID exists or belongs to the worker. No bank account number or IFSC details are currently collected, so bank-account/penny-drop verification is not applicable to the present UI. Do not describe either contact details or payment IDs as externally verified unless a provider-backed verification integration is added and configured.
