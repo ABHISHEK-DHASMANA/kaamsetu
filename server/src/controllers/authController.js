@@ -77,6 +77,10 @@ export const firebaseLogin = async (req, res) => {
     const token = generateToken(user);
     const userSafe = { ...user };
     delete userSafe.password;
+    delete userSafe.firebaseUid;
+    delete userSafe.emailVerificationTokenHash;
+    delete userSafe.emailVerificationExpiresAt;
+    delete userSafe.emailVerificationLastSentAt;
 
     let profile = null;
     if (user.role === 'worker') {
@@ -264,8 +268,10 @@ export const register = async (req, res) => {
 
     const safeUser = { ...newUser };
     delete safeUser.password;
+    delete safeUser.firebaseUid;
     delete safeUser.emailVerificationTokenHash;
     delete safeUser.emailVerificationExpiresAt;
+    delete safeUser.emailVerificationLastSentAt;
 
     return res.status(201).json({
       success: true,
@@ -332,6 +338,10 @@ export const login = async (req, res) => {
     const token = generateToken(user);
     const userSafe = { ...user };
     delete userSafe.password;
+    delete userSafe.firebaseUid;
+    delete userSafe.emailVerificationTokenHash;
+    delete userSafe.emailVerificationExpiresAt;
+    delete userSafe.emailVerificationLastSentAt;
 
     let profile = null;
     if (user.role === 'worker') {
@@ -366,6 +376,10 @@ export const getMe = async (req, res) => {
 
     const userSafe = { ...user };
     delete userSafe.password;
+    delete userSafe.firebaseUid;
+    delete userSafe.emailVerificationTokenHash;
+    delete userSafe.emailVerificationExpiresAt;
+    delete userSafe.emailVerificationLastSentAt;
 
     res.status(200).json({
       success: true,
