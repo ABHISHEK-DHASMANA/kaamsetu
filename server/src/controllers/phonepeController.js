@@ -202,7 +202,7 @@ export const getPhonePePaymentStatus = async (req, res) => {
           message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Worker payout is tracked separately and is not marked complete yet.',
           type: 'success', actionUrl: '/payments', isRead: false
         });
-      } else if (state === 'FAILED') {
+      } else if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(state)) {
         intent.status = 'failed';
       }
       intent.providerState = state;
