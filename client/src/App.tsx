@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { AboutPage } from './pages/AboutPage';
 import { JobsExplorePage } from './pages/JobsExplorePage';
 import { WorkersExplorePage } from './pages/WorkersExplorePage';
@@ -71,6 +72,7 @@ export const App: React.FC = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/jobs" element={<JobsExplorePage />} />
       <Route path="/workers" element={<WorkersExplorePage />} />
