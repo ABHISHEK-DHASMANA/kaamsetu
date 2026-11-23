@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import PaymentIntent from '../models/PaymentIntent.js';
-import { findOne, find, insert, update, flushStorage } from '../services/storage.js';
+import { findOne, insert } from '../services/storage.js';
 import { createPhonePeCheckout, fetchPhonePeOrderStatus, isPhonePeConfigured } from '../services/phonepeService.js';
 
 const currentUserId = user => user?._id || user?.id;
@@ -42,6 +42,7 @@ const safeStatus = intent => ({
   amount: intent.amount,
   currency: intent.currency,
   status: intent.status,
+  payoutStatus: intent.payoutStatus || 'not_configured',
   providerState: intent.providerState,
   verifiedAt: intent.verifiedAt,
   createdAt: intent.createdAt
@@ -183,39 +184,21 @@ export const getPhonePePaymentStatus = async (req, res) => {
         }
         intent.status = 'paid';
         intent.verifiedAt = new Date();
-        const application = findOne('applications', a => String(a._id || a.id) === String(intent.applicationId));
-        if (application && application.status === 'PaymentPending' && application.paymentMode === 'online') {
-          const now = new Date().toISOString();
-          const existingLedgerPayment = findOne('payments', p => String(p.applicationId) === String(intent.applicationId) && p.method === 'phonepe_gateway');
-          if (!existingLedgerPayment) {
-            insert('payments', {
-              applicationId: String(intent.applicationId), jobId: String(intent.jobId),
-              employerId: String(intent.employerId), workerId: String(intent.workerId),
-              amount: intent.amount, currency: 'INR', method: 'phonepe_gateway',
-              transactionReference: String(provider.orderId || intent.phonepeOrderId || intent.merchantOrderId),
-              note: 'Automatically confirmed by PhonePe server-side order status.',
-              employerConfirmed: true, workerConfirmed: true, status: 'paid',
-              verificationType: 'phonepe_gateway', confirmedAt: now,
-              events: [{ type: 'phonepe_gateway_payment_verified', actorId: 'phonepe', at: now }]
-            });
-          }
-          update('applications', String(application._id || application.id), {
-            status: 'Completed', completedAt: now, paymentConfirmedAt: now, paymentProvider: 'phonepe'
-          });
-          const workerProfile = findOne('workerProfiles', p => String(p.userId) === String(intent.workerId));
-          if (workerProfile) {
-            const passport = workerProfile.skillPassport || {};
-            update('workerProfiles', String(workerProfile._id || workerProfile.id), {
-              skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1 }
-            });
-          }
-          const job = findOne('jobs', j => String(j._id || j.id) === String(intent.jobId));
-          const otherActive = find('applications', a => String(a.jobId) === String(intent.jobId) && String(a._id || a.id) !== String(intent.applicationId) && ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending'].includes(a.status));
-          if (job) update('jobs', String(job._id || job.id), { status: otherActive.length ? 'in_progress' : 'completed' });
-          insert('notifications', { userId: String(intent.workerId), title: 'Payment received', message: 'PhonePe confirmed your job payment of ₹' + intent.amount + '. Your job is now completed.', type: 'success', actionUrl: '/payments', isRead: false });
-          insert('notifications', { userId: String(intent.employerId), title: 'Payment successful', message: 'PhonePe confirmed your payment of ₹' + intent.amount + '. The job is now completed.', type: 'success', actionUrl: '/payments', isRead: false });
-          await flushStorage();
-        }
+        // PhonePe PG confirms collection into the merchant account; this is NOT proof
+        // that a separate worker payout has happened. Keep payout explicitly pending.
+        intent.payoutStatus = 'pending_provider_settlement';
+        insert('notifications', {
+          userId: String(intent.workerId),
+          title: 'Employer payment received by KaamSetu',
+          message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Your worker payout is not yet confirmed; KaamSetu will update this status after the approved settlement process completes.',
+          type: 'info', actionUrl: '/payments', isRead: false
+        });
+        insert('notifications', {
+          userId: String(intent.employerId),
+          title: 'Payment collected',
+          message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Worker payout is tracked separately and is not marked complete yet.',
+          type: 'success', actionUrl: '/payments', isRead: false
+        });
       } else if (state === 'FAILED') {
         intent.status = 'failed';
       }
