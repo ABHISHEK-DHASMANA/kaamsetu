@@ -59,7 +59,7 @@ export const getPhonePeAvailability = (req, res) => {
   });
 };
 
-export const getPhonePePaymentQuote = (req, res) => {
+export const getPhonePePaymentQuote = async (req, res) => {
   try {
     if (!ensureMongo(res)) return;
     const employerId = currentUserId(req.user);
