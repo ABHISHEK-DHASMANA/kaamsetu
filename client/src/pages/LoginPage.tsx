@@ -60,8 +60,9 @@ export const LoginPage: React.FC = () => {
       setNotice('OTP sent. Enter the verification code received on your phone.');
     } catch (err: any) {
       const code = err?.code || '';
+      const hostname = window.location.hostname;
       setErrorMsg(code === 'auth/unauthorized-domain'
-        ? \`Firebase is blocking this website (\${window.location.hostname}). Add this exact hostname in Firebase Console → Authentication → Settings → Authorized domains, then reload the site.\`
+        ? 'Firebase is blocking this website (' + hostname + '). Add this exact hostname in Firebase Console → Authentication → Settings → Authorized domains, then reload the site.'
         : code === 'auth/operation-not-allowed'
           ? 'Phone authentication is disabled. Enable the Phone provider in Firebase Console → Authentication → Sign-in method.'
           : code === 'auth/billing-not-enabled' || code === 'auth/quota-exceeded'
