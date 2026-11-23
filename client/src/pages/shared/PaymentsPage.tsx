@@ -25,7 +25,7 @@ type PhonePePayment = {
   merchantOrderId: string; applicationId: string; amount: number; currency: string;
   status: 'pending' | 'paid' | 'failed'; payoutStatus?: string; providerState?: string; verifiedAt?: string; createdAt: string;
 };
-type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType: string; duration: string; alreadyCollected?: boolean; payoutStatus?: string | null; checkoutPending?: boolean; checkoutUrl?: string };
+type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType: string; duration: string; alreadyCollected?: boolean; directPaymentPending?: boolean; directPaymentStatus?: string | null; payoutStatus?: string | null; checkoutPending?: boolean; checkoutUrl?: string };
 
 const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value || 0);
 
@@ -203,6 +203,7 @@ export const PaymentsPage: React.FC = () => {
         note: note.trim()
       });
       setMessage(result.message);
+      setQuote(current => current ? { ...current, directPaymentPending: true, directPaymentStatus: 'awaiting_worker_confirmation' } : current);
       setReference('');
       setNote('');
       await refresh();
@@ -290,6 +291,7 @@ export const PaymentsPage: React.FC = () => {
                 <div className="text-xs text-brand-muted">Worker: {quote.workerName} · Based on {quote.wageType} wage · {quote.duration}</div>
                 {quote.alreadyCollected && <div className="text-xs font-semibold text-amber-700 mt-2">Payment already collected by KaamSetu. Do not pay again. Worker payout is pending approved settlement.</div>}
                 {quote.checkoutPending && <div className="text-xs font-semibold text-blue-700 mt-2">A checkout is already open for this job. Continue it below to avoid creating a duplicate payment.</div>}
+                {quote.directPaymentPending && <div className="text-xs font-semibold text-amber-700 mt-2">A direct UPI payment has already been recorded. Wait for the worker to confirm receipt; do not pay again.</div>}
               </div>
             )}
             {!available && (
@@ -300,10 +302,10 @@ export const PaymentsPage: React.FC = () => {
             )}
             {available && !webhookConfigured && <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">PhonePe server notifications are not configured yet. Payment status can still be checked when the payer returns to KaamSetu, but automatic updates while the page is closed require the merchant webhook to be configured by the authorised business administrator.</div>}
             {environment !== 'production' && available && <div className="text-xs text-amber-700">Sandbox mode: test transactions only. No real money will be transferred.</div>}
-            <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || !available || quoteLoading || (quote.checkoutPending && !quote.checkoutUrl)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
+            <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || quote.directPaymentPending || !available || quoteLoading || (quote.checkoutPending && !quote.checkoutUrl)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
               <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `${quote?.checkoutPending ? 'Resume UPI checkout' : 'Continue to UPI checkout ' + (quote ? money(quote.amount) : '')}`}
             </button>
-            <div className="border-t border-brand-border pt-4 space-y-3">
+            {!quote?.alreadyCollected && !quote?.checkoutPending && !quote?.directPaymentPending && <div className="border-t border-brand-border pt-4 space-y-3">
               <div>
                 <h3 className="font-bold text-sm text-brand-dark">Or pay the worker directly with UPI</h3>
                 <p className="text-xs text-brand-muted mt-1">This restores KaamSetu's earlier direct UPI option. The amount is fixed from the agreed job payment. On Android, the button opens compatible UPI apps; on desktop, scan the QR with any UPI app.</p>
@@ -330,7 +332,7 @@ export const PaymentsPage: React.FC = () => {
                 </button>
                 <p className="text-[11px] text-brand-muted">After recording, the worker must independently confirm the money reached their UPI account. This is a two-party confirmation, not automatic bank verification.</p>
               </form>}
-            </div>
+            </div>}
           </section>
         )}
 
