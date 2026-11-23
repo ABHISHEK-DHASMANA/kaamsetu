@@ -53,6 +53,7 @@ export const getPhonePeAvailability = (req, res) => {
   res.json({
     success: true,
     available: isPhonePeConfigured() && mongoose.connection.readyState === 1,
+    webhookConfigured: Boolean(process.env.PHONEPE_WEBHOOK_USERNAME && process.env.PHONEPE_WEBHOOK_PASSWORD),
     environment: (process.env.PHONEPE_ENV || 'sandbox').toLowerCase(),
     message: isPhonePeConfigured()
       ? 'PhonePe credentials are configured. Checkout availability also requires MongoDB.'
