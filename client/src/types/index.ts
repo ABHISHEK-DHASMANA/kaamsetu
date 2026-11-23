@@ -1,6 +1,6 @@
 export type Role = 'worker' | 'employer' | 'admin';
 
-export type UserVerificationStatus = 'Registered' | 'Contact Verified' | 'Identity Verified';
+export type UserVerificationStatus = 'Registered' | 'Contact Verified' | 'Identity Verified' | 'Phone Verified' | 'Email Verification Pending' | 'Email Verified' | 'Phone and Email Verified';
 
 export type SkillVerificationStatus = 'Self-declared' | 'Evidence Submitted' | 'Employer Confirmed';
 
