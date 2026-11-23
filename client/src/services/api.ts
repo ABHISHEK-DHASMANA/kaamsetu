@@ -67,6 +67,13 @@ export const apiLogin = async (phone: string, password: string) => {
   });
 };
 
+export const apiDemoLogin = async (role: 'worker' | 'employer') => {
+  return request<{ success: boolean; token: string; user: User; profile: any; demo: true }>('/auth/demo-login', {
+    method: 'POST',
+    body: JSON.stringify({ role })
+  });
+};
+
 export const apiRegister = async (payload: any) => {
   return request<{ success: boolean; message: string; emailVerificationRequired: boolean; phoneVerified: boolean; user: User }>('/auth/register', {
     method: 'POST',
