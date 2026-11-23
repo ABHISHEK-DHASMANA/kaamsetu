@@ -12,6 +12,7 @@ const paymentIntentSchema = new mongoose.Schema({
   currency: { type: String, default: 'INR' },
   provider: { type: String, default: 'phonepe' },
   status: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending', index: true },
+  payoutStatus: { type: String, enum: ['not_configured', 'pending_provider_settlement', 'processing', 'paid', 'failed'], default: 'not_configured', index: true },
   checkoutUrl: { type: String, default: '' },
   providerState: { type: String, default: 'PENDING' },
   verifiedAt: { type: Date, default: null },
