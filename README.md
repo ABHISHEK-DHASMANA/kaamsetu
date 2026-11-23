@@ -162,6 +162,13 @@ kaamsetu/
 - Keep `FIREBASE_PROJECT_ID` and `FIREBASE_SERVICE_ACCOUNT_JSON` configured only on the Render backend. Never put the service-account JSON in Vite/client variables.
 - Firebase may require billing/SMS quota configuration and may limit SMS delivery by country, IP, or volume. Real SMS delivery must be tested on a real, authorized mobile number; a local success state is not proof of delivery.
 
+### API CORS and JWT configuration
+- Set `JWT_SECRET` on Render to a unique, randomly generated secret (at least 32 random bytes). Do not use the sample value in `.env.example`.
+- Set `FRONTEND_URL` to the exact production frontend origin, for example `https://kaamsetu-codexbuilde.vercel.app`.
+- Set `CORS_ALLOWED_ORIGINS` to a comma-separated list of any additional trusted production origins (for example a custom domain or a Vercel preview domain you actively use). Do not use `*`.
+- `CLIENT_URL` remains useful for local development; localhost origins are allowed automatically only when `NODE_ENV` is not `production`.
+- The API now rejects browser requests from origins not in this allowlist. After changing these settings, verify login, registration, profile updates, messaging, and payment requests from the production site.
+
 ### Email verification
 The backend sends single-use, 24-hour verification links through Resend. Configure these variables in Render (not in frontend code):
 - `RESEND_API_KEY`: private Resend API key.
