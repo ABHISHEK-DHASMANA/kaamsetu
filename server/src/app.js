@@ -27,7 +27,7 @@ const app = express();
 // Middlewares
 const allowedOrigins = new Set(
   [process.env.FRONTEND_URL, process.env.CLIENT_URL, ...(process.env.CORS_ALLOWED_ORIGINS || '').split(',')]
-    .map(value => String(value || '').trim().replace(/\\/+$/, ''))
+    .map(value => String(value || '').trim().replace(/\/+$/, ''))
     .filter(Boolean)
 );
 if (process.env.NODE_ENV !== 'production') {
@@ -38,7 +38,7 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(cors({
   origin(origin, callback) {
     // Requests without an Origin header (health checks, server-to-server calls)
-    // are not browser CORS requests and remain allowed.
+    if (!origin || allowedOrigins.has(origin.replace(/\/+$/, ''))) return callback(null, true);
     if (!origin || allowedOrigins.has(origin.replace(/\\/+$/, ''))) return callback(null, true);
     return callback(new Error('Origin is not allowed by KaamSetu CORS policy.'));
   },
