@@ -11,7 +11,7 @@ interface AuthContextType {
   role: Role | null;
   isAuthenticated: boolean;
   login: (phone: string, pass: string) => Promise<void>;
-  quickLogin: (type: 'worker' | 'employer' | 'admin') => Promise<void>;
+  quickLogin: (type: 'worker' | 'employer') => Promise<void>;
   loginWithFirebase: (firebaseUser: FirebaseUser) => Promise<void>;
   logout: () => void;
   updateLocalProfile: (newProfile: any) => void;
