@@ -22,9 +22,9 @@ type LegacyPayment = {
 };
 type PhonePePayment = {
   merchantOrderId: string; applicationId: string; amount: number; currency: string;
-  status: 'pending' | 'paid' | 'failed'; providerState?: string; verifiedAt?: string; createdAt: string;
+  status: 'pending' | 'paid' | 'failed'; payoutStatus?: string; providerState?: string; verifiedAt?: string; createdAt: string;
 };
-type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType: string; duration: string };
+type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType: string; duration: string; alreadyCollected?: boolean; payoutStatus?: string | null };
 
 const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value || 0);
 
@@ -124,9 +124,10 @@ export const PaymentsPage: React.FC = () => {
   useEffect(() => {
     const timer = window.setInterval(() => {
       refresh().catch(() => undefined);
+      syncGatewayStatuses().catch(() => undefined);
     }, 12000);
     return () => window.clearInterval(timer);
-  }, [refresh]);
+  }, [refresh, syncGatewayStatuses]);
 
   const selectedApplication = applications.find(a => a._id === applicationId);
   const paidTotal = useMemo(
@@ -210,6 +211,7 @@ export const PaymentsPage: React.FC = () => {
                 <div className="text-xs text-brand-muted">Amount due for {quote.jobTitle}</div>
                 <div className="text-3xl font-black text-brand-dark">{money(quote.amount)}</div>
                 <div className="text-xs text-brand-muted">Worker: {quote.workerName} · Based on {quote.wageType} wage · {quote.duration}</div>
+                {quote.alreadyCollected && <div className="text-xs font-semibold text-amber-700 mt-2">Payment already collected by KaamSetu. Do not pay again. Worker payout is pending approved settlement.</div>}
               </div>
             )}
             {!available && (
@@ -219,7 +221,7 @@ export const PaymentsPage: React.FC = () => {
               </div>
             )}
             {environment !== 'production' && available && <div className="text-xs text-amber-700">Sandbox mode: test transactions only. No real money will be transferred.</div>}
-            <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || !available || quoteLoading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
+            <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || !available || quoteLoading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
               <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `Continue to pay ${quote ? money(quote.amount) : ''}`}
             </button>
           </section>
@@ -241,7 +243,7 @@ export const PaymentsPage: React.FC = () => {
             {phonePePayments.map(payment => (
               <div key={payment.merchantOrderId} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div><div className="font-semibold text-sm text-brand-dark">{applicationName(payment.applicationId)}</div><div className="text-xs text-brand-muted mt-1">Order {payment.merchantOrderId} · {new Date(payment.createdAt).toLocaleString('en-IN')}</div></div>
-                <div className="flex items-center gap-3"><strong className="text-brand-dark">{money(payment.amount)}</strong><span className={`text-xs font-bold rounded-full px-2.5 py-1 ${payment.status === 'paid' ? 'bg-emerald-50 text-emerald-700' : payment.status === 'failed' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>{payment.status === 'paid' ? 'Paid · Verified' : payment.status === 'failed' ? 'Failed' : 'Pending'}</span></div>
+                <div className="flex items-center gap-3"><strong className="text-brand-dark">{money(payment.amount)}</strong><span className={`text-xs font-bold rounded-full px-2.5 py-1 ${payment.status === 'paid' ? 'bg-emerald-50 text-emerald-700' : payment.status === 'failed' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>{payment.status === 'paid' ? (payment.payoutStatus === 'paid' ? 'Paid to worker' : 'Collected · payout pending') : payment.status === 'failed' ? 'Failed' : 'Pending'}</span></div>
               </div>
             ))}
           </div>}
@@ -260,7 +262,7 @@ export const PaymentsPage: React.FC = () => {
           </div>}
         </section>
 
-        <div className="text-xs text-brand-muted flex items-center gap-2"><Clock3 className="w-4 h-4"/> Payment statuses are updated from the provider's server-side order status. A pending or failed transaction is never shown as paid.</div>
+        <div className="text-xs text-brand-muted flex items-center gap-2"><Clock3 className="w-4 h-4"/> Collection status is verified from PhonePe server-side order status. Collection by KaamSetu is not the same as money received by the worker; worker payout remains pending until separately confirmed.</div>
         <div className="text-[11px] text-brand-muted flex items-center gap-2"><IndianRupee className="w-3.5 h-3.5"/> Gateway collection and worker payouts depend on the approved PhonePe merchant and settlement configuration.</div>
       </div>
     </DashboardLayout>
