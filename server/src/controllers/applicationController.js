@@ -93,6 +93,8 @@ export const getEmployerApplications = async (req, res) => {
           phone: unlocked ? (workerProfile.phone || workerUser?.phone) : undefined,
           email: undefined,
           upiId: unlocked ? workerProfile.upiId : undefined,
+          upiVerified: unlocked ? workerProfile.upiVerified === true : undefined,
+          upiVerificationStatus: unlocked ? (workerProfile.upiVerificationStatus || (workerProfile.upiId ? 'format_only' : 'not_provided')) : undefined,
           location: unlocked ? workerProfile.location : { ...workerProfile.location, coordinates: undefined }
         } : { fullName: workerUser?.name || 'Worker', skills: [] },
         workerUser: { name: workerUser?.name, phone: unlocked ? workerUser?.phone : undefined, verificationStatus: workerUser?.verificationStatus },
