@@ -311,7 +311,10 @@ export const login = async (req, res) => {
     const identifier = String(phone).trim();
     const normalizedIdentifier = identifier.toLowerCase();
     const isEmailIdentifier = normalizedIdentifier.includes('@');
-    if (!isEmailIdentifier) {
+    const isLocalDemoLogin = !isEmailIdentifier &&
+      process.env.NODE_ENV !== 'production' &&
+      process.env.DEMO_MODE === 'true';
+    if (!isEmailIdentifier && !isLocalDemoLogin) {
       return res.status(403).json({
         success: false,
         code: 'PHONE_OTP_REQUIRED',
