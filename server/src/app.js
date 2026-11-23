@@ -25,8 +25,23 @@ dotenv.config();
 const app = express();
 
 // Middlewares
+const allowedOrigins = new Set(
+  [process.env.FRONTEND_URL, process.env.CLIENT_URL, ...(process.env.CORS_ALLOWED_ORIGINS || '').split(',')]
+    .map(value => String(value || '').trim().replace(/\\/+$/, ''))
+    .filter(Boolean)
+);
+if (process.env.NODE_ENV !== 'production') {
+  allowedOrigins.add('http://localhost:5173');
+  allowedOrigins.add('http://127.0.0.1:5173');
+}
+
 app.use(cors({
-  origin: '*',
+  origin(origin, callback) {
+    // Requests without an Origin header (health checks, server-to-server calls)
+    // are not browser CORS requests and remain allowed.
+    if (!origin || allowedOrigins.has(origin.replace(/\\/+$/, ''))) return callback(null, true);
+    return callback(new Error('Origin is not allowed by KaamSetu CORS policy.'));
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
