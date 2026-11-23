@@ -63,11 +63,16 @@ export const updateEmployerProfile = async (req, res) => {
 
     const { companyName, contactPerson, phone, email, industry, businessType, address, aboutCompany, avatar, maxHiringDistanceKm } = req.body;
 
+    const normalizePhoneForProfile = value => String(value || '').replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').replace(/^0(?=\d{10}$)/, '');
+    if (phone && normalizePhoneForProfile(phone) !== normalizePhoneForProfile(req.user.phone)) {
+      return res.status(400).json({ success: false, message: 'Changing your mobile number requires a new SMS OTP verification. Your saved number was not changed.' });
+    }
+    if (email && String(email).trim().toLowerCase() !== String(req.user.email || '').trim().toLowerCase()) {
+      return res.status(400).json({ success: false, message: 'Changing your email requires a new verification link. Your saved email was not changed.' });
+    }
     const updates = {};
     if (companyName) updates.companyName = companyName;
     if (contactPerson) updates.contactPerson = contactPerson;
-    if (phone) updates.phone = phone;
-    if (email) updates.email = email;
     if (industry) updates.industry = industry;
     if (businessType) updates.businessType = businessType;
     if (address) updates.address = address;
