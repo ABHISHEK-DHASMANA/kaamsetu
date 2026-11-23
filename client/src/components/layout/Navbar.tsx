@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth, DEMO_USERS } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import {
   Briefcase,
@@ -22,12 +22,30 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [demoDropdownOpen, setDemoDropdownOpen] = useState(false);
+  const [demoLoadingRole, setDemoLoadingRole] = useState<'worker' | 'employer' | null>(null);
+  const [demoError, setDemoError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const runDemoLogin = async (role: 'worker' | 'employer') => {
+    setDemoError(null);
+    setDemoLoadingRole(role);
+    setDemoDropdownOpen(false);
+    setMobileMenuOpen(false);
+    try {
+      await quickLogin(role);
+      navigate(role === 'worker' ? '/worker/dashboard' : '/employer/dashboard');
+    } catch (error: any) {
+      setDemoError(error?.message || 'Demo login failed. Please try again.');
+      setDemoDropdownOpen(true);
+    } finally {
+      setDemoLoadingRole(null);
+    }
   };
 
   const getDashboardLink = () => {
@@ -111,47 +129,30 @@ export const Navbar: React.FC = () => {
                   <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-brand-muted border-b border-brand-border/60">
                     One-Click Hackathon Logins
                   </div>
+                  {demoError && <div role="alert" className="mx-3 my-2 rounded-lg bg-red-50 px-2.5 py-2 text-[11px] text-red-700">{demoError}</div>}
                   <button
-                    onClick={async () => {
-                      setDemoDropdownOpen(false);
-                      await quickLogin('worker');
-                      navigate('/worker/dashboard');
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-brand-primary-light flex items-center justify-between group"
+                    type="button"
+                    disabled={demoLoadingRole !== null}
+                    onClick={() => runDemoLogin('worker')}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-brand-primary-light flex items-center justify-between group disabled:opacity-50"
                   >
                     <div>
-                      <div className="font-semibold text-brand-dark">Ramesh Kumar (Worker)</div>
+                      <div className="font-semibold text-brand-dark">{demoLoadingRole === 'worker' ? 'Opening demo…' : 'Ramesh Kumar (Worker)'}</div>
                       <div className="text-[11px] text-brand-muted">Electrician • Sector 62 • ₹800</div>
                     </div>
                     <span className="text-[10px] bg-brand-primary/10 text-brand-primary px-1.5 py-0.5 rounded font-mono font-medium">Worker</span>
                   </button>
                   <button
-                    onClick={async () => {
-                      setDemoDropdownOpen(false);
-                      await quickLogin('employer');
-                      navigate('/employer/dashboard');
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-brand-primary-light flex items-center justify-between group"
+                    type="button"
+                    disabled={demoLoadingRole !== null}
+                    onClick={() => runDemoLogin('employer')}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-brand-primary-light flex items-center justify-between group disabled:opacity-50"
                   >
                     <div>
-                      <div className="font-semibold text-brand-dark">Sharma Electrical Services</div>
+                      <div className="font-semibold text-brand-dark">{demoLoadingRole === 'employer' ? 'Opening demo…' : 'Sharma Electrical Services'}</div>
                       <div className="text-[11px] text-brand-muted">Employer • Sector 63 • Hiring</div>
                     </div>
                     <span className="text-[10px] bg-brand-secondary/10 text-brand-secondary px-1.5 py-0.5 rounded font-mono font-medium">Employer</span>
-                  </button>
-                  <button
-                    onClick={async () => {
-                      setDemoDropdownOpen(false);
-                      await quickLogin('admin');
-                      navigate('/admin/dashboard');
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-brand-primary-light flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-semibold text-brand-dark">KAAMSETU Admin</div>
-                      <div className="text-[11px] text-brand-muted">Analytics, Verification, Reports</div>
-                    </div>
-                    <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-mono font-medium">Admin</span>
                   </button>
                 </div>
               )}
@@ -288,38 +289,15 @@ export const Navbar: React.FC = () => {
 
           <div className="pt-3 border-t border-brand-border space-y-2">
             <div className="text-[11px] font-bold text-brand-muted uppercase">Quick Demo Access</div>
-            <div className="grid grid-cols-3 gap-1.5">
-              <button
-                onClick={async () => {
-                  setMobileMenuOpen(false);
-                  await quickLogin('worker');
-                  navigate('/worker/dashboard');
-                }}
-                className="px-2 py-1.5 bg-brand-primary-light text-brand-primary rounded text-xs font-semibold"
-              >
-                Worker
+            <div className="grid grid-cols-2 gap-1.5">
+              <button type="button" disabled={demoLoadingRole !== null} onClick={() => runDemoLogin('worker')} className="px-2 py-2 bg-brand-primary-light text-brand-primary rounded text-xs font-semibold disabled:opacity-50">
+                {demoLoadingRole === 'worker' ? 'Opening…' : 'Worker Demo'}
               </button>
-              <button
-                onClick={async () => {
-                  setMobileMenuOpen(false);
-                  await quickLogin('employer');
-                  navigate('/employer/dashboard');
-                }}
-                className="px-2 py-1.5 bg-brand-secondary-light text-brand-secondary rounded text-xs font-semibold"
-              >
-                Employer
-              </button>
-              <button
-                onClick={async () => {
-                  setMobileMenuOpen(false);
-                  await quickLogin('admin');
-                  navigate('/admin/dashboard');
-                }}
-                className="px-2 py-1.5 bg-purple-50 text-purple-700 rounded text-xs font-semibold"
-              >
-                Admin
+              <button type="button" disabled={demoLoadingRole !== null} onClick={() => runDemoLogin('employer')} className="px-2 py-2 bg-brand-secondary-light text-brand-secondary rounded text-xs font-semibold disabled:opacity-50">
+                {demoLoadingRole === 'employer' ? 'Opening…' : 'Employer Demo'}
               </button>
             </div>
+            {demoError && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[11px] text-red-700">{demoError}</p>}
 
             {isAuthenticated ? (
               <div className="flex gap-2 pt-2">
