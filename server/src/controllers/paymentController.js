@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+import PaymentIntent from '../models/PaymentIntent.js';
 import { find, findOne, insert, update, flushStorage } from '../services/storage.js';
 
 const idOf = value => String(value?._id || value?.id || value || '');
@@ -103,6 +105,10 @@ export const createPayment = async (req, res) => {
 
     const existing = findOne('payments', p => idOf(p.applicationId) === normalizedApplicationId && p.status !== 'cancelled');
     if (existing) return res.status(409).json({ success: false, message: 'A payment record already exists for this job. Check payment history before trying again.' });
+    if (mongoose.connection.readyState === 1) {
+      const gatewayOrder = await PaymentIntent.findOne({ applicationId: normalizedApplicationId, status: { $in: ['pending', 'paid'] } });
+      if (gatewayOrder) return res.status(409).json({ success: false, message: 'A PhonePe checkout already exists for this job. Check its status before using direct UPI.' });
+    }
 
     const payment = insert('payments', {
       applicationId: normalizedApplicationId,
