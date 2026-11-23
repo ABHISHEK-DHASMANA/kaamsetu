@@ -73,10 +73,11 @@ export const getPhonePePaymentQuote = (req, res) => {
     const job = findOne('jobs', j => String(j._id || j.id) === String(application.jobId));
     if (!job) return res.status(404).json({ success: false, message: 'Job listing not found.' });
     const amount = getPromisedJobAmount(job, application);
+    const existingPayment = await PaymentIntent.findOne({ applicationId: String(application._id || application.id), status: 'paid' });
     if (!Number.isFinite(amount) || amount < 1 || amount > 1000000) {
       return res.status(422).json({ success: false, message: 'The agreed payment cannot be calculated safely from the job listing. Please contact support.' });
     }
-    res.json({ success: true, quote: { applicationId: String(application._id || application.id), jobTitle: job.title, workerName: findOne('workerProfiles', p => String(p.userId) === String(application.workerId))?.fullName || 'Worker', amount, currency: 'INR', wageType: job.wageType || 'daily', duration: job.workDuration || '' } });
+    res.json({ success: true, quote: { applicationId: String(application._id || application.id), jobTitle: job.title, workerName: findOne('workerProfiles', p => String(p.userId) === String(application.workerId))?.fullName || 'Worker', amount, currency: 'INR', wageType: job.wageType || 'daily', duration: job.workDuration || '', alreadyCollected: Boolean(existingPayment), payoutStatus: existingPayment?.payoutStatus || null } });
   } catch (error) {
     console.error('[PhonePe] Quote failed:', error.message);
     res.status(500).json({ success: false, message: 'Could not calculate the agreed job payment.' });
@@ -109,7 +110,7 @@ export const createPhonePePayment = async (req, res) => {
     }
 
     const existingPaid = await PaymentIntent.findOne({ applicationId, status: 'paid' });
-    if (existingPaid) return res.status(409).json({ success: false, message: 'This completed job already has a verified online payment.' });
+    if (existingPaid) return res.status(409).json({ success: false, message: 'PhonePe has already collected payment for this job. Do not pay again; worker payout is awaiting the approved settlement process.' });
 
     const existingPending = await PaymentIntent.findOne({ applicationId, status: 'pending' });
     if (existingPending) {
