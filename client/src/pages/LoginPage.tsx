@@ -152,6 +152,7 @@ export const LoginPage: React.FC = () => {
             <p className="text-xs text-brand-muted">Sign in securely to your KAAMSETU account</p>
           </div>
 
+          {import.meta.env.DEV && (
           <div className="p-4 rounded-2xl bg-brand-accent-light/50 border border-brand-accent/30 space-y-2.5">
             <div className="flex items-center gap-1.5 text-xs font-bold text-brand-dark"><Sparkles className="w-4 h-4 text-brand-accent" />One-Click Evaluation Logins</div>
             <div className="grid grid-cols-3 gap-2">
@@ -170,6 +171,7 @@ export const LoginPage: React.FC = () => {
 
           {errorMsg && <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2"><AlertCircle className="w-4 h-4 flex-shrink-0" />{errorMsg}</div>}
           {notice && <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2"><CheckCircle2 className="w-4 h-4 flex-shrink-0" />{notice}</div>}
+          )}
 
           <section className="space-y-3">
             <div className="text-xs font-bold text-brand-dark">Continue with Google</div>
