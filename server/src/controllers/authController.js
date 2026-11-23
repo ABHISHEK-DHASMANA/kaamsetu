@@ -475,6 +475,15 @@ export const deleteAccount = async (req, res) => {
       String(item.workerId) === userId || String(item.employerId) === userId
     );
     const applicationIds = new Set(relatedApplications.map(item => String(item._id || item.id)));
+    for (const application of relatedApplications) {
+      const redactions = {};
+      if (String(application.workerId) === userId && application.coverNote) redactions.coverNote = '[removed after account deletion]';
+      if (String(application.employerId) === userId && application.employerNotes) redactions.employerNotes = '[removed after account deletion]';
+      if (Object.keys(redactions).length) update('applications', application._id || application.id, redactions);
+    }
+    for (const review of find('reviews', item => String(item.fromUserId) === userId && item.reviewText)) {
+      update('reviews', review._id || review.id, { reviewText: '[review text removed after account deletion]' });
+    }
     for (const message of find('messages', item =>
       String(item.senderId) === userId || String(item.userId) === userId || applicationIds.has(String(item.applicationId))
     )) remove('messages', message._id || message.id);
@@ -482,14 +491,20 @@ export const deleteAccount = async (req, res) => {
     for (const item of find('savedJobs', row => String(row.userId) === userId)) remove('savedJobs', item._id || item.id);
     for (const item of find('userBlocks', row => String(row.blockerId) === userId || String(row.blockedId) === userId)) remove('userBlocks', item._id || item.id);
 
-    if (user.role === 'employer') {
-      for (const job of find('jobs', item => String(item.employerId) === userId && item.status === 'active')) {
-        update('jobs', job._id || job.id, { status: 'closed', closedReason: 'Employer account deleted', closedAt: new Date().toISOString() });
-      }
-    }
-
     const workerProfile = findOne('workerProfiles', item => String(item.userId) === userId);
     const employerProfile = findOne('employerProfiles', item => String(item.userId) === userId);
+    if (user.role === 'employer') {
+      for (const job of find('jobs', item => String(item.employerId) === userId)) {
+        const jobUpdates = {};
+        if (job.status === 'active') {
+          jobUpdates.status = 'closed';
+          jobUpdates.closedReason = 'Employer account deleted';
+          jobUpdates.closedAt = new Date().toISOString();
+        }
+        if (employerProfile?.businessType === 'Home Owner') jobUpdates.companyName = 'Deleted Employer';
+        if (Object.keys(jobUpdates).length) update('jobs', job._id || job.id, jobUpdates);
+      }
+    }
     if (workerProfile) remove('workerProfiles', workerProfile._id || workerProfile.id);
     if (employerProfile) remove('employerProfiles', employerProfile._id || employerProfile.id);
 
