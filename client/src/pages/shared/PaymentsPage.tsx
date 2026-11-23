@@ -182,7 +182,7 @@ export const PaymentsPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title={isWorker ? 'My Earnings' : 'Payments'} subtitle={isWorker ? 'Track payments verified by KaamSetu' : 'Pay the agreed job amount securely through PhonePe'}>
+    <DashboardLayout title={isWorker ? 'My Earnings' : 'Payments'} subtitle={isWorker ? 'Track payments verified by KaamSetu' : 'Pay securely using your preferred supported UPI app'}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl border border-brand-border p-4">
@@ -202,7 +202,7 @@ export const PaymentsPage: React.FC = () => {
           <section className="bg-white rounded-2xl border border-brand-border p-5 space-y-4">
             <div>
               <h2 className="font-bold text-brand-dark">Pay for completed work</h2>
-              <p className="text-xs text-brand-muted mt-1">KaamSetu automatically calculates the amount from the job's agreed wage and duration. You do not need to enter an amount, UPI ID or transaction reference.</p>
+              <p className="text-xs text-brand-muted mt-1">KaamSetu calculates the agreed amount automatically. PhonePe Checkout offers supported UPI options, including Google Pay, PhonePe, Paytm and BHIM where available. On supported mobile devices it can open a UPI app; on desktop it can show a QR for scanning with a UPI app. You do not need to enter an amount or transaction reference.</p>
             </div>
             <label className="block text-xs font-semibold text-brand-muted">Job awaiting payment
               <select value={applicationId} onChange={e => setApplicationId(e.target.value)} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">
@@ -223,13 +223,13 @@ export const PaymentsPage: React.FC = () => {
             {!available && (
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 flex gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0"/>
-                <span>Secure checkout is not enabled yet. The authorised KaamSetu business administrator must finish PhonePe merchant onboarding and configure production credentials on the backend.</span>
+                <span>Secure checkout is not enabled yet. The authorised KaamSetu business administrator must finish PhonePe merchant onboarding and configure the approved credentials on the backend.</span>
               </div>
             )}
             {available && !webhookConfigured && <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">PhonePe server notifications are not configured yet. Payment status can still be checked when the payer returns to KaamSetu, but automatic updates while the page is closed require the merchant webhook to be configured by the authorised business administrator.</div>}
             {environment !== 'production' && available && <div className="text-xs text-amber-700">Sandbox mode: test transactions only. No real money will be transferred.</div>}
             <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || !available || quoteLoading || (quote.checkoutPending && !quote.checkoutUrl)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
-              <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `${quote?.checkoutPending ? 'Resume PhonePe checkout' : 'Continue to pay ' + (quote ? money(quote.amount) : '')}`}
+              <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `${quote?.checkoutPending ? 'Resume UPI checkout' : 'Continue to UPI checkout ' + (quote ? money(quote.amount) : '')}`}
             </button>
           </section>
         )}

@@ -23,6 +23,20 @@ const getConfig = () => {
   };
 };
 
+// PhonePe PG V2 Standard Checkout: leave the UPI app allowlist unset so
+// every UPI app enabled for this merchant/device can be offered. INTENT is
+// suited to supported mobile apps; QR also supports desktop-to-phone payment.
+export const buildPhonePePaymentFlow = redirectUrl => ({
+  type: 'PG_CHECKOUT',
+  merchantUrls: { redirectUrl },
+  paymentModeConfig: {
+    version: 'V2',
+    enabledPaymentModes: [
+      { type: 'UPI', flows: ['INTENT', 'QR'] }
+    ]
+  }
+});
+
 const readJson = async response => {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -71,10 +85,7 @@ export const createPhonePeCheckout = async ({ merchantOrderId, amountPaisa, redi
     body: JSON.stringify({
       merchantOrderId,
       amount: amountPaisa,
-      paymentFlow: {
-        type: 'PG_CHECKOUT',
-        merchantUrls: { redirectUrl }
-      }
+      paymentFlow: buildPhonePePaymentFlow(redirectUrl)
     })
   });
 
