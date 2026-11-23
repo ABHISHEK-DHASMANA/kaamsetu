@@ -175,7 +175,7 @@ export const register = async (req, res) => {
     const verificationToken = cleanEmail ? randomBytes(32).toString('hex') : null;
     const newUser = insert('users', {
       name: cleanName,
-      phone: verifiedPhone || '',
+      phone: verifiedPhone || undefined,
       phoneVerified: Boolean(verifiedPhone),
       firebaseUid,
       email: cleanEmail,
@@ -496,8 +496,8 @@ export const deleteAccount = async (req, res) => {
     // Retain payments, applications, completed jobs, and reviews for audit/dispute handling.
     update('users', userId, {
       name: 'Deleted KaamSetu User',
-      phone: '',
-      email: '',
+      phone: undefined,
+      email: undefined,
       avatar: '',
       password: await bcrypt.hash(randomBytes(48).toString('hex'), 12),
       phoneVerified: false,
