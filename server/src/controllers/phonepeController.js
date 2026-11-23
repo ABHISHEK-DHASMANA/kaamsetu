@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { isValidPhonePeWebhookAuthorization } from '../services/phonepeWebhookAuth.js';
 import PaymentIntent from '../models/PaymentIntent.js';
 import { findOne, insert } from '../services/storage.js';
 import { createPhonePeCheckout, fetchPhonePeOrderStatus, isPhonePeConfigured } from '../services/phonepeService.js';
@@ -222,6 +223,84 @@ export const getPhonePePaymentStatus = async (req, res) => {
   } catch (error) {
     console.error('[PhonePe] Status verification failed:', error.message);
     res.status(error.statusCode || 502).json({ success: false, message: 'Could not verify payment with PhonePe right now. The payment remains unconfirmed until verification succeeds.' });
+  }
+};
+
+export const receivePhonePeWebhook = async (req, res) => {
+  try {
+    if (!ensureMongo(res)) return;
+    const authorization = req.get('authorization') || '';
+    if (!isValidPhonePeWebhookAuthorization(authorization)) {
+      return res.status(401).json({ success: false, message: 'Invalid PhonePe webhook authorization.' });
+    }
+
+    const event = String(req.body?.event || '').toLowerCase();
+    if (!['checkout.order.completed', 'checkout.order.failed'].includes(event)) {
+      return res.status(200).json({ success: true, ignored: true });
+    }
+
+    const payload = req.body?.payload || {};
+    const merchantOrderId = String(payload.merchantOrderId || '');
+    if (!merchantOrderId) {
+      return res.status(400).json({ success: false, message: 'Webhook is missing merchantOrderId.' });
+    }
+
+    const intent = await PaymentIntent.findOne({ merchantOrderId });
+    if (!intent) return res.status(404).json({ success: false, message: 'Payment order not found.' });
+
+    const state = String(payload.state || '').toUpperCase();
+    const amount = Number(payload.amount);
+    if (!Number.isFinite(amount) || amount !== intent.amountPaisa) {
+      console.error('[PhonePe] Webhook amount mismatch for order:', merchantOrderId);
+      return res.status(409).json({ success: false, message: 'Webhook amount does not match the stored order.' });
+    }
+
+    const wasPaid = intent.status === 'paid';
+    if (event === 'checkout.order.completed' && state === 'COMPLETED') {
+      if (!wasPaid) {
+        intent.status = 'paid';
+        intent.payoutStatus = 'pending_provider_settlement';
+        intent.verifiedAt = new Date();
+      }
+    } else if (event === 'checkout.order.failed' && state === 'FAILED' && !wasPaid && intent.status === 'pending') {
+      intent.status = 'failed';
+    } else {
+      return res.status(200).json({ success: true, ignored: true });
+    }
+
+    intent.providerState = state;
+    intent.providerResponse = {
+      event,
+      state,
+      amount,
+      orderId: String(payload.orderId || ''),
+      paymentDetails: Array.isArray(payload.paymentDetails) ? payload.paymentDetails.map(item => ({
+        paymentMode: item.paymentMode,
+        transactionId: item.transactionId,
+        state: item.state
+      })) : []
+    };
+    await intent.save();
+
+    if (!wasPaid && intent.status === 'paid') {
+      insert('notifications', {
+        userId: String(intent.workerId),
+        title: 'Employer payment received by KaamSetu',
+        message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Your worker payout is not yet confirmed; KaamSetu will update this status after the approved settlement process completes.',
+        type: 'info', actionUrl: '/payments', isRead: false
+      });
+      insert('notifications', {
+        userId: String(intent.employerId),
+        title: 'Payment collected',
+        message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Worker payout is tracked separately and is not marked complete yet.',
+        type: 'success', actionUrl: '/payments', isRead: false
+      });
+    }
+
+    return res.status(200).json({ success: true, received: true });
+  } catch (error) {
+    console.error('[PhonePe] Webhook processing failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Webhook could not be processed.' });
   }
 };
 
