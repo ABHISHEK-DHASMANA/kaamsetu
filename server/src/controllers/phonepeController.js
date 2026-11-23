@@ -13,7 +13,7 @@ const getPromisedJobAmount = (job, application) => {
   const wageType = String(job?.wageType || 'daily').toLowerCase();
   if (wageType === 'task') return Math.round(rate * 100) / 100;
   const duration = String(job?.workDuration || '').toLowerCase();
-  const match = duration.match(/(\\d+(?:\\.\\d+)?)\\s*(day|days|week|weeks|month|months)/);
+  const match = duration.match(/(\d+(?:\.\d+)?)\s*(day|days|week|weeks|month|months)/);
   if (!match) return null;
   const count = Number(match[1]);
   if (!Number.isFinite(count) || count <= 0) return null;
