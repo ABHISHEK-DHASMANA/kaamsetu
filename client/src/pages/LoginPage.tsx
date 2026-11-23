@@ -34,7 +34,8 @@ export const LoginPage: React.FC = () => {
     setErrorMsg(null); setNotice(null); setBusy(true);
     try {
       const result = await signInWithPopup(firebaseAuth, googleProvider);
-      await completeLogin(result.user);
+      await loginWithFirebase(result.user);
+      destination();
     } catch (err: any) {
       setErrorMsg(err.code === 'auth/unauthorized-domain'
         ? `Firebase is blocking this website (${window.location.hostname}). Add this exact hostname in Firebase Console → Authentication → Settings → Authorized domains, then reload the site.`
