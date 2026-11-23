@@ -355,7 +355,7 @@ export const apiDisputePayment = async (id: string, reason: string) => {
 
 // PhonePe PG V2 checkout and server-side status verification
 export const apiGetPhonePeAvailability = async () => {
-  return request<{ success: boolean; available: boolean; environment: string; message: string }>('/phonepe/availability');
+  return request<{ success: boolean; available: boolean; webhookConfigured: boolean; environment: string; message: string }>('/phonepe/availability');
 };
 
 export const apiGetPhonePePaymentQuote = async (applicationId: string) => {
