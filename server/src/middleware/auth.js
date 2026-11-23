@@ -19,6 +19,16 @@ export const protect = async (req, res, next) => {
     }
     const decoded = jwt.verify(token, secret);
 
+    // Shared hackathon demo sessions are strictly read-only. This protects
+    // seeded worker/employer data from being changed by public demo visitors.
+    if (decoded.demo === true && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+      return res.status(403).json({
+        success: false,
+        code: 'DEMO_READ_ONLY',
+        message: 'Demo accounts are read-only. Register an account to make changes.'
+      });
+    }
+
     let user = null;
     try {
       user = await User.findById(decoded.id).select('-password');
