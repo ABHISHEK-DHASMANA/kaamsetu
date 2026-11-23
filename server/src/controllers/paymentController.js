@@ -52,66 +52,10 @@ export const listMyPayments = (req, res) => {
 };
 
 export const createPayment = async (req, res) => {
-  try {
-    const employerId = idOf(req.user);
-    const { applicationId, amount, method, transactionReference, note } = req.body || {};
-    const numericAmount = Number(amount);
-    const normalizedApplicationId = idOf(applicationId);
-
-    if (!normalizedApplicationId || !Number.isFinite(numericAmount) || numericAmount <= 0 || numericAmount > 1000000) {
-      return res.status(400).json({ success: false, message: 'Choose a completed job and enter a valid amount.' });
-    }
-    if (method !== 'direct_upi') return res.status(400).json({ success: false, message: 'Only Online UPI payment can be recorded here. Offline jobs go directly to ratings.' });
-    const normalizedReference = String(transactionReference || '').trim();
-    if (!/^[A-Za-z0-9._-]{6,100}$/.test(normalizedReference)) {
-      return res.status(400).json({ success: false, message: 'Enter the UPI transaction reference/UTR shown by your payment app.' });
-    }
-
-    const application = findOne('applications', a => idOf(a._id || a.id) === normalizedApplicationId);
-    if (!application || idOf(application.employerId) !== employerId) {
-      return res.status(404).json({ success: false, message: 'Completed job application not found for this employer.' });
-    }
-    if (application.status !== 'PaymentPending' || application.paymentMode !== 'online') {
-      return res.status(400).json({ success: false, message: 'This job is not waiting for online payment. Offline jobs go directly to ratings.' });
-    }
-
-    const existing = findOne('payments', p =>
-      idOf(p.applicationId) === normalizedApplicationId && p.status !== 'cancelled'
-    );
-    if (existing) {
-      return res.status(409).json({ success: false, message: 'A payment record already exists for this completed job. Open payment history to check its status.' });
-    }
-
-    const payment = insert('payments', {
-      applicationId: normalizedApplicationId,
-      jobId: idOf(application.jobId),
-      employerId,
-      workerId: idOf(application.workerId),
-      amount: Math.round(numericAmount * 100) / 100,
-      currency: 'INR',
-      method,
-      transactionReference: method === 'direct_upi' ? normalizedReference : '',
-      note: String(note || '').trim().slice(0, 300),
-      employerConfirmed: true,
-      workerConfirmed: false,
-      status: 'awaiting_worker_confirmation',
-      verificationType: 'two_party_confirmation',
-      confirmedAt: null,
-      events: [{ type: 'employer_recorded_payment', actorId: employerId, at: new Date().toISOString() }]
-    });
-
-    notify(application.workerId, 'Payment confirmation requested',
-      `Your employer recorded ₹${payment.amount} for a completed job. Check your cash or UPI account, then confirm only if you received it.`);
-    if (!await persistOrFail(res)) return;
-    return res.status(201).json({
-      success: true,
-      message: 'Payment recorded and the worker has been notified. It will show as confirmed only after the worker confirms receipt.',
-      payment: hydratePayment(payment)
-    });
-  } catch (error) {
-    console.error('[Payments] createPayment failed:', error);
-    return res.status(500).json({ success: false, message: 'Could not record this payment. Please refresh and try again.' });
-  }
+  return res.status(410).json({
+    success: false,
+    message: 'Manual UPI reference entry is no longer supported. Use the secure PhonePe checkout from the Payments page.'
+  });
 };
 
 export const confirmPaymentReceived = async (req, res) => {
