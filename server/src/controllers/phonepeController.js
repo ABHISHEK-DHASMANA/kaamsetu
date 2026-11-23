@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import PaymentIntent from '../models/PaymentIntent.js';
-import { findOne } from '../services/storage.js';
+import { findOne, find, insert, update, flushStorage } from '../services/storage.js';
 import { createPhonePeCheckout, fetchPhonePeOrderStatus, isPhonePeConfigured } from '../services/phonepeService.js';
 
 const currentUserId = user => user?._id || user?.id;
@@ -55,6 +55,30 @@ export const getPhonePeAvailability = (req, res) => {
       ? 'PhonePe credentials are configured. Checkout availability also requires MongoDB.'
       : 'PhonePe merchant credentials have not been configured.'
   });
+};
+
+export const getPhonePePaymentQuote = (req, res) => {
+  try {
+    if (!ensureMongo(res)) return;
+    const employerId = currentUserId(req.user);
+    const application = findOne('applications', a => String(a._id || a.id) === String(req.params.applicationId));
+    if (!application || String(application.employerId) !== String(employerId)) {
+      return res.status(404).json({ success: false, message: 'Job application not found for this employer.' });
+    }
+    if (application.status !== 'PaymentPending' || application.paymentMode !== 'online') {
+      return res.status(409).json({ success: false, message: 'This job is not awaiting online payment.' });
+    }
+    const job = findOne('jobs', j => String(j._id || j.id) === String(application.jobId));
+    if (!job) return res.status(404).json({ success: false, message: 'Job listing not found.' });
+    const amount = getPromisedJobAmount(job, application);
+    if (!Number.isFinite(amount) || amount < 1 || amount > 1000000) {
+      return res.status(422).json({ success: false, message: 'The agreed payment cannot be calculated safely from the job listing. Please contact support.' });
+    }
+    res.json({ success: true, quote: { applicationId: String(application._id || application.id), jobTitle: job.title, workerName: findOne('workerProfiles', p => String(p.userId) === String(application.workerId))?.fullName || 'Worker', amount, currency: 'INR', wageType: job.wageType || 'daily', duration: job.workDuration || '' } });
+  } catch (error) {
+    console.error('[PhonePe] Quote failed:', error.message);
+    res.status(500).json({ success: false, message: 'Could not calculate the agreed job payment.' });
+  }
 };
 
 export const createPhonePePayment = async (req, res) => {
@@ -158,6 +182,39 @@ export const getPhonePePaymentStatus = async (req, res) => {
         }
         intent.status = 'paid';
         intent.verifiedAt = new Date();
+        const application = findOne('applications', a => String(a._id || a.id) === String(intent.applicationId));
+        if (application && application.status === 'PaymentPending' && application.paymentMode === 'online') {
+          const now = new Date().toISOString();
+          const existingLedgerPayment = findOne('payments', p => String(p.applicationId) === String(intent.applicationId) && p.method === 'phonepe_gateway');
+          if (!existingLedgerPayment) {
+            insert('payments', {
+              applicationId: String(intent.applicationId), jobId: String(intent.jobId),
+              employerId: String(intent.employerId), workerId: String(intent.workerId),
+              amount: intent.amount, currency: 'INR', method: 'phonepe_gateway',
+              transactionReference: String(provider.orderId || intent.phonepeOrderId || intent.merchantOrderId),
+              note: 'Automatically confirmed by PhonePe server-side order status.',
+              employerConfirmed: true, workerConfirmed: true, status: 'paid',
+              verificationType: 'phonepe_gateway', confirmedAt: now,
+              events: [{ type: 'phonepe_gateway_payment_verified', actorId: 'phonepe', at: now }]
+            });
+          }
+          update('applications', String(application._id || application.id), {
+            status: 'Completed', completedAt: now, paymentConfirmedAt: now, paymentProvider: 'phonepe'
+          });
+          const workerProfile = findOne('workerProfiles', p => String(p.userId) === String(intent.workerId));
+          if (workerProfile) {
+            const passport = workerProfile.skillPassport || {};
+            update('workerProfiles', String(workerProfile._id || workerProfile.id), {
+              skillPassport: { ...passport, completedJobsCount: (passport.completedJobsCount || 0) + 1 }
+            });
+          }
+          const job = findOne('jobs', j => String(j._id || j.id) === String(intent.jobId));
+          const otherActive = find('applications', a => String(a.jobId) === String(intent.jobId) && String(a._id || a.id) !== String(intent.applicationId) && ['Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending'].includes(a.status));
+          if (job) update('jobs', String(job._id || job.id), { status: otherActive.length ? 'in_progress' : 'completed' });
+          insert('notifications', { userId: String(intent.workerId), title: 'Payment received', message: 'PhonePe confirmed your job payment of ₹' + intent.amount + '. Your job is now completed.', type: 'success', actionUrl: '/payments', isRead: false });
+          insert('notifications', { userId: String(intent.employerId), title: 'Payment successful', message: 'PhonePe confirmed your payment of ₹' + intent.amount + '. The job is now completed.', type: 'success', actionUrl: '/payments', isRead: false });
+          await flushStorage();
+        }
       } else if (state === 'FAILED') {
         intent.status = 'failed';
       }
