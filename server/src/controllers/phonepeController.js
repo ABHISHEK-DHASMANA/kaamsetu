@@ -38,6 +38,7 @@ const ensureMongo = res => {
 
 const safeStatus = intent => ({
   merchantOrderId: intent.merchantOrderId,
+  applicationId: intent.applicationId,
   amount: intent.amount,
   currency: intent.currency,
   status: intent.status,
