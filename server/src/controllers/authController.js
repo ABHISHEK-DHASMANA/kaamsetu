@@ -446,13 +446,14 @@ export const resendEmailVerification = async (req, res) => {
 export const deleteAccount = async (req, res) => {
   try {
     const password = String(req.body?.password || '');
-    if (!password || !(await bcrypt.compare(password, req.user.password || ''))) {
-      return res.status(403).json({ success: false, message: 'Your current password is required to confirm account deletion.' });
-    }
     const userId = String(req.user._id || req.user.id);
     const tombstoneId = 'deleted:' + userId;
+    // Read the stored password hash directly; the auth middleware intentionally strips it from req.user.
     const user = findOne('users', item => String(item._id || item.id) === userId);
     if (!user) return res.status(404).json({ success: false, message: 'Account not found.' });
+    if (!password || !(await bcrypt.compare(password, user.password || ''))) {
+      return res.status(403).json({ success: false, message: 'Your current password is required to confirm account deletion.' });
+    }
 
     // Keep application/payment/job audit records. Remove profile and private conversation data.
     const relatedApplications = find('applications', item =>
