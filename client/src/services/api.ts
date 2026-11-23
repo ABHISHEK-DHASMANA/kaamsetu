@@ -358,6 +358,10 @@ export const apiGetPhonePeAvailability = async () => {
   return request<{ success: boolean; available: boolean; environment: string; message: string }>('/phonepe/availability');
 };
 
+export const apiGetPhonePePaymentQuote = async (applicationId: string) => {
+  return request<{ success: boolean; quote: { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType: string; duration: string } }>(`/phonepe/quote/${encodeURIComponent(applicationId)}`);
+};
+
 export const apiCreatePhonePeCheckout = async (payload: { applicationId: string }) => {
   return request<{ success: boolean; message: string; checkoutUrl: string; payment: any }>('/phonepe/checkout', {
     method: 'POST', body: JSON.stringify(payload)
