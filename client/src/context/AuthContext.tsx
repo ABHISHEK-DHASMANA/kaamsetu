@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '../types';
-import { apiLogin, apiGetMe, apiFirebaseLogin } from '../services/api';
+import { apiLogin, apiGetMe, apiFirebaseLogin, apiDemoLogin } from '../services/api';
 import type { User as FirebaseUser } from 'firebase/auth';
 
 interface AuthContextType {
@@ -18,13 +18,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Quick Demo Login credentials
-export const DEMO_USERS = {
-  worker: { phone: '9811002233', password: 'kaamsetu123', name: 'Ramesh Kumar (Worker)' },
-  employer: { phone: '9811445566', password: 'kaamsetu123', name: 'Sharma Electrical Services' },
-  admin: { phone: '9876543210', password: 'kaamsetu123', name: 'Admin (Vigilance)' }
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -89,9 +82,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const quickLogin = async (type: 'worker' | 'employer' | 'admin') => {
-    const creds = DEMO_USERS[type];
-    await login(creds.phone, creds.password);
+  const quickLogin = async (type: 'worker' | 'employer') => {
+    setIsLoading(true);
+    try {
+      const res = await apiDemoLogin(type);
+      if (!res.success || !res.token || !res.user) {
+        throw new Error('Demo login was not completed. Please try again.');
+      }
+      sessionStorage.setItem('kaamsetu_token', res.token);
+      setToken(res.token);
+      setUser(res.user);
+      setProfile(res.profile);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {
