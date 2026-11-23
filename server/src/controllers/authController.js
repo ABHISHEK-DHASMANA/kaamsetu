@@ -152,7 +152,7 @@ export const register = async (req, res) => {
     if (cleanEmail && findOne('users', u => String(u.email || '').trim().toLowerCase() === cleanEmail)) {
       return res.status(409).json({ success: false, message: 'An account with this email already exists. Use another email or sign in.' });
     }
-    if (!verifiedPhone && !isEmailDeliveryConfigured()) {
+    if (!isEmailDeliveryConfigured()) {
       return res.status(503).json({ success: false, code: 'EMAIL_NOT_CONFIGURED', message: 'Email registration is temporarily unavailable. The administrator must configure the email verification service first.' });
     }
 
@@ -180,15 +180,9 @@ export const register = async (req, res) => {
         await sendVerificationEmail({ to: cleanEmail, token: verificationToken, name: cleanName });
       } catch (emailError) {
         emailDeliveryFailed = true;
-        {
-          remove('users', newUser._id);
-          createdUserId = null;
-          return res.status(503).json({ success: false, code: emailError.code || 'EMAIL_DELIVERY_FAILED', message: emailError.message });
-        }
-        update('users', newUser._id, {
-          emailVerificationTokenHash: null,
-          emailVerificationExpiresAt: null
-        });
+        remove('users', newUser._id);
+        createdUserId = null;
+        return res.status(503).json({ success: false, code: emailError.code || 'EMAIL_DELIVERY_FAILED', message: emailError.message });
       }
     }
 
@@ -235,7 +229,7 @@ export const register = async (req, res) => {
         userId: newUser._id,
         companyName: req.body.companyName || cleanName + "'s Services",
         contactPerson: cleanName,
-        phone: verifiedPhone || '',
+        phone: contactPhone || '',
         email: cleanEmail,
         industry: req.body.industry || 'Contracting',
         businessType: req.body.businessType || 'Small Business / Shop',
@@ -260,14 +254,13 @@ export const register = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: emailDeliveryFailed
-          ? 'Account created with verified mobile. Email verification could not be sent; request a new link from sign-in.'
-        ? 'Account created. Check your email and verify the link before signing in.'
+        ? 'Account created, but the verification email could not be sent. Please request another verification link.'
         : 'Account created. Check your email and verify the link before signing in.',
       emailVerificationRequired: true,
       phoneVerified: false,
       phoneContactOnly: Boolean(contactPhone),
       user: safeUser
-    });
+    });;
   } catch (error) {
     console.error('[Auth] Register error:', error.message);
     if (createdUserId) {
