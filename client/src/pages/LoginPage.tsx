@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithPopup } from 'firebase/auth';
 import { firebaseAuth, googleProvider } from '../services/firebase';
-import { useAuth, DEMO_USERS } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { apiResendVerification } from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
@@ -64,10 +64,17 @@ export const LoginPage: React.FC = () => {
     try { await login(identifier.trim(), password); destination(); }
     catch (err: any) { setErrorMsg(err.message || 'Login failed. Please verify credentials.'); }
   };
-  const handleQuickDemoClick = async (type: 'worker' | 'employer' | 'admin') => {
+  const handleQuickDemoClick = async (type: 'worker' | 'employer') => {
     setErrorMsg(null);
-    try { await quickLogin(type); destination(type); }
-    catch (err: any) { setErrorMsg(err.message || 'Quick login failed.'); }
+    setBusy(true);
+    try {
+      await quickLogin(type);
+      destination(type);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Quick login failed. Please try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -85,10 +92,10 @@ export const LoginPage: React.FC = () => {
           <div className="p-4 rounded-2xl bg-brand-accent-light/50 border border-brand-accent/30 space-y-2.5">
             <div className="flex items-center gap-1.5 text-xs font-bold text-brand-dark"><Sparkles className="w-4 h-4 text-brand-accent" />One-Click Evaluation Logins</div>
             <div className="grid grid-cols-3 gap-2">
-              {(['worker','employer','admin'] as const).map(type => (
-                <button key={type} type="button" onClick={() => handleQuickDemoClick(type)} className="py-2 px-1 rounded-xl bg-white border border-brand-border text-brand-dark text-[11px] font-bold flex flex-col items-center">
+              {(['worker','employer'] as const).map(type => (
+                <button key={type} type="button" onClick={() => handleQuickDemoClick(type)} disabled={busy || isLoading} className="py-2 px-1 rounded-xl bg-white border border-brand-border text-brand-dark text-[11px] font-bold flex flex-col items-center disabled:opacity-50">
                   {type === 'worker' ? <User className="w-4 h-4" /> : type === 'employer' ? <Briefcase className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                  {type === 'worker' ? 'Worker Demo' : type === 'employer' ? 'Employer Demo' : 'Admin Demo'}
+                  {type === 'worker' ? 'Worker Demo' : 'Employer Demo'}
                 </button>
               ))}
             </div>
