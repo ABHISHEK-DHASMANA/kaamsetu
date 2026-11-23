@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Trash2, ShieldCheck } from 'lucide-react';
 import { apiDeleteAccount } from '../../services/api';
+import { firebaseAuth } from '../../services/firebase';
+import { signOut } from 'firebase/auth';
 import { useAuth } from '../../context/AuthContext';
 
 export const AccountDeletionSection: React.FC = () => {
@@ -26,6 +28,7 @@ export const AccountDeletionSection: React.FC = () => {
     setBusy(true);
     try {
       await apiDeleteAccount(password);
+      await signOut(firebaseAuth).catch(() => undefined);
       logout();
       navigate('/', { replace: true });
     } catch (err: any) {
