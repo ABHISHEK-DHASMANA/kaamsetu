@@ -120,7 +120,6 @@ export const RegisterPage: React.FC = () => {
   const handleSubmitRegistration = async () => {
     setErrorMsg(null);
     if (!name.trim()) { setErrorMsg('Enter your full name.'); return; }
-    if !email.trim() { setErrorMsg('Enter an email address or mobile number.'); return; }
     if (!email.trim()) { setErrorMsg('Enter an email address. Email verification is required to activate password sign-in.'); return; }
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
       setErrorMsg('Enter a valid email address.');
