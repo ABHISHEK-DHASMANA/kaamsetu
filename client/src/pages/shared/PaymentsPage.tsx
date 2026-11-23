@@ -39,6 +39,7 @@ export const PaymentsPage: React.FC = () => {
   const [legacyPayments, setLegacyPayments] = useState<LegacyPayment[]>([]);
   const [phonePePayments, setPhonePePayments] = useState<PhonePePayment[]>([]);
   const [available, setAvailable] = useState(false);
+  const [webhookConfigured, setWebhookConfigured] = useState(false);
   const [environment, setEnvironment] = useState('sandbox');
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -72,6 +73,7 @@ export const PaymentsPage: React.FC = () => {
       .then(([, , status]) => {
         if (!active) return;
         setAvailable(status.available);
+        setWebhookConfigured(status.webhookConfigured === true);
         setEnvironment(status.environment || 'sandbox');
       })
       .catch((e: any) => { if (active) setError(e.message || 'Unable to load payment information.'); });
@@ -224,6 +226,7 @@ export const PaymentsPage: React.FC = () => {
                 <span>Secure checkout is not enabled yet. The authorised KaamSetu business administrator must finish PhonePe merchant onboarding and configure production credentials on the backend.</span>
               </div>
             )}
+            {available && !webhookConfigured && <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">PhonePe server notifications are not configured yet. Payment status can still be checked when the payer returns to KaamSetu, but automatic updates while the page is closed require the merchant webhook to be configured by the authorised business administrator.</div>}
             {environment !== 'production' && available && <div className="text-xs text-amber-700">Sandbox mode: test transactions only. No real money will be transferred.</div>}
             <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || !available || quoteLoading || (quote.checkoutPending && !quote.checkoutUrl)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
               <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `${quote?.checkoutPending ? 'Resume PhonePe checkout' : 'Continue to pay ' + (quote ? money(quote.amount) : '')}`}
