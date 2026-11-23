@@ -124,8 +124,8 @@ export const register = async (req, res) => {
     if (!cleanName || cleanName.length > 120 || !password) {
       return res.status(400).json({ success: false, message: 'Enter your name and a password.' });
     }
-    if (!cleanPhone && !cleanEmail) {
-      return res.status(400).json({ success: false, message: 'Enter an email address or mobile number to register.' });
+    if (!cleanEmail) {
+      return res.status(400).json({ success: false, code: 'EMAIL_REQUIRED', message: 'An email address is required. Verify it before signing in with a password.' });
     }
     if (cleanPhone && normalizePhone(cleanPhone).length !== 10) {
       return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number.' });
@@ -141,27 +141,12 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Use at least 3 of: lowercase, uppercase, number, and special character.' });
     }
 
-    let verifiedPhone = null;
-    let firebaseUid = null;
-    if (cleanPhone) {
-      if (!firebaseIdToken) {
-        return res.status(400).json({ success: false, code: 'PHONE_OTP_REQUIRED', message: 'Verify your mobile number using the SMS OTP before registering.' });
-      }
-      const decoded = await getFirebaseAdminAuth().verifyIdToken(String(firebaseIdToken), true);
-      const firebaseUser = await getFirebaseAdminAuth().getUser(decoded.uid);
-      const hasPhoneProvider = decoded.firebase?.sign_in_provider === 'phone' ||
-        firebaseUser.providerData?.some(provider => provider.providerId === 'phone');
-      if (!hasPhoneProvider || !decoded.phone_number ||
-          normalizePhone(decoded.phone_number) !== normalizePhone(cleanPhone)) {
-        return res.status(403).json({ success: false, code: 'PHONE_NOT_VERIFIED', message: 'The Firebase OTP verification does not match the mobile number entered.' });
-      }
-      verifiedPhone = normalizePhone(decoded.phone_number);
-      firebaseUid = decoded.uid;
-    } else if (firebaseIdToken) {
-      return res.status(400).json({ success: false, message: 'A mobile verification token was supplied without a mobile number.' });
+    const contactPhone = cleanPhone ? normalizePhone(cleanPhone) : null;
+    if (contactPhone && contactPhone.length !== 10) {
+      return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number.' });
     }
 
-    if (cleanPhone && findOne('users', u => normalizePhone(u.phone) === verifiedPhone)) {
+    if (contactPhone && findOne('users', u => normalizePhone(u.phone) === contactPhone)) {
       return res.status(409).json({ success: false, message: 'An account with this verified mobile number already exists.' });
     }
     if (cleanEmail && findOne('users', u => String(u.email || '').trim().toLowerCase() === cleanEmail)) {
@@ -175,16 +160,15 @@ export const register = async (req, res) => {
     const verificationToken = cleanEmail ? randomBytes(32).toString('hex') : null;
     const newUser = insert('users', {
       name: cleanName,
-      phone: verifiedPhone || undefined,
-      phoneVerified: Boolean(verifiedPhone),
-      firebaseUid,
+      phone: contactPhone || undefined,
+      phoneVerified: false,
       email: cleanEmail,
       emailVerified: false,
       emailVerificationTokenHash: verificationToken ? createHash('sha256').update(verificationToken).digest('hex') : null,
       emailVerificationExpiresAt: verificationToken ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null,
       password: passwordHash,
       role: cleanRole,
-      verificationStatus: verifiedPhone ? 'Phone Verified' : 'Email Verification Pending',
+      verificationStatus: 'Email Verification Pending',
       avatar: avatar || '',
       isActive: true
     });
@@ -196,7 +180,7 @@ export const register = async (req, res) => {
         await sendVerificationEmail({ to: cleanEmail, token: verificationToken, name: cleanName });
       } catch (emailError) {
         emailDeliveryFailed = true;
-        if (!verifiedPhone) {
+        {
           remove('users', newUser._id);
           createdUserId = null;
           return res.status(503).json({ success: false, code: emailError.code || 'EMAIL_DELIVERY_FAILED', message: emailError.message });
@@ -219,7 +203,7 @@ export const register = async (req, res) => {
       insert('workerProfiles', {
         userId: newUser._id,
         fullName: cleanName,
-        phone: verifiedPhone || '',
+        phone: contactPhone || '',
         email: cleanEmail,
         avatar: newUser.avatar,
         preferredLanguage: preferredLanguage || 'Hindi',
@@ -255,7 +239,7 @@ export const register = async (req, res) => {
         email: cleanEmail,
         industry: req.body.industry || 'Contracting',
         businessType: req.body.businessType || 'Small Business / Shop',
-        verificationStatus: verifiedPhone ? 'Phone Verified' : 'Email Pending',
+        verificationStatus: 'Email Pending',
         gstOrGovtId: req.body.gstOrGovtId || '',
         address: location || {
           state: 'Uttar Pradesh', city: 'Noida', area: 'Sector 63',
@@ -275,13 +259,13 @@ export const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: cleanEmail
-        ? (emailDeliveryFailed
+      message: emailDeliveryFailed
           ? 'Account created with verified mobile. Email verification could not be sent; request a new link from sign-in.'
-          : 'Account created. Check your email and verify the link before using email-and-password sign-in.')
-        : 'Account created with verified mobile number. You can now sign in using SMS OTP.',
-      emailVerificationRequired: Boolean(cleanEmail),
-      phoneVerified: Boolean(verifiedPhone),
+        ? 'Account created. Check your email and verify the link before signing in.'
+        : 'Account created. Check your email and verify the link before signing in.',
+      emailVerificationRequired: true,
+      phoneVerified: false,
+      phoneContactOnly: Boolean(contactPhone),
       user: safeUser
     });
   } catch (error) {
