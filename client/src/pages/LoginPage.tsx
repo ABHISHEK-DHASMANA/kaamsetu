@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup, linkWithPhoneNumber, type ConfirmationResult, type User as FirebaseUser } from 'firebase/auth';
 import { firebaseAuth, googleProvider } from '../services/firebase';
 import { useAuth, DEMO_USERS } from '../context/AuthContext';
+import { apiResendVerification } from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { LogIn, User, Briefcase, ShieldCheck, Phone, Mail, Lock, AlertCircle, Sparkles, CheckCircle2, Chrome } from 'lucide-react';
@@ -16,8 +17,15 @@ export const LoginPage: React.FC = () => {
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
   const [googleUser, setGoogleUser] = useState<FirebaseUser | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(() => {
+    const registered = new URLSearchParams(window.location.search).get('registered');
+    if (registered === 'email') return 'Your account was created. Check your inbox and open the verification link before signing in with email and password.';
+    if (registered === 'phone') return 'Your account was created with a verified mobile number. Sign in using phone OTP.';
+    return null;
+  });
   const [busy, setBusy] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'worker' | 'employer' | 'admin'>('worker');
   const recaptcha = useRef<RecaptchaVerifier | null>(null);
   const navigate = useNavigate();
@@ -38,8 +46,8 @@ export const LoginPage: React.FC = () => {
     return '+91' + digits;
   };
   const completeLogin = async (firebaseUser: FirebaseUser) => {
-    await loginWithFirebase(firebaseUser);
-    destination();
+    const signedInUser = await loginWithFirebase(firebaseUser);
+    destination(signedInUser.role);
   };
   const sendPhoneOtp = async () => {
     setErrorMsg(null); setNotice(null); setBusy(true);
@@ -56,6 +64,16 @@ export const LoginPage: React.FC = () => {
           ? 'This phone number is already linked to another Firebase account. Sign in using that phone number instead.'
           : err.code === 'auth/too-many-requests'
             ? 'Too many attempts. Please wait before requesting another OTP.'
+            : err.code === 'auth/captcha-check-failed' || err.code === 'auth/missing-app-credential'
+              ? 'The security check could not be completed. Refresh the page and try again.'
+              : err.code === 'auth/operation-not-allowed'
+                ? 'Phone sign-in is disabled in Firebase Authentication. Enable the Phone provider in Firebase Console.'
+                : err.code === 'auth/billing-not-enabled' || err.code === 'auth/quota-exceeded'
+                  ? 'Firebase SMS quota or billing settings are blocking OTP delivery. Please contact the site administrator.'
+                  : err.code === 'auth/invalid-phone-number'
+                    ? 'Enter a valid Indian mobile number with 10 digits.'
+                    : err.code === 'auth/network-request-failed'
+                      ? 'Network error while requesting the OTP. Check your connection and try again.'
             : err.message || 'Could not send OTP. Check the number and try again.');
       recaptcha.current?.clear(); recaptcha.current = null;
     } finally { setBusy(false); }
@@ -91,14 +109,31 @@ export const LoginPage: React.FC = () => {
         : err.code === 'auth/popup-closed-by-user' ? 'Google sign-in was cancelled.' : err.message || 'Google sign-in failed.');
     } finally { setBusy(false); }
   };
+  const handleResendVerification = async () => {
+    setResendBusy(true);
+    setResendMessage(null);
+    try {
+      const result = await apiResendVerification(identifier.trim());
+      setResendMessage(result.message);
+    } catch (err: any) {
+      setResendMessage(err.message || 'Could not send a verification email.');
+    } finally {
+      setResendBusy(false);
+    }
+  };
+
   const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setErrorMsg(null);
-    try { await login(identifier.trim(), password); destination(); }
+    if (!identifier.trim().includes('@')) {
+      setErrorMsg('Password sign-in requires a verified email address. Use the phone OTP option for mobile numbers.');
+      return;
+    }
+    try { const signedInUser = await login(identifier.trim(), password); destination(signedInUser.role); }
     catch (err: any) { setErrorMsg(err.message || 'Login failed. Please verify credentials.'); }
   };
   const handleQuickDemoClick = async (type: 'worker' | 'employer' | 'admin') => {
     setErrorMsg(null);
-    try { await quickLogin(type); destination(type); }
+    try { const signedInUser = await quickLogin(type); destination(signedInUser.role); }
     catch (err: any) { setErrorMsg(err.message || 'Quick login failed.'); }
   };
 
@@ -162,13 +197,19 @@ export const LoginPage: React.FC = () => {
           </section>
 
           <div className="relative flex items-center"><div className="flex-1 border-t border-brand-border" /><span className="px-3 text-[10px] text-brand-muted">OR USE PASSWORD</span><div className="flex-1 border-t border-brand-border" /></div>
+          {errorMsg?.toLowerCase().includes('not been verified') && identifier.includes('@') && (
+            <button type="button" onClick={handleResendVerification} disabled={resendBusy} className="w-full rounded-xl border border-brand-primary text-brand-primary py-2.5 text-xs font-bold disabled:opacity-50">
+              {resendBusy ? 'Sending verification link…' : 'Resend email verification link'}
+            </button>
+          )}
+          {resendMessage && <p role="status" className="text-xs text-brand-muted">{resendMessage}</p>}
           <form onSubmit={handleManualLogin} className="space-y-3">
-            <div className="relative"><Mail className="w-4 h-4 text-brand-muted absolute left-3 top-3" /><input type="text" autoComplete="username" required placeholder="Registered mobile number or email" value={identifier} onChange={e => setIdentifier(e.target.value)} className="w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-slate-50 text-brand-dark" /></div>
+            <div className="relative"><Mail className="w-4 h-4 text-brand-muted absolute left-3 top-3" /><input type="email" autoComplete="username" required placeholder="Verified email address" value={identifier} onChange={e => setIdentifier(e.target.value)} className="w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-slate-50 text-brand-dark" /></div>
             <div className="relative"><Lock className="w-4 h-4 text-brand-muted absolute left-3 top-3" /><input type="password" required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-slate-50 text-brand-dark" /></div>
             <button type="submit" disabled={isLoading} className="w-full py-3 rounded-xl bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-60"><LogIn className="w-4 h-4" />Sign In with Password</button>
           </form>
           <div className="text-center text-xs text-brand-muted pt-2 border-t border-brand-border">Don't have an account? <Link to="/register" className="font-bold text-brand-primary hover:underline">Create Profile Free</Link></div>
-          <p className="text-[10px] leading-relaxed text-center text-brand-muted">Sign in with your registered phone and password, email and password, Google sign-in with a previously verified account, phone OTP, or phone/email and password.</p>
+          <p className="text-[10px] leading-relaxed text-center text-brand-muted">Sign in with a verified email and password, or verify your mobile number using SMS OTP. Google sign-in is available for previously linked accounts.</p>
         </div>
       </div>
       <Footer />

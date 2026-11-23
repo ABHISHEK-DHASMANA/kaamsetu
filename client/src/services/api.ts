@@ -68,7 +68,7 @@ export const apiLogin = async (phone: string, password: string) => {
 };
 
 export const apiRegister = async (payload: any) => {
-  return request<{ success: boolean; token: string; user: User }>('/auth/register', {
+  return request<{ success: boolean; message: string; emailVerificationRequired: boolean; phoneVerified: boolean }>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload)
   });
@@ -87,6 +87,24 @@ export const apiFirebaseLogin = async (idToken: string) => {
 
 export const apiGetMe = async () => {
   return request<{ success: boolean; user: User; profile: any }>('/auth/me');
+};
+
+export const apiVerifyEmail = async (token: string) => {
+  return request<{ success: boolean; message: string; user: { email: string } }>(
+    '/auth/verify-email?token=' + encodeURIComponent(token)
+  );
+};
+
+export const apiResendVerification = async (email: string) => {
+  return request<{ success: boolean; message: string }>('/auth/resend-verification', {
+    method: 'POST', body: JSON.stringify({ email })
+  });
+};
+
+export const apiDeleteAccount = async (password: string) => {
+  return request<{ success: boolean; message: string }>('/auth/account', {
+    method: 'DELETE', body: JSON.stringify({ password })
+  });
 };
 
 // Jobs API

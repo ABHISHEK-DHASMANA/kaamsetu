@@ -10,9 +10,9 @@ interface AuthContextType {
   isLoading: boolean;
   role: Role | null;
   isAuthenticated: boolean;
-  login: (phone: string, pass: string) => Promise<void>;
-  quickLogin: (type: 'worker' | 'employer' | 'admin') => Promise<void>;
-  loginWithFirebase: (firebaseUser: FirebaseUser) => Promise<void>;
+  login: (email: string, pass: string) => Promise<User>;
+  quickLogin: (type: 'worker' | 'employer' | 'admin') => Promise<User>;
+  loginWithFirebase: (firebaseUser: FirebaseUser) => Promise<User>;
   logout: () => void;
   updateLocalProfile: (newProfile: any) => void;
 }
@@ -67,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(res.token);
       setUser(res.user);
       setProfile(res.profile);
+      return res.user;
     } finally {
       setIsLoading(false);
     }
@@ -84,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(res.token);
       setUser(res.user);
       setProfile(res.profile);
+      return res.user;
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const quickLogin = async (type: 'worker' | 'employer' | 'admin') => {
     const creds = DEMO_USERS[type];
-    await login(creds.phone, creds.password);
+    return login(creds.phone, creds.password);
   };
 
   const logout = () => {

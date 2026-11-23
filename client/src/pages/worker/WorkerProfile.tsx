@@ -7,6 +7,7 @@ import { WorkerProfile } from '../../types';
 import { User, Phone, MapPin, IndianRupee, Save, CheckCircle2, Camera } from 'lucide-react';
 import { uploadProfileImage } from '../../services/imageUpload';
 import { LocationPicker } from '../../components/maps/LocationPicker';
+import { AccountDeletionSection } from '../../components/profile/AccountDeletionSection';
 
 export const WorkerProfilePage: React.FC = () => {
   const { user, updateLocalProfile } = useAuth();
@@ -15,6 +16,7 @@ export const WorkerProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<WorkerProfile | null>(null);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [upiId, setUpiId] = useState('');
   const [primarySkill, setPrimarySkill] = useState('');
   const [bio, setBio] = useState('');
   const [area, setArea] = useState('');
@@ -35,7 +37,8 @@ export const WorkerProfilePage: React.FC = () => {
           const wp = res.workerProfile;
           setProfile(wp);
           setFullName(wp.fullName);
-          setPhone(wp.phone);
+          setPhone(wp.phone || '');
+          setUpiId(wp.upiId || '');
           setPrimarySkill(wp.primarySkill);
           setBio(wp.bio || '');
           setArea(wp.location?.area || '');
@@ -61,6 +64,7 @@ export const WorkerProfilePage: React.FC = () => {
       const res = await apiUpdateWorkerProfile({
         fullName,
         phone,
+        upiId,
         avatar,
         primarySkill,
         bio,
@@ -120,9 +124,16 @@ export const WorkerProfilePage: React.FC = () => {
             <input
               type="text"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              readOnly
               className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark font-mono"
             />
+            <p className="mt-1 text-[11px] text-brand-muted">Phone number is locked here. To change it, a new SMS OTP verification is required.</p>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-brand-dark block mb-1">UPI ID (optional)</label>
+            <input type="text" value={upiId} onChange={e => setUpiId(e.target.value)} placeholder="name@bank" className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark" />
+            <p className="mt-1 text-[11px] text-amber-700">Only the UPI ID format is checked. KaamSetu does not currently verify that the ID exists or belongs to you.</p>
           </div>
 
           <div>
@@ -193,6 +204,7 @@ export const WorkerProfilePage: React.FC = () => {
           </button>
         </form>
       </div>
+      <AccountDeletionSection />
     </DashboardLayout>
   );
 };

@@ -63,9 +63,12 @@ export const updateWorkerProfile = async (req, res) => {
       upiId
     } = req.body;
 
+    const normalizePhone = value => String(value || '').replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').replace(/^0(?=\d{10}$)/, '');
+    if (phone && normalizePhone(phone) !== normalizePhone(req.user.phone)) {
+      return res.status(400).json({ success: false, message: 'Changing your mobile number requires a new SMS OTP verification. Your saved number was not changed.' });
+    }
     const updates = {};
     if (fullName) updates.fullName = fullName;
-    if (phone) updates.phone = phone;
     if (bio !== undefined) updates.bio = bio;
     if (preferredLanguage) updates.preferredLanguage = preferredLanguage;
     if (primarySkill) updates.primarySkill = primarySkill;
@@ -80,18 +83,16 @@ export const updateWorkerProfile = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Enter a valid UPI ID, for example name@bank.' });
       }
       updates.upiId = cleanUpiId;
+      updates.upiVerified = false;
+      updates.upiVerificationStatus = cleanUpiId ? 'format_only' : 'not_provided';
+      updates.upiVerifiedAt = null;
     }
 
     const updated = update('workerProfiles', workerProfile._id, updates);
 
     // Also update base user record
     if (avatar) update('users', workerUserId, { avatar });
-    if (fullName || phone) {
-      update('users', workerUserId, {
-        ...(fullName && { name: fullName }),
-        ...(phone && { phone: phone })
-      });
-    }
+    if (fullName) update('users', workerUserId, { name: fullName });
 
     res.status(200).json({
       success: true,

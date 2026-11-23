@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { RecaptchaVerifier, signInWithPhoneNumber, signOut, type ConfirmationResult } from 'firebase/auth';
+import { firebaseAuth } from '../services/firebase';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiRegister } from '../services/api';
 import { uploadProfileImage } from '../services/imageUpload';
-import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import {
@@ -52,8 +53,12 @@ export const RegisterPage: React.FC = () => {
   const [step, setStep] = useState(1);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneConfirmation, setPhoneConfirmation] = useState<ConfirmationResult | null>(null);
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [verifiedPhoneIdToken, setVerifiedPhoneIdToken] = useState('');
+  const [verifiedPhone, setVerifiedPhone] = useState('');
+  const registrationRecaptcha = useRef<RecaptchaVerifier | null>(null);
 
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   // Form states
@@ -92,6 +97,66 @@ export const RegisterPage: React.FC = () => {
   const [availableDates, setAvailableDates] = useState('Immediate');
   const [maxDistanceKm, setMaxDistanceKm] = useState(8);
 
+  const normalizeIndianPhone = (value: string) => {
+    let digits = value.replace(/\D/g, '');
+    if (digits.startsWith('91') && digits.length === 12) digits = digits.slice(2);
+    if (digits.startsWith('0') && digits.length === 11) digits = digits.slice(1);
+    return digits;
+  };
+
+  const sendRegistrationOtp = async () => {
+    setErrorMsg(null);
+    const digits = normalizeIndianPhone(phone);
+    if (digits.length !== 10) { setErrorMsg('Enter a valid 10-digit Indian mobile number.'); return; }
+    try {
+      if (!registrationRecaptcha.current) {
+        registrationRecaptcha.current = new RecaptchaVerifier(firebaseAuth, 'register-firebase-recaptcha', { size: 'invisible' });
+      }
+      const confirmation = await signInWithPhoneNumber(firebaseAuth, '+91' + digits, registrationRecaptcha.current);
+      setPhoneConfirmation(confirmation);
+      setErrorMsg(null);
+    } catch (error: any) {
+      registrationRecaptcha.current?.clear();
+      registrationRecaptcha.current = null;
+      const code = error?.code || '';
+      setErrorMsg(code === 'auth/unauthorized-domain'
+        ? 'Firebase does not authorize this website domain. Add the current hostname in Firebase Console → Authentication → Settings → Authorized domains.'
+        : code === 'auth/operation-not-allowed'
+          ? 'Phone authentication is disabled in Firebase. Enable the Phone provider.'
+          : code === 'auth/too-many-requests' || code === 'auth/quota-exceeded'
+            ? 'Firebase is temporarily limiting SMS requests. Please wait and try again.'
+            : code === 'auth/captcha-check-failed' || code === 'auth/missing-app-credential'
+              ? 'The reCAPTCHA security check failed. Refresh the page and try again.'
+              : code === 'auth/invalid-phone-number'
+                ? 'Enter a valid 10-digit Indian mobile number.'
+                : code === 'auth/billing-not-enabled' || code === 'auth/app-not-authorized'
+                  ? 'Firebase billing or app authorization is blocking SMS delivery. Ask the site administrator to check Firebase settings.'
+                  : code === 'auth/network-request-failed'
+                    ? 'Network error while requesting the SMS OTP. Check your connection and try again.'
+                    : error?.message || 'Could not send the SMS OTP. Check Firebase phone-auth settings and try again.');
+    }
+  };
+
+  const verifyRegistrationOtp = async () => {
+    if (!phoneConfirmation || phoneOtp.trim().length !== 6) { setErrorMsg('Enter the 6-digit OTP received on your phone.'); return; }
+    try {
+      const credential = await phoneConfirmation.confirm(phoneOtp.trim());
+      const verifiedDigits = normalizeIndianPhone(phone);
+      const token = await credential.user.getIdToken(true);
+      setVerifiedPhoneIdToken(token);
+      setVerifiedPhone(verifiedDigits);
+      setPhoneConfirmation(null);
+      setPhoneOtp('');
+      setErrorMsg(null);
+    } catch (error: any) {
+      setErrorMsg(error?.code === 'auth/invalid-verification-code'
+        ? 'That OTP is incorrect. Please check the SMS and try again.'
+        : error?.code === 'auth/code-expired'
+          ? 'This OTP has expired. Request a new code.'
+          : error?.message || 'Phone OTP verification failed.');
+    }
+  };
+
   const toggleSkill = (skill: string) => {
     if (selectedSkills.includes(skill)) {
       if (selectedSkills.length > 1) {
@@ -125,26 +190,31 @@ export const RegisterPage: React.FC = () => {
       setErrorMsg('Use at least 8 characters and include at least 3 of these: lowercase, uppercase, number, and special character.');
       return;
     }
+    if (!phone.trim() && !email.trim()) {
+      setErrorMsg('Enter an email address or mobile number to create your account.');
+      return;
+    }
+    if (phone.trim() && (!verifiedPhoneIdToken || verifiedPhone !== normalizeIndianPhone(phone))) {
+      setErrorMsg('Verify the mobile number with SMS OTP before creating the account.');
+      return;
+    }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      setErrorMsg('Enter a valid email address.');
+      return;
+    }
     setIsSubmitting(true);
-
     try {
       const payload: any = {
         name,
-        phone,
-        email,
+        phone: phone.trim(),
+        email: email.trim(),
         password,
         role,
         avatar,
         preferredLanguage,
-        location: {
-          state,
-          city,
-          area,
-          pincode,
-          coordinates: coords
-        }
+        firebaseIdToken: verifiedPhoneIdToken || undefined,
+        location: { state, city, area, pincode, coordinates: coords }
       };
-
       if (role === 'worker') {
         payload.skills = selectedSkills;
         payload.experienceLevel = experienceLevel;
@@ -156,17 +226,15 @@ export const RegisterPage: React.FC = () => {
           maxDistanceKm: Number(maxDistanceKm)
         };
       } else {
-        payload.companyName = businessType === 'Home Owner' ? `${name} - Home Hiring` : companyName.trim();
+        payload.companyName = businessType === 'Home Owner' ? name + ' - Home Hiring' : companyName.trim();
         payload.businessType = businessType;
         payload.industry = industry;
         payload.aboutCompany = aboutCompany;
       }
-
       const res = await apiRegister(payload);
       if (res.success) {
-        // Auto login with credentials
-        await login(phone, password);
-        navigate(role === 'worker' ? '/worker/dashboard' : '/employer/dashboard');
+        await signOut(firebaseAuth).catch(() => undefined);
+        navigate(email.trim() ? '/login?registered=email' : '/login?registered=phone');
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Registration failed.');
@@ -260,24 +328,41 @@ export const RegisterPage: React.FC = () => {
               </div>
               <div>
                 <label className="text-xs font-semibold text-brand-dark block mb-1">
-                  Mobile Number (Used for SMS & OTP) <span className="text-red-500">*</span>
+                  Mobile Number (Optional — verify by SMS OTP if entered)
                 </label>
                 <input
-                  type="text"
-                  required
+                  type="tel"
+                  inputMode="numeric"
                   placeholder="e.g. 9811002233"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => { setPhone(e.target.value); setVerifiedPhoneIdToken(''); setVerifiedPhone(''); setPhoneConfirmation(null); setPhoneOtp(''); }}
                   className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark"
                 />
+                {phone.trim() && (
+                  <div className="mt-2 space-y-2">
+                    {verifiedPhoneIdToken && verifiedPhone === normalizeIndianPhone(phone) ? (
+                      <p className="text-xs font-semibold text-emerald-700 flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Mobile number verified successfully</p>
+                    ) : phoneConfirmation ? (
+                      <>
+                        <input aria-label="Registration OTP" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={phoneOtp} onChange={e => setPhoneOtp(e.target.value.replace(/\D/g, ''))} placeholder="Enter 6-digit SMS OTP" className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white tracking-widest" />
+                        <button type="button" onClick={verifyRegistrationOtp} disabled={phoneOtp.length !== 6} className="w-full py-2.5 rounded-xl bg-brand-primary text-white text-xs font-bold disabled:opacity-50">Verify mobile OTP</button>
+                        <button type="button" onClick={() => { setPhoneConfirmation(null); setPhoneOtp(''); }} className="text-xs font-semibold text-brand-primary">Use a different number</button>
+                      </>
+                    ) : (
+                      <button type="button" onClick={sendRegistrationOtp} className="w-full py-2.5 rounded-xl border border-brand-primary text-brand-primary text-xs font-bold">Send SMS OTP to verify number</button>
+                    )}
+                  </div>
+                )}
+                <div id="register-firebase-recaptcha" />
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-brand-dark block mb-1">
-                  Email Address (Optional)
+                  Email Address (Required if no mobile number — verification link will be sent)
                 </label>
                 <input
                   type="email"
+                  required={!phone.trim()}
                   placeholder="e.g. ramesh.kumar@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -586,7 +671,11 @@ export const RegisterPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between py-1 border-b border-brand-primary/10">
                   <span className="text-brand-muted">Phone:</span>
-                  <span className="font-bold text-brand-dark">{phone}</span>
+                  <span className="font-bold text-brand-dark">{phone || "Not provided"}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-brand-primary/10">
+                  <span className="text-brand-muted">Email:</span>
+                  <span className="font-bold text-brand-dark">{email || "Not provided"}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-brand-primary/10">
                   <span className="text-brand-muted">Primary Skills:</span>
@@ -631,8 +720,16 @@ export const RegisterPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  if (step === 1 && (!name.trim() || !phone.trim() || !password)) {
-                    setErrorMsg('Please complete all required fields.');
+                  if (step === 1 && (!name.trim() || (!phone.trim() && !email.trim()) || !password)) {
+                    setErrorMsg('Enter your name, password, and either an email address or mobile number.');
+                    return;
+                  }
+                  if (step === 1 && phone.trim() && (!verifiedPhoneIdToken || verifiedPhone !== normalizeIndianPhone(phone))) {
+                    setErrorMsg('Verify your mobile number with SMS OTP before continuing.');
+                    return;
+                  }
+                  if (step === 1 && email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+                    setErrorMsg('Enter a valid email address.');
                     return;
                   }
                   if (role === 'employer' && step === 2 && businessType !== 'Home Owner' && !companyName.trim()) { setErrorMsg('Please enter your business or firm name.'); return; }
@@ -648,7 +745,7 @@ export const RegisterPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSubmitRegistration}
-                disabled={isSubmitting}
+                disabled={isSubmitting || (Boolean(phone.trim()) && !verifiedPhoneIdToken)}
                 className="px-6 py-2.5 rounded-xl bg-brand-primary text-white text-xs font-bold hover:bg-brand-primary-dark transition-all flex items-center gap-1.5 shadow-md shadow-brand-primary/20 disabled:opacity-50"
               >
                 {isSubmitting ? (

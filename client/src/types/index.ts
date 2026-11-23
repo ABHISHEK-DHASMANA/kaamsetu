@@ -74,6 +74,9 @@ export interface WorkerProfile {
   fullName: string;
   phone: string;
   email?: string;
+  upiId?: string;
+  upiVerified?: boolean;
+  upiVerificationStatus?: 'verified' | 'format_only' | 'not_provided';
   avatar?: string;
   preferredLanguage: string;
   workerId: string;

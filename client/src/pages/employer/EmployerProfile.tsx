@@ -7,6 +7,7 @@ import { EmployerProfile } from '../../types';
 import { Building2, Phone, Mail, MapPin, ShieldCheck, Save, Award, Camera, Star } from 'lucide-react';
 import { uploadProfileImage } from '../../services/imageUpload';
 import { LocationPicker } from '../../components/maps/LocationPicker';
+import { AccountDeletionSection } from '../../components/profile/AccountDeletionSection';
 
 export const EmployerProfilePage: React.FC = () => {
   const { user, profile, updateLocalProfile } = useAuth();
@@ -182,9 +183,10 @@ export const EmployerProfilePage: React.FC = () => {
               <input
                 type="text"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                readOnly
                 className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark font-mono"
               />
+              <p className="mt-1 text-[11px] text-brand-muted">Changing this number requires SMS OTP verification.</p>
             </div>
           </div>
 
@@ -250,6 +252,7 @@ export const EmployerProfilePage: React.FC = () => {
           </button>
         </form>
       </div>
+      <AccountDeletionSection />
     </DashboardLayout>
   );
 };
