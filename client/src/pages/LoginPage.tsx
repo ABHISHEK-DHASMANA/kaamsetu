@@ -17,7 +17,7 @@ export const LoginPage: React.FC = () => {
   const [notice, setNotice] = useState<string | null>(() => {
     const registered = searchParams.get('registered');
     if (registered === 'email') return 'Your account was created. Check your inbox and verify the link before signing in with email and password.';
-    if (registered === 'phone') return 'Your account was created with a verified mobile number. Sign in using SMS OTP.';
+    if (registered === 'phone') return 'Your account was created. Sign in using your verified email and password.';
     return null;
   });
   const [busy, setBusy] = useState(false);
