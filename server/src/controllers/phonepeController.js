@@ -5,6 +5,29 @@ import { createPhonePeCheckout, fetchPhonePeOrderStatus, isPhonePeConfigured } f
 
 const currentUserId = user => user?._id || user?.id;
 
+const getPromisedJobAmount = (job, application) => {
+  const agreed = Number(application?.agreedPaymentAmount);
+  if (Number.isFinite(agreed) && agreed > 0) return Math.round(agreed * 100) / 100;
+  const rate = Number(job?.offeredWage);
+  if (!Number.isFinite(rate) || rate <= 0) return null;
+  const wageType = String(job?.wageType || 'daily').toLowerCase();
+  if (wageType === 'task') return Math.round(rate * 100) / 100;
+  const duration = String(job?.workDuration || '').toLowerCase();
+  const match = duration.match(/(\\d+(?:\\.\\d+)?)\\s*(day|days|week|weeks|month|months)/);
+  if (!match) return null;
+  const count = Number(match[1]);
+  if (!Number.isFinite(count) || count <= 0) return null;
+  if (wageType === 'daily') {
+    const days = match[2].startsWith('week') ? count * 7 : match[2].startsWith('month') ? count * 30 : count;
+    return Math.round(rate * days * 100) / 100;
+  }
+  if (wageType === 'monthly') {
+    const months = match[2].startsWith('month') ? count : match[2].startsWith('week') ? count / 4.345 : count / 30;
+    return Math.round(rate * months * 100) / 100;
+  }
+  return null;
+};
+
 const ensureMongo = res => {
   if (mongoose.connection.readyState !== 1) {
     res.status(503).json({ success: false, message: 'Secure online payments require the production MongoDB ledger. Online checkout is unavailable in demo storage.' });
@@ -42,18 +65,21 @@ export const createPhonePePayment = async (req, res) => {
     }
 
     const employerId = currentUserId(req.user);
-    const { applicationId, amount } = req.body || {};
-    const numericAmount = Number(amount);
-    if (!applicationId || !Number.isFinite(numericAmount) || numericAmount < 1 || numericAmount > 1000000) {
-      return res.status(400).json({ success: false, message: 'Choose a completed job and enter a valid amount.' });
-    }
+    const { applicationId } = req.body || {};
+    if (!applicationId) return res.status(400).json({ success: false, message: 'Choose the job you want to pay for.' });
 
-    const application = findOne('applications', a => (a._id || a.id) === applicationId);
-    if (!application || application.employerId !== employerId) {
-      return res.status(404).json({ success: false, message: 'Completed job application not found for this employer.' });
+    const application = findOne('applications', a => String(a._id || a.id) === String(applicationId));
+    if (!application || String(application.employerId) !== String(employerId)) {
+      return res.status(404).json({ success: false, message: 'Job application not found for this employer.' });
     }
-    if (application.status !== 'Completed') {
-      return res.status(400).json({ success: false, message: 'Online payment is available only after the job is marked completed.' });
+    if (application.status !== 'PaymentPending' || application.paymentMode !== 'online') {
+      return res.status(400).json({ success: false, message: 'This job is not awaiting an online payment.' });
+    }
+    const job = findOne('jobs', j => String(j._id || j.id) === String(application.jobId));
+    if (!job) return res.status(404).json({ success: false, message: 'The original job listing could not be found.' });
+    const numericAmount = getPromisedJobAmount(job, application);
+    if (!Number.isFinite(numericAmount) || numericAmount < 1 || numericAmount > 1000000) {
+      return res.status(400).json({ success: false, message: 'The agreed job amount cannot be calculated safely from this listing. Ask support to review the job payment terms before collecting payment.' });
     }
 
     const existingPaid = await PaymentIntent.findOne({ applicationId, status: 'paid' });
