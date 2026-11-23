@@ -311,6 +311,13 @@ export const login = async (req, res) => {
     const identifier = String(phone).trim();
     const normalizedIdentifier = identifier.toLowerCase();
     const isEmailIdentifier = normalizedIdentifier.includes('@');
+    if (!isEmailIdentifier) {
+      return res.status(403).json({
+        success: false,
+        code: 'PHONE_OTP_REQUIRED',
+        message: 'Mobile sign-in must be completed with Firebase SMS OTP. Password sign-in is available only with a verified email address.'
+      });
+    }
     const user = isEmailIdentifier
       ? findOne('users', u => String(u.email || '').trim().toLowerCase() === normalizedIdentifier)
       : findOne('users', u => normalizePhone(u.phone) === normalizePhone(identifier));
