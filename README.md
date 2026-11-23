@@ -148,3 +148,30 @@ kaamsetu/
 - **Empowering Semi-Skilled Artisans**: Eliminates exploitation by middlemen, ensuring zero commission deduction.
 - **Overcoming Literacy Barriers**: Voice-first Hindi & English natural language search makes digital job discovery accessible to everyone.
 - **Portability of Reputation**: Blue-collar workers own their verified Digital Skill Passport across jobs, building long-term creditworthiness and upward mobility.
+
+
+---
+
+## Account verification and privacy configuration
+
+### Firebase phone OTP
+- In Firebase Console, select the `kaamsetu-83aef` project.
+- Enable **Authentication → Sign-in method → Phone**.
+- Add every production and preview hostname used for testing under **Authentication → Settings → Authorized domains**.
+- Keep the existing `VITE_FIREBASE_*` values configured in the Vercel project.
+- Keep `FIREBASE_PROJECT_ID` and `FIREBASE_SERVICE_ACCOUNT_JSON` configured only on the Render backend. Never put the service-account JSON in Vite/client variables.
+- Firebase may require billing/SMS quota configuration and may limit SMS delivery by country, IP, or volume. Real SMS delivery must be tested on a real, authorized mobile number; a local success state is not proof of delivery.
+
+### Email verification
+The backend sends single-use, 24-hour verification links through Resend. Configure these variables in Render (not in frontend code):
+- `RESEND_API_KEY`: private Resend API key.
+- `RESEND_FROM_EMAIL`: sender address on a domain verified in Resend, for example `KaamSetu <verify@your-domain.example>`.
+- `FRONTEND_URL`: public frontend origin, without a trailing slash. The verification link is built from this origin.
+
+Email registration is unavailable until all three values are configured and Resend accepts the sender domain. Email tokens are stored as SHA-256 hashes and are cleared after successful verification. Email/password login is blocked until verification is complete.
+
+### Account deletion and retained records
+Workers and employers can request deletion from their profile page after confirming their current password and typing `DELETE`. The backend removes profile and private conversation data, closes active employer jobs, and anonymizes the account record. Application, job, review, and payment records remain for audit, reconciliation, and dispute handling. Firebase identity deletion is attempted when the linked UID is available.
+
+### UPI and bank details
+KaamSetu currently collects a worker UPI ID only. It checks the input format but does **not** verify that the UPI ID exists or belongs to the worker. No bank account number or IFSC details are currently collected, so bank-account/penny-drop verification is not applicable to the present UI. Do not describe either contact details or payment IDs as externally verified unless a provider-backed verification integration is added and configured.
