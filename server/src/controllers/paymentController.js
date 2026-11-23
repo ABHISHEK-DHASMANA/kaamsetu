@@ -52,10 +52,88 @@ export const listMyPayments = (req, res) => {
 };
 
 export const createPayment = async (req, res) => {
-  return res.status(410).json({
-    success: false,
-    message: 'Manual UPI reference entry is no longer supported. Use the secure PhonePe checkout from the Payments page.'
-  });
+  try {
+    const employerId = idOf(req.user);
+    const { applicationId, amount, method, transactionReference, note } = req.body || {};
+    const normalizedApplicationId = idOf(applicationId);
+    if (!normalizedApplicationId || method !== 'direct_upi') {
+      return res.status(400).json({ success: false, message: 'Choose a job awaiting online UPI payment.' });
+    }
+    const normalizedReference = String(transactionReference || '').trim();
+    if (!/^[A-Za-z0-9._-]{6,100}$/.test(normalizedReference)) {
+      return res.status(400).json({ success: false, message: 'Enter the UPI transaction reference / UTR shown by your payment app.' });
+    }
+
+    const application = findOne('applications', a => idOf(a._id || a.id) === normalizedApplicationId);
+    if (!application || idOf(application.employerId) !== employerId) {
+      return res.status(404).json({ success: false, message: 'Job application not found for this employer.' });
+    }
+    if (application.status !== 'PaymentPending' || application.paymentMode !== 'online') {
+      return res.status(409).json({ success: false, message: 'This job is not awaiting online payment.' });
+    }
+    const job = findOne('jobs', j => idOf(j._id || j.id) === idOf(application.jobId));
+    if (!job) return res.status(404).json({ success: false, message: 'Job listing not found.' });
+
+    const agreed = Number(application.agreedPaymentAmount);
+    let expectedAmount = Number.isFinite(agreed) && agreed > 0 ? agreed : null;
+    if (expectedAmount === null) {
+      const rate = Number(job.offeredWage);
+      const wageType = String(job.wageType || 'daily').toLowerCase();
+      if (Number.isFinite(rate) && rate > 0 && wageType === 'task') expectedAmount = rate;
+      else {
+        const duration = String(job.workDuration || '').toLowerCase();
+        const match = duration.match(/(\\d+(?:\\.\\d+)?)\\s*(day|days|week|weeks|month|months)/);
+        if (match) {
+          const count = Number(match[1]);
+          if (Number.isFinite(count) && count > 0 && wageType === 'daily') {
+            const days = match[2].startsWith('week') ? count * 7 : match[2].startsWith('month') ? count * 30 : count;
+            expectedAmount = rate * days;
+          } else if (Number.isFinite(count) && count > 0 && wageType === 'monthly') {
+            expectedAmount = rate * (match[2].startsWith('month') ? count : match[2].startsWith('week') ? count / 4.345 : count / 30);
+          }
+        }
+      }
+    }
+    expectedAmount = Number.isFinite(expectedAmount) ? Math.round(expectedAmount * 100) / 100 : null;
+    const submittedAmount = Number(amount);
+    if (!expectedAmount || expectedAmount < 1 || expectedAmount > 1000000 ||
+        !Number.isFinite(submittedAmount) || Math.round(submittedAmount * 100) !== Math.round(expectedAmount * 100)) {
+      return res.status(409).json({ success: false, message: 'The payment amount does not match the agreed job amount. Refresh the payment page before paying.' });
+    }
+
+    const existing = findOne('payments', p => idOf(p.applicationId) === normalizedApplicationId && p.status !== 'cancelled');
+    if (existing) return res.status(409).json({ success: false, message: 'A payment record already exists for this job. Check payment history before trying again.' });
+
+    const payment = insert('payments', {
+      applicationId: normalizedApplicationId,
+      jobId: idOf(application.jobId),
+      employerId,
+      workerId: idOf(application.workerId),
+      amount: expectedAmount,
+      currency: 'INR',
+      method: 'direct_upi',
+      transactionReference: normalizedReference,
+      note: String(note || '').trim().slice(0, 300),
+      employerConfirmed: true,
+      workerConfirmed: false,
+      status: 'awaiting_worker_confirmation',
+      verificationType: 'two_party_confirmation',
+      confirmedAt: null,
+      events: [{ type: 'employer_recorded_payment', actorId: employerId, at: new Date().toISOString() }]
+    });
+
+    notify(application.workerId, 'UPI payment confirmation requested',
+      'Your employer recorded a direct UPI payment of ₹' + payment.amount + '. Check your own UPI app and confirm only if the amount has arrived.');
+    if (!await persistOrFail(res)) return;
+    return res.status(201).json({
+      success: true,
+      message: 'UPI payment reference recorded. The worker must confirm receipt before the job is marked completed.',
+      payment: hydratePayment(payment)
+    });
+  } catch (error) {
+    console.error('[Payments] createPayment failed:', error);
+    return res.status(500).json({ success: false, message: 'Could not record the UPI payment. Please refresh and try again.' });
+  }
 };
 
 export const confirmPaymentReceived = async (req, res) => {
