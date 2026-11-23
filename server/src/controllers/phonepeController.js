@@ -73,11 +73,13 @@ export const getPhonePePaymentQuote = async (req, res) => {
     const job = findOne('jobs', j => String(j._id || j.id) === String(application.jobId));
     if (!job) return res.status(404).json({ success: false, message: 'Job listing not found.' });
     const amount = getPromisedJobAmount(job, application);
-    const existingPayment = await PaymentIntent.findOne({ applicationId: String(application._id || application.id), status: 'paid' });
+    const paymentQuery = { applicationId: String(application._id || application.id) };
+    const existingPayment = await PaymentIntent.findOne({ ...paymentQuery, status: 'paid' });
+    const pendingPayment = await PaymentIntent.findOne({ ...paymentQuery, status: 'pending' });
     if (!Number.isFinite(amount) || amount < 1 || amount > 1000000) {
       return res.status(422).json({ success: false, message: 'The agreed payment cannot be calculated safely from the job listing. Please contact support.' });
     }
-    res.json({ success: true, quote: { applicationId: String(application._id || application.id), jobTitle: job.title, workerName: findOne('workerProfiles', p => String(p.userId) === String(application.workerId))?.fullName || 'Worker', amount, currency: 'INR', wageType: job.wageType || 'daily', duration: job.workDuration || '', alreadyCollected: Boolean(existingPayment), payoutStatus: existingPayment?.payoutStatus || null } });
+    res.json({ success: true, quote: { applicationId: String(application._id || application.id), jobTitle: job.title, workerName: findOne('workerProfiles', p => String(p.userId) === String(application.workerId))?.fullName || 'Worker', amount, currency: 'INR', wageType: job.wageType || 'daily', duration: job.workDuration || '', alreadyCollected: Boolean(existingPayment), payoutStatus: existingPayment?.payoutStatus || null, checkoutPending: Boolean(pendingPayment), checkoutUrl: pendingPayment?.checkoutUrl || '' } });
   } catch (error) {
     console.error('[PhonePe] Quote failed:', error.message);
     res.status(500).json({ success: false, message: 'Could not calculate the agreed job payment.' });
