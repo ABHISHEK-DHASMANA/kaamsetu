@@ -59,24 +59,26 @@ export const LoginPage: React.FC = () => {
       setConfirmation(result);
       setNotice('OTP sent. Enter the verification code received on your phone.');
     } catch (err: any) {
-      setErrorMsg(err.code === 'auth/unauthorized-domain'
-        ? `Firebase is blocking this website (${window.location.hostname}). Add this exact hostname in Firebase Console → Authentication → Settings → Authorized domains, then reload the site.`
-        : err.code === 'auth/operation-not-allowed'
+      const code = err?.code || '';
+      setErrorMsg(code === 'auth/unauthorized-domain'
+        ? \`Firebase is blocking this website (\${window.location.hostname}). Add this exact hostname in Firebase Console → Authentication → Settings → Authorized domains, then reload the site.\`
+        : code === 'auth/operation-not-allowed'
           ? 'Phone authentication is disabled. Enable the Phone provider in Firebase Console → Authentication → Sign-in method.'
-          : err.code === 'auth/billing-not-enabled' || err.code === 'auth/quota-exceeded'
+          : code === 'auth/billing-not-enabled' || code === 'auth/quota-exceeded'
             ? 'Firebase SMS quota or billing settings are blocking OTP delivery. Please contact the site administrator.'
-            : err.code === 'auth/captcha-check-failed' || err.code === 'auth/missing-app-credential'
+            : code === 'auth/captcha-check-failed' || code === 'auth/missing-app-credential'
               ? 'The reCAPTCHA security check failed. Refresh the page and try again.'
-              : err.code === 'auth/invalid-phone-number'
+              : code === 'auth/invalid-phone-number'
                 ? 'Enter a valid 10-digit Indian mobile number.'
-                : err.code === 'auth/network-request-failed'
+                : code === 'auth/network-request-failed'
                   ? 'Network error while requesting OTP. Check your connection and try again.'
-        : err.code === 'auth/credential-already-in-use'
-          ? 'This phone number is already linked to another Firebase account. Sign in using that phone number instead.'
-          : err.code === 'auth/too-many-requests'
-            ? 'Too many attempts. Please wait before requesting another OTP.'
-            : err.message || 'Could not send OTP. Check the number and try again.');
-      recaptcha.current?.clear(); recaptcha.current = null;
+                  : code === 'auth/credential-already-in-use'
+                    ? 'This phone number is already linked to another Firebase account. Sign in using that phone number instead.'
+                    : code === 'auth/too-many-requests'
+                      ? 'Too many attempts. Please wait before requesting another OTP.'
+                      : err.message || 'Could not send OTP. Check the number and try again.');
+      recaptcha.current?.clear();
+      recaptcha.current = null;
     } finally { setBusy(false); }
   };
   const verifyOtp = async () => {
