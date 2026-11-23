@@ -281,8 +281,10 @@ export const register = async (req, res) => {
   } catch (error) {
     console.error('[Auth] Register error:', error.message);
     if (createdUserId) {
-      remove('workerProfiles', findOne('workerProfiles', p => p.userId === createdUserId)?._id);
-      remove('employerProfiles', findOne('employerProfiles', p => p.userId === createdUserId)?._id);
+      const workerProfile = findOne('workerProfiles', p => p.userId === createdUserId);
+      const employerProfile = findOne('employerProfiles', p => p.userId === createdUserId);
+      if (workerProfile) remove('workerProfiles', workerProfile._id || workerProfile.id);
+      if (employerProfile) remove('employerProfiles', employerProfile._id || employerProfile.id);
       remove('users', createdUserId);
     }
     if (error.code?.startsWith('auth/')) {
@@ -303,10 +305,9 @@ export const login = async (req, res) => {
     const identifier = String(phone).trim();
     const normalizedIdentifier = identifier.toLowerCase();
     const isEmailIdentifier = normalizedIdentifier.includes('@');
-    const user = findOne('users', u =>
-      normalizePhone(u.phone) === normalizePhone(identifier) ||
-      String(u.email || '').trim().toLowerCase() === normalizedIdentifier
-    );
+    const user = isEmailIdentifier
+      ? findOne('users', u => String(u.email || '').trim().toLowerCase() === normalizedIdentifier)
+      : findOne('users', u => normalizePhone(u.phone) === normalizePhone(identifier));
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid phone number or password.' });
