@@ -84,7 +84,7 @@ export const createPayment = async (req, res) => {
       if (Number.isFinite(rate) && rate > 0 && wageType === 'task') expectedAmount = rate;
       else {
         const duration = String(job.workDuration || '').toLowerCase();
-        const match = duration.match(/(\\d+(?:\\.\\d+)?)\\s*(day|days|week|weeks|month|months)/);
+        const match = duration.match(/(\d+(?:\.\d+)?)\s*(day|days|week|weeks|month|months)/);
         if (match) {
           const count = Number(match[1]);
           if (Number.isFinite(count) && count > 0 && wageType === 'daily') {
