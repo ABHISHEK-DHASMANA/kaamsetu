@@ -7,6 +7,7 @@ import { WorkerProfile } from '../../types';
 import { User, Phone, MapPin, IndianRupee, Save, CheckCircle2, Camera } from 'lucide-react';
 import { uploadProfileImage } from '../../services/imageUpload';
 import { LocationPicker } from '../../components/maps/LocationPicker';
+import { AccountDeletionSection } from '../../components/profile/AccountDeletionSection';
 
 export const WorkerProfilePage: React.FC = () => {
   const { user, updateLocalProfile } = useAuth();
@@ -120,7 +121,7 @@ export const WorkerProfilePage: React.FC = () => {
             <input
               type="text"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              readOnly
               className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark font-mono"
             />
           </div>
@@ -193,6 +194,7 @@ export const WorkerProfilePage: React.FC = () => {
           </button>
         </form>
       </div>
+      <AccountDeletionSection />
     </DashboardLayout>
   );
 };
