@@ -24,7 +24,7 @@ type PhonePePayment = {
   merchantOrderId: string; applicationId: string; amount: number; currency: string;
   status: 'pending' | 'paid' | 'failed'; payoutStatus?: string; providerState?: string; verifiedAt?: string; createdAt: string;
 };
-type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType: string; duration: string; alreadyCollected?: boolean; payoutStatus?: string | null };
+type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType: string; duration: string; alreadyCollected?: boolean; payoutStatus?: string | null; checkoutPending?: boolean; checkoutUrl?: string };
 
 const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value || 0);
 
@@ -144,6 +144,10 @@ export const PaymentsPage: React.FC = () => {
     if (!applicationId || !quote) return;
     setBusy(true); setError(''); setMessage('');
     try {
+      if (quote?.checkoutPending && quote.checkoutUrl) {
+        window.location.assign(quote.checkoutUrl);
+        return;
+      }
       const result = await apiCreatePhonePeCheckout({ applicationId });
       if (!result.checkoutUrl) throw new Error('PhonePe did not provide a checkout link.');
       window.location.assign(result.checkoutUrl);
@@ -211,6 +215,7 @@ export const PaymentsPage: React.FC = () => {
                 <div className="text-3xl font-black text-brand-dark">{money(quote.amount)}</div>
                 <div className="text-xs text-brand-muted">Worker: {quote.workerName} · Based on {quote.wageType} wage · {quote.duration}</div>
                 {quote.alreadyCollected && <div className="text-xs font-semibold text-amber-700 mt-2">Payment already collected by KaamSetu. Do not pay again. Worker payout is pending approved settlement.</div>}
+                {quote.checkoutPending && <div className="text-xs font-semibold text-blue-700 mt-2">A checkout is already open for this job. Continue it below to avoid creating a duplicate payment.</div>}
               </div>
             )}
             {!available && (
@@ -220,8 +225,8 @@ export const PaymentsPage: React.FC = () => {
               </div>
             )}
             {environment !== 'production' && available && <div className="text-xs text-amber-700">Sandbox mode: test transactions only. No real money will be transferred.</div>}
-            <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || !available || quoteLoading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
-              <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `Continue to pay ${quote ? money(quote.amount) : ''}`}
+            <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || !available || quoteLoading || (quote.checkoutPending && !quote.checkoutUrl)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
+              <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `${quote?.checkoutPending ? 'Resume PhonePe checkout' : 'Continue to pay ' + (quote ? money(quote.amount) : '')}`}
             </button>
           </section>
         )}
