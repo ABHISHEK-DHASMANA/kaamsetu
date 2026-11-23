@@ -89,6 +89,26 @@ export const apiGetMe = async () => {
   return request<{ success: boolean; user: User; profile: any }>('/auth/me');
 };
 
+export const apiVerifyEmail = async (token: string) => {
+  return request<{ success: boolean; message: string }>(
+    '/auth/verify-email?token=' + encodeURIComponent(token)
+  );
+};
+
+export const apiResendVerification = async (email: string) => {
+  return request<{ success: boolean; message: string }>('/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  });
+};
+
+export const apiDeleteAccount = async (password: string) => {
+  return request<{ success: boolean; message: string }>('/auth/account', {
+    method: 'DELETE',
+    body: JSON.stringify({ password })
+  });
+};
+
 // Jobs API
 export const apiGetJobs = async (params: Record<string, string> = {}) => {
   const query = new URLSearchParams(params).toString();
