@@ -339,7 +339,7 @@ export const RegisterPage: React.FC = () => {
                       <p className="text-xs font-semibold text-emerald-700 flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Mobile number verified</p>
                     ) : phoneConfirmation ? (
                       <>
-                        <input aria-label="Registration SMS OTP" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={phoneOtp} onChange={e => setPhoneOtp(e.target.value.replace(/D/g, ''))} placeholder="Enter 6-digit SMS OTP" className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white tracking-widest" />
+                        <input aria-label="Registration SMS OTP" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={phoneOtp} onChange={e => setPhoneOtp(e.target.value.replace(/\\D/g, ''))} placeholder="Enter 6-digit SMS OTP" className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white tracking-widest" />
                         <button type="button" onClick={verifyRegistrationOtp} disabled={phoneOtp.length !== 6} className="w-full py-2.5 rounded-xl bg-brand-primary text-white text-xs font-bold disabled:opacity-50">Verify mobile OTP</button>
                         <button type="button" onClick={() => { setPhoneConfirmation(null); setPhoneOtp(''); }} className="text-xs font-semibold text-brand-primary">Request a new code</button>
                       </>
@@ -353,7 +353,7 @@ export const RegisterPage: React.FC = () => {
 
               <div>
                 <label className="text-xs font-semibold text-brand-dark block mb-1">
-                  Email Address (Optional)
+                  Email Address (Required if no mobile number; verify before email sign-in)
                 </label>
                 <input
                   type="email"
