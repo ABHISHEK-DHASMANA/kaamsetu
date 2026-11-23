@@ -147,7 +147,7 @@ export const register = async (req, res) => {
     }
 
     if (contactPhone && findOne('users', u => normalizePhone(u.phone) === contactPhone)) {
-      return res.status(409).json({ success: false, message: 'An account with this verified mobile number already exists.' });
+      return res.status(409).json({ success: false, message: 'This mobile number is already saved on another account.' });
     }
     if (cleanEmail && findOne('users', u => String(u.email || '').trim().toLowerCase() === cleanEmail)) {
       return res.status(409).json({ success: false, message: 'An account with this email already exists. Use another email or sign in.' });
@@ -253,14 +253,12 @@ export const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: emailDeliveryFailed
-        ? 'Account created, but the verification email could not be sent. Please request another verification link.'
-        : 'Account created. Check your email and verify the link before signing in.',
+      message: 'Account created. Check your email and verify the link before signing in.',
       emailVerificationRequired: true,
       phoneVerified: false,
       phoneContactOnly: Boolean(contactPhone),
       user: safeUser
-    });;
+    });
   } catch (error) {
     console.error('[Auth] Register error:', error.message);
     if (createdUserId) {
