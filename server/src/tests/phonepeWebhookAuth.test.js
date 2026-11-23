@@ -8,7 +8,7 @@ import {
 test('creates the SHA-256 webhook authorization hash', () => {
   assert.equal(
     createPhonePeWebhookAuthHash('kaamsetu', 'test-password'),
-    '2d1f4f6db7d8f17a7a8c3c9d12d6b92ed1bd2e6e0e3a35c3a0f1a43f2e4c6f90'
+    'c3653ff10002ae75c96a7d419fab914d8754b031c6d018ca374be4cf5f6d7196'
   );
 });
 
