@@ -9,6 +9,8 @@ export interface User {
   name: string;
   phone: string;
   email?: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
   role: Role;
   verificationStatus: UserVerificationStatus;
   avatar?: string;
@@ -74,6 +76,9 @@ export interface WorkerProfile {
   fullName: string;
   phone: string;
   email?: string;
+  upiId?: string;
+  upiVerified?: boolean;
+  upiVerificationStatus?: 'verified' | 'format_only' | 'not_provided';
   avatar?: string;
   preferredLanguage: string;
   workerId: string;
