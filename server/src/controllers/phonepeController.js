@@ -78,10 +78,11 @@ export const getPhonePePaymentQuote = async (req, res) => {
     const paymentQuery = { applicationId: String(application._id || application.id) };
     const existingPayment = await PaymentIntent.findOne({ ...paymentQuery, status: 'paid' });
     const pendingPayment = await PaymentIntent.findOne({ ...paymentQuery, status: 'pending' });
+    const directPayment = findOne('payments', p => String(p.applicationId) === String(application._id || application.id) && p.status !== 'cancelled');
     if (!Number.isFinite(amount) || amount < 1 || amount > 1000000) {
       return res.status(422).json({ success: false, message: 'The agreed payment cannot be calculated safely from the job listing. Please contact support.' });
     }
-    res.json({ success: true, quote: { applicationId: String(application._id || application.id), jobTitle: job.title, workerName: findOne('workerProfiles', p => String(p.userId) === String(application.workerId))?.fullName || 'Worker', amount, currency: 'INR', wageType: job.wageType || 'daily', duration: job.workDuration || '', alreadyCollected: Boolean(existingPayment), payoutStatus: existingPayment?.payoutStatus || null, checkoutPending: Boolean(pendingPayment), checkoutUrl: pendingPayment?.checkoutUrl || '' } });
+    res.json({ success: true, quote: { applicationId: String(application._id || application.id), jobTitle: job.title, workerName: findOne('workerProfiles', p => String(p.userId) === String(application.workerId))?.fullName || 'Worker', amount, currency: 'INR', wageType: job.wageType || 'daily', duration: job.workDuration || '', alreadyCollected: Boolean(existingPayment), directPaymentPending: Boolean(directPayment && directPayment.status !== 'paid'), directPaymentStatus: directPayment?.status || null, payoutStatus: existingPayment?.payoutStatus || null, checkoutPending: Boolean(pendingPayment), checkoutUrl: pendingPayment?.checkoutUrl || '' } });
   } catch (error) {
     console.error('[PhonePe] Quote failed:', error.message);
     res.status(500).json({ success: false, message: 'Could not calculate the agreed job payment.' });
@@ -112,6 +113,9 @@ export const createPhonePePayment = async (req, res) => {
     if (!Number.isFinite(numericAmount) || numericAmount < 1 || numericAmount > 1000000) {
       return res.status(400).json({ success: false, message: 'The agreed job amount cannot be calculated safely from this listing. Ask support to review the job payment terms before collecting payment.' });
     }
+
+    const directPayment = findOne('payments', p => String(p.applicationId) === String(applicationId) && p.status !== 'cancelled');
+    if (directPayment) return res.status(409).json({ success: false, message: 'A direct UPI payment is already recorded for this job. Check its confirmation status before paying again.' });
 
     const existingPaid = await PaymentIntent.findOne({ applicationId, status: 'paid' });
     if (existingPaid) return res.status(409).json({ success: false, message: 'PhonePe has already collected payment for this job. Do not pay again; worker payout is awaiting the approved settlement process.' });
