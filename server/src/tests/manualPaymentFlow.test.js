@@ -1,7 +1,10 @@
 import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { setDb, getDb } from '../services/storage.js';
-import { createPayment, getPaymentQuote, confirmPaymentReceived } from '../controllers/paymentController.js';
+import {
+  createPayment, getPaymentQuote, respondToPaymentRequest,
+  approvePaymentCounter, reportDirectPayment, confirmPaymentReceived
+} from '../controllers/paymentController.js';
 
 const resetDb = () => setDb({
   users: [],
@@ -20,7 +23,7 @@ const response = () => ({
 
 afterEach(() => resetDb());
 
-test('payment quote only exposes worker UPI to the employer assigned to that application', async () => {
+test('payment quote exposes UPI only to the employer assigned to the application', async () => {
   resetDb();
   const res = response();
   await getPaymentQuote({ user: { _id: 'employer-1', role: 'employer' }, params: { applicationId: 'application-1' } }, res);
@@ -32,14 +35,32 @@ test('payment quote only exposes worker UPI to the employer assigned to that app
   assert.equal(unauthorized.statusCode, 404);
 });
 
-test('direct UPI payment report awaits worker confirmation and completes the job only after confirmation', async () => {
+test('worker can counter employer amount, employer approves, UPI reference is reported, and worker confirms receipt', async () => {
   resetDb();
   const created = response();
-  await createPayment({ user: { _id: 'employer-1', role: 'employer' }, body: { applicationId: 'application-1', method: 'direct_upi', amount: 1 } }, created);
+  await createPayment({ user: { _id: 'employer-1', role: 'employer' }, body: { applicationId: 'application-1', method: 'direct_upi', amount: 700 } }, created);
   assert.equal(created.statusCode, 201);
-  assert.equal(created.body.payment.amount, 600);
-  assert.equal(created.body.payment.status, 'awaiting_worker_confirmation');
-  assert.equal(created.body.payment.verificationLevel, 'employer_reported');
+  assert.equal(created.body.payment.status, 'requested_by_worker');
+  assert.equal(created.body.payment.amount, 700);
+
+  const countered = response();
+  await respondToPaymentRequest({ user: { _id: 'worker-1', role: 'worker' }, params: { id: created.body.payment._id }, body: { action: 'counter', amount: 800 } }, countered);
+  assert.equal(countered.statusCode, 200);
+  assert.equal(countered.body.payment.status, 'countered_by_worker');
+  assert.equal(countered.body.payment.amount, 800);
+
+  const approved = response();
+  await approvePaymentCounter({ user: { _id: 'employer-1', role: 'employer' }, params: { id: created.body.payment._id } }, approved);
+  assert.equal(approved.statusCode, 200);
+  assert.equal(approved.body.payment.status, 'approved_by_employer');
+  assert.equal(approved.body.payment.amount, 800);
+
+  const reported = response();
+  await reportDirectPayment({ user: { _id: 'employer-1', role: 'employer' }, params: { id: created.body.payment._id }, body: { transactionReference: 'UPI123456789' } }, reported);
+  assert.equal(reported.statusCode, 200);
+  assert.equal(reported.body.payment.status, 'awaiting_worker_confirmation');
+  assert.equal(reported.body.payment.transactionReference, 'UPI123456789');
+
   const confirmed = response();
   await confirmPaymentReceived({ user: { _id: 'worker-1', role: 'worker' }, params: { id: created.body.payment._id } }, confirmed);
   assert.equal(confirmed.statusCode, 200);
@@ -50,10 +71,23 @@ test('direct UPI payment report awaits worker confirmation and completes the job
   assert.equal(getDb().workerProfiles[0].skillPassport.completedJobsCount, 1);
 });
 
-test('another employer cannot record a payment for this application', async () => {
+test('worker can accept the employer amount without a counter-offer', async () => {
+  resetDb();
+  const created = response();
+  await createPayment({ user: { _id: 'employer-1', role: 'employer' }, body: { applicationId: 'application-1', method: 'direct_upi', amount: 600 } }, created);
+  const accepted = response();
+  await respondToPaymentRequest({ user: { _id: 'worker-1', role: 'worker' }, params: { id: created.body.payment._id }, body: { action: 'accept' } }, accepted);
+  assert.equal(accepted.statusCode, 200);
+  assert.equal(accepted.body.payment.status, 'approved_by_worker');
+  const premature = response();
+  await confirmPaymentReceived({ user: { _id: 'worker-1', role: 'worker' }, params: { id: created.body.payment._id } }, premature);
+  assert.equal(premature.statusCode, 409);
+});
+
+test('another employer cannot create a payment request for this application', async () => {
   resetDb();
   const res = response();
-  await createPayment({ user: { _id: 'other-employer', role: 'employer' }, body: { applicationId: 'application-1', method: 'direct_upi' } }, res);
+  await createPayment({ user: { _id: 'other-employer', role: 'employer' }, body: { applicationId: 'application-1', method: 'direct_upi', amount: 600 } }, res);
   assert.equal(res.statusCode, 404);
   assert.equal(getDb().payments.length, 0);
 });
