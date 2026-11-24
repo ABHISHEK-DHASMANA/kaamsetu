@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { signInWithPopup } from 'firebase/auth';
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  signOut
+} from 'firebase/auth';
 import { firebaseAuth, googleProvider } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import { apiResendVerification } from '../services/api';
@@ -26,12 +31,14 @@ export const LoginPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'worker' | 'employer' | 'admin'>('worker');
   const navigate = useNavigate();
 
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+
   const destination = (role?: string) => {
     const actualRole = role || activeTab;
     navigate(actualRole === 'worker' ? '/worker/dashboard' : actualRole === 'employer' ? '/employer/dashboard' : '/admin/dashboard');
   };
   const handleGoogle = async () => {
-    setErrorMsg(null); setNotice(null); setBusy(true);
+    setErrorMsg(null); setNotice(null); setBusy(true); setUnverifiedEmail(null);
     try {
       const result = await signInWithPopup(firebaseAuth, googleProvider);
       await loginWithFirebase(result.user);
@@ -42,12 +49,39 @@ export const LoginPage: React.FC = () => {
         : err.code === 'auth/popup-closed-by-user' ? 'Google sign-in was cancelled.' : err.message || 'Google sign-in failed.');
     } finally { setBusy(false); }
   };
+
   const handleResendVerification = async () => {
+    const targetEmail = unverifiedEmail || identifier.trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setResendMessage('Please enter your email address first.');
+      return;
+    }
     setResendBusy(true);
     setResendMessage(null);
     try {
-      const result = await apiResendVerification(identifier.trim());
-      setResendMessage(result.message);
+      // 1. First attempt to resend via Firebase if user is currently loaded or can be signed in temporarily
+      let sentViaFirebase = false;
+      try {
+        if (firebaseAuth.currentUser && firebaseAuth.currentUser.email === targetEmail) {
+          await sendEmailVerification(firebaseAuth.currentUser);
+          sentViaFirebase = true;
+        } else if (password) {
+          const userCred = await signInWithEmailAndPassword(firebaseAuth, targetEmail, password);
+          await sendEmailVerification(userCred.user);
+          await signOut(firebaseAuth);
+          sentViaFirebase = true;
+        }
+      } catch (fbErr: any) {
+        console.warn('[Firebase] Direct resend attempt:', fbErr.message);
+      }
+
+      if (sentViaFirebase) {
+        setResendMessage('A new Firebase verification email has been sent to ' + targetEmail + '. Please check your inbox.');
+      } else {
+        // Fallback to backend resend endpoint
+        const result = await apiResendVerification(targetEmail);
+        setResendMessage(result.message || 'Verification link sent to ' + targetEmail);
+      }
     } catch (err: any) {
       setResendMessage(err.message || 'Could not send a verification email.');
     } finally {
@@ -56,13 +90,69 @@ export const LoginPage: React.FC = () => {
   };
 
   const handleManualLogin = async (e: React.FormEvent) => {
-    e.preventDefault(); setErrorMsg(null);
-    if (!identifier.trim().includes('@')) {
+    e.preventDefault();
+    setErrorMsg(null);
+    setNotice(null);
+    setResendMessage(null);
+    setUnverifiedEmail(null);
+
+    const emailInput = identifier.trim().toLowerCase();
+    if (!emailInput.includes('@')) {
       setErrorMsg('Sign in using your registered email address and password. Phone numbers are contact details until verified.');
       return;
     }
-    try { await login(identifier.trim(), password); destination(); }
-    catch (err: any) { setErrorMsg(err.message || 'Login failed. Please verify credentials.'); }
+
+    try {
+      // 1. Try Firebase Authentication with email & password
+      let fbUser: any = null;
+      let firebaseAvailable = true;
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(firebaseAuth, emailInput, password);
+        fbUser = userCredential.user;
+      } catch (fbErr: any) {
+        if (fbErr.code === 'auth/wrong-password' || fbErr.code === 'auth/invalid-credential') {
+          setErrorMsg('Invalid email or password.');
+          return;
+        } else if (fbErr.code === 'auth/user-not-found') {
+          // Check backend directly in case user exists in database but not Firebase
+          firebaseAvailable = false;
+        } else if (fbErr.code === 'auth/too-many-requests') {
+          setErrorMsg('Access to this account has been temporarily disabled due to many failed login attempts. Try again later or reset password.');
+          return;
+        } else {
+          // If network error or config issue, fall back to backend login
+          firebaseAvailable = false;
+        }
+      }
+
+      // 2. If Firebase user found, check email verification status
+      if (fbUser) {
+        // Force refresh user token to get latest emailVerified status
+        await fbUser.reload();
+        if (!fbUser.emailVerified) {
+          setUnverifiedEmail(emailInput);
+          await signOut(firebaseAuth);
+          setErrorMsg('Your email address has not been verified yet. Please check your inbox for the verification email.');
+          return;
+        }
+
+        // Firebase email is verified! Now authenticate with backend via ID token
+        await loginWithFirebase(fbUser);
+        destination();
+        return;
+      }
+
+      // 3. Fallback to standard backend login
+      await login(emailInput, password);
+      destination();
+    } catch (err: any) {
+      const msg = err.message || 'Login failed. Please verify credentials.';
+      if (msg.toLowerCase().includes('not been verified') || msg.toLowerCase().includes('not verified')) {
+        setUnverifiedEmail(emailInput);
+      }
+      setErrorMsg(msg);
+    }
   };
   const handleQuickDemoClick = async (type: 'worker' | 'employer') => {
     setErrorMsg(null);
@@ -114,8 +204,18 @@ export const LoginPage: React.FC = () => {
             <p className="text-xs leading-relaxed text-blue-800">You can sign in with Google or your verified email and password. Mobile numbers are used as contact details and are not treated as verified without an OTP.</p>
           </section>
 
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={busy || isLoading}
+            className="w-full py-3 px-4 rounded-xl border border-brand-border bg-white hover:bg-slate-50 text-brand-dark text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50"
+          >
+            <Chrome className="w-4 h-4 text-brand-primary" />
+            Continue with Google
+          </button>
+
           <div className="relative flex items-center"><div className="flex-1 border-t border-brand-border" /><span className="px-3 text-[10px] text-brand-muted">OR USE PASSWORD</span><div className="flex-1 border-t border-brand-border" /></div>
-          {errorMsg?.toLowerCase().includes('not been verified') && identifier.includes('@') && (
+          {(unverifiedEmail || (errorMsg?.toLowerCase().includes('not been verified') && identifier.includes('@'))) && (
             <button type="button" onClick={handleResendVerification} disabled={resendBusy} className="w-full rounded-xl border border-brand-primary text-brand-primary py-2.5 text-xs font-bold disabled:opacity-50">
               {resendBusy ? 'Sending verification link…' : 'Resend email verification link'}
             </button>

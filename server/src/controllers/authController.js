@@ -39,16 +39,26 @@ export const firebaseLogin = async (req, res) => {
     const hasVerifiedGoogleEmail = decoded.firebase?.sign_in_provider === 'google.com' &&
       decoded.email_verified === true && !!decoded.email &&
       firebaseUser.providerData?.some(provider => provider.providerId === 'google.com');
+    const hasVerifiedPasswordEmail = decoded.firebase?.sign_in_provider === 'password' &&
+      decoded.email_verified === true && !!decoded.email;
 
     let user = null;
-    if (hasVerifiedGoogleEmail) {
+    if (hasVerifiedGoogleEmail || hasVerifiedPasswordEmail) {
       const verifiedEmail = String(decoded.email).trim().toLowerCase();
-      // A Google-verified address may only match an app account after that
-      // address was independently verified during the app's registration flow.
+      // Match by verified email address
       user = findOne('users', candidate =>
-        candidate.emailVerified === true &&
         String(candidate.email || '').trim().toLowerCase() === verifiedEmail
       );
+
+      // If user exists and email was not marked verified yet, mark it verified
+      if (user && user.emailVerified !== true) {
+        update('users', user._id || user.id, {
+          emailVerified: true,
+          verificationStatus: user.phoneVerified ? 'Phone and Email Verified' : 'Email Verified'
+        });
+        user.emailVerified = true;
+        user.verificationStatus = user.phoneVerified ? 'Phone and Email Verified' : 'Email Verified';
+      }
     }
     if (!user && hasVerifiedPhoneProvider && decoded.phone_number) {
       const verifiedPhone = normalizePhone(decoded.phone_number);
@@ -57,8 +67,12 @@ export const firebaseLogin = async (req, res) => {
       }
       user = findOne('users', candidate => normalizePhone(candidate.phone) === verifiedPhone);
     }
-    if (!hasVerifiedGoogleEmail && !hasVerifiedPhoneProvider) {
-      return res.status(403).json({ success: false, message: 'Use a verified Google account or verify your mobile number to sign in.' });
+    if (!hasVerifiedGoogleEmail && !hasVerifiedPasswordEmail && !hasVerifiedPhoneProvider) {
+      return res.status(403).json({
+        success: false,
+        code: 'UNVERIFIED_ACCOUNT',
+        message: 'Your email address is not verified yet. Please verify your email before signing in.'
+      });
     }
     if (!user) {
       return res.status(404).json({
@@ -113,7 +127,7 @@ export const register = async (req, res) => {
   try {
     const {
       name, phone, email, password, role, preferredLanguage, skills,
-      experienceLevel, location, preferences, avatar, firebaseIdToken
+      experienceLevel, location, preferences, avatar, firebaseUid
     } = req.body || {};
 
     const cleanName = String(name || '').trim();
@@ -152,20 +166,15 @@ export const register = async (req, res) => {
     if (cleanEmail && findOne('users', u => String(u.email || '').trim().toLowerCase() === cleanEmail)) {
       return res.status(409).json({ success: false, message: 'An account with this email already exists. Use another email or sign in.' });
     }
-    if (!isEmailDeliveryConfigured()) {
-      return res.status(503).json({ success: false, code: 'EMAIL_NOT_CONFIGURED', message: 'Email registration is temporarily unavailable. The administrator must configure the email verification service first.' });
-    }
 
     const passwordHash = await bcrypt.hash(password, await bcrypt.genSalt(12));
-    const verificationToken = cleanEmail ? randomBytes(32).toString('hex') : null;
     const newUser = insert('users', {
       name: cleanName,
       phone: contactPhone || undefined,
       phoneVerified: false,
       email: cleanEmail,
       emailVerified: false,
-      emailVerificationTokenHash: verificationToken ? createHash('sha256').update(verificationToken).digest('hex') : null,
-      emailVerificationExpiresAt: verificationToken ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null,
+      firebaseUid: firebaseUid || null,
       password: passwordHash,
       role: cleanRole,
       verificationStatus: 'Email Verification Pending',
@@ -174,15 +183,17 @@ export const register = async (req, res) => {
     });
     createdUserId = newUser._id;
 
-    let emailDeliveryFailed = false;
-    if (cleanEmail) {
+    // Optional legacy fallback: if Resend email delivery is configured, also send standard email
+    if (cleanEmail && isEmailDeliveryConfigured()) {
       try {
+        const verificationToken = randomBytes(32).toString('hex');
+        update('users', newUser._id, {
+          emailVerificationTokenHash: createHash('sha256').update(verificationToken).digest('hex'),
+          emailVerificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        });
         await sendVerificationEmail({ to: cleanEmail, token: verificationToken, name: cleanName });
       } catch (emailError) {
-        emailDeliveryFailed = true;
-        remove('users', newUser._id);
-        createdUserId = null;
-        return res.status(503).json({ success: false, code: emailError.code || 'EMAIL_DELIVERY_FAILED', message: emailError.message });
+        console.warn('[Auth] Optional legacy email delivery failed, relying on Firebase email verification:', emailError.message);
       }
     }
 

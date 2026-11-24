@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { applyActionCode, checkActionCode } from 'firebase/auth';
+import { firebaseAuth } from '../services/firebase';
 import { AlertCircle, CheckCircle2, Loader2, Mail } from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
@@ -14,22 +16,64 @@ export const VerifyEmailPage: React.FC = () => {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    const token = params.get('token') || '';
-    if (!token) {
-      setStatus('error');
-      setMessage('This verification link is incomplete. Request a new link from the sign-in page.');
-      return;
-    }
+
+    // Check for Firebase Action Code params (oobCode or mode)
+    const oobCode = params.get('oobCode') || params.get('code') || '';
+    const mode = params.get('mode') || '';
+    const legacyToken = params.get('token') || '';
+
     let active = true;
-    apiVerifyEmail(token).then(result => {
-      if (!active) return;
-      setStatus('success');
-      setMessage(result.message);
-    }).catch((error: any) => {
+
+    const handleVerification = async () => {
+      // 1. Firebase Action Code Verification
+      if (oobCode) {
+        try {
+          // Verify code and apply verification directly with Firebase
+          await applyActionCode(firebaseAuth, oobCode);
+          if (!active) return;
+          setStatus('success');
+          setMessage('Your email address has been verified successfully via Firebase! You can now sign in using your email and password.');
+          return;
+        } catch (firebaseErr: any) {
+          if (!active) return;
+          console.warn('[Firebase] Action code error:', firebaseErr.code, firebaseErr.message);
+          let userMsg = 'This verification link is invalid, expired, or has already been used.';
+          if (firebaseErr.code === 'auth/invalid-action-code') {
+            userMsg = 'This verification link is invalid or has already been used. Please log in or request a new verification email.';
+          } else if (firebaseErr.code === 'auth/expired-action-code') {
+            userMsg = 'This verification link has expired. Please sign in to request a fresh verification link.';
+          } else if (firebaseErr.code === 'auth/user-disabled') {
+            userMsg = 'This account has been disabled.';
+          }
+          setStatus('error');
+          setMessage(userMsg);
+          return;
+        }
+      }
+
+      // 2. Legacy backend token verification
+      if (legacyToken) {
+        try {
+          const result = await apiVerifyEmail(legacyToken);
+          if (!active) return;
+          setStatus('success');
+          setMessage(result.message || 'Your email address has been verified. You can now sign in.');
+        } catch (error: any) {
+          if (!active) return;
+          setStatus('error');
+          setMessage(error.message || 'This verification link is invalid or expired.');
+        }
+        return;
+      }
+
+      // 3. Neither param provided
       if (!active) return;
       setStatus('error');
-      setMessage(error.message || 'This verification link is invalid or expired.');
-    });
+      setMessage('This verification link is incomplete or missing. Request a new link from the sign-in page.');
+    };
+
+    handleVerification();
+
     return () => { active = false; };
   }, [params]);
 

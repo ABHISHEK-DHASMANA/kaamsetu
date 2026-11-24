@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
+import { firebaseAuth } from '../services/firebase';
 import { apiRegister } from '../services/api';
 import { uploadProfileImage } from '../services/imageUpload';
 
@@ -130,7 +132,30 @@ export const RegisterPage: React.FC = () => {
       return;
     }
     setIsSubmitting(true);
+    let firebaseUser: any = null;
     try {
+      // 1. Create or register user in Firebase Authentication
+      try {
+        const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email.trim(), password);
+        firebaseUser = userCredential.user;
+        // 2. Send Firebase native email verification
+        await sendEmailVerification(firebaseUser);
+        // Ensure user is signed out until verified
+        await signOut(firebaseAuth);
+      } catch (fbErr: any) {
+        if (fbErr.code === 'auth/email-already-in-use') {
+          throw new Error('An account with this email already exists in Firebase. Please sign in or use a different email.');
+        } else if (fbErr.code === 'auth/weak-password') {
+          throw new Error('Firebase requires a stronger password.');
+        } else if (fbErr.code === 'auth/invalid-email') {
+          throw new Error('The email address is invalid.');
+        } else if (fbErr.code?.startsWith('auth/')) {
+          throw new Error(`Firebase registration failed: ${fbErr.message}`);
+        } else {
+          throw fbErr;
+        }
+      }
+
       const payload: any = {
         name,
         phone: phone.trim(),
@@ -139,6 +164,7 @@ export const RegisterPage: React.FC = () => {
         role,
         avatar,
         preferredLanguage,
+        firebaseUid: firebaseUser?.uid || null,
         location: { state, city, area, pincode, coordinates: coords }
       };
       if (role === 'worker') {
