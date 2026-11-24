@@ -26,7 +26,15 @@ const app = express();
 
 // Middlewares
 const allowedOrigins = new Set(
-  [process.env.FRONTEND_URL, process.env.CLIENT_URL, ...(process.env.CORS_ALLOWED_ORIGINS || '').split(',')]
+  [
+    process.env.FRONTEND_URL,
+    process.env.CLIENT_URL,
+    ...(process.env.CORS_ALLOWED_ORIGINS || '').split(','),
+    // Known KaamSetu production Vercel origins (stable and current project aliases).
+    'https://kaamsetu-livid-nine.vercel.app',
+    'https://kaamsetu-codexbuilde.vercel.app',
+    'https://kaamsetu-git-master-codexbuilde.vercel.app'
+  ]
     .map(value => String(value || '').trim().replace(/\/+$/, ''))
     .filter(Boolean)
 );
