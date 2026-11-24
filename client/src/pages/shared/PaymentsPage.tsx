@@ -108,7 +108,13 @@ export const PaymentsPage: React.FC = () => {
       .then(async result => {
         if (!active) return;
         const state = result.payment?.status;
-        setMessage(state === 'paid' ? 'Payment collection verified by PhonePe. Worker payout remains pending the approved settlement process.' : state === 'failed' ? 'PhonePe reports that this payment failed. Check your PhonePe and bank transaction history before trying again. If money was debited, do not retry; raise a complaint with PhonePe and contact KaamSetu support.' : 'Payment is not confirmed yet. Do not pay again while this order is pending; KaamSetu will keep checking its status.');
+        if (state === 'paid') {
+          setMessage('Payment collection verified by PhonePe. Worker payout is separate and will show as complete only after approved settlement confirmation.');
+        } else if (state === 'failed') {
+          setError('PhonePe reports that this payment failed. Check your PhonePe and bank transaction history before trying again. If money was debited, do not retry; raise a complaint with PhonePe and contact KaamSetu support.');
+        } else {
+          setMessage('Payment is not confirmed yet. Do not pay again while this order is pending; KaamSetu will keep checking its status.');
+        }
         await refresh();
         await loadApplications();
       })
@@ -155,6 +161,14 @@ export const PaymentsPage: React.FC = () => {
       window.location.assign(result.checkoutUrl);
     } catch (e: any) {
       setError(e.message || 'Could not start secure checkout.');
+      // Re-read the server quote: an ambiguous PhonePe response may have created
+      // an order that must stay locked rather than allowing the user to pay twice.
+      try {
+        const latest = await apiGetPhonePePaymentQuote(applicationId);
+        setQuote(latest.quote);
+      } catch {
+        // Keep the provider error visible; never assume the checkout was not created.
+      }
       setBusy(false);
     }
   };
@@ -186,7 +200,7 @@ export const PaymentsPage: React.FC = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl border border-brand-border p-4">
-            <div className="text-xs text-brand-muted">{isWorker ? 'Worker payouts confirmed' : 'Payments collected by KaamSetu'}</div>
+            <div className="text-xs text-brand-muted">Confirmed payment records</div>
             <div className="text-xl font-black text-emerald-600 mt-1">{money(paidTotal)}</div>
           </div>
           <div className="bg-white rounded-2xl border border-brand-border p-4">
