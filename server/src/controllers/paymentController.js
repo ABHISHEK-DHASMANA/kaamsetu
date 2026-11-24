@@ -167,7 +167,7 @@ export const createPayment = async (req, res) => {
       employerConfirmed: true,
       workerConfirmed: false,
       reportedAt: now,
-      verificationLevel: 'party_confirmed',
+      verificationLevel: 'employer_reported',
       events: [{ type: 'employer_reported_payment', actorId: employerId, at: now }]
     });
     notify(application.workerId, 'Payment reported by employer', method === 'direct_upi'
@@ -210,7 +210,9 @@ export const confirmPaymentReceived = async (req, res) => {
     }
     const updated = update('payments', idOf(payment._id || payment.id), {
       workerConfirmed: true,
+      workerConfirmedAt: now,
       status: 'paid',
+      verificationLevel: 'party_confirmed',
       confirmedAt: now,
       events: [...(payment.events || []), { type: 'worker_confirmed_receipt', actorId: workerId, at: now }]
     });

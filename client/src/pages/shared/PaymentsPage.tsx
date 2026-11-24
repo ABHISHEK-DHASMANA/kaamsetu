@@ -275,7 +275,7 @@ export const PaymentsPage: React.FC = () => {
                   </div>
                 )}
                 {isManualPayment && <p className="text-[11px] text-amber-800">Direct UPI and cash are reported by the employer and confirmed by the worker. KaamSetu does not independently verify these transfers.</p>}
-                {quote.existingPayment && <div className="text-xs font-semibold text-amber-800">Payment already reported · {quote.existingPayment.status.replaceAll('_', ' ')}. Do not report or pay again.</div>}
+                {quote.existingPayment && <div className="text-xs font-semibold text-amber-800">Payment already reported · {quote.existingPayment.status.replace(/_/g, ' ')}. Do not report or pay again.</div>}
                 {quote.alreadyCollected && <div className="text-xs font-semibold text-amber-700 mt-2">Payment already collected by KaamSetu. Do not pay again. Worker payout is pending approved settlement.</div>}
                 {quote.checkoutPending && <div className="text-xs font-semibold text-blue-700 mt-2">A checkout is already open for this job. Continue it below to avoid creating a duplicate payment.</div>}
                 {quote.directPaymentPending && <div className="text-xs font-semibold text-amber-700 mt-2">A direct UPI payment has already been recorded. Wait for the worker to confirm receipt; do not pay again.</div>}

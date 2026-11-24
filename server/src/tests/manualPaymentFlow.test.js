@@ -39,11 +39,12 @@ test('direct UPI payment report awaits worker confirmation and completes the job
   assert.equal(created.statusCode, 201);
   assert.equal(created.body.payment.amount, 600);
   assert.equal(created.body.payment.status, 'awaiting_worker_confirmation');
-  assert.equal(created.body.payment.verificationLevel, 'party_confirmed');
+  assert.equal(created.body.payment.verificationLevel, 'employer_reported');
   const confirmed = response();
   await confirmPaymentReceived({ user: { _id: 'worker-1', role: 'worker' }, params: { id: created.body.payment._id } }, confirmed);
   assert.equal(confirmed.statusCode, 200);
   assert.equal(confirmed.body.payment.status, 'paid');
+  assert.equal(confirmed.body.payment.verificationLevel, 'party_confirmed');
   assert.match(confirmed.body.message, /not independent bank or gateway verification/i);
   assert.equal(getDb().applications[0].status, 'Completed');
   assert.equal(getDb().workerProfiles[0].skillPassport.completedJobsCount, 1);
