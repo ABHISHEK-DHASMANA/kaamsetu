@@ -60,12 +60,13 @@ export const EmployerCandidates: React.FC = () => {
     }
   };
 
-  const lifecycleAction = async (application: Application, action: 'confirm_completion' | 'cancel', paymentMode?: 'online' | 'offline') => {
+  const lifecycleAction = async (application: Application, action: 'confirm_completion' | 'cancel', paymentMode?: 'online' | 'offline' | 'direct_upi' | 'cash') => {
     const reason = action === 'cancel' ? window.prompt('Please explain why you need to cancel (at least 5 characters):') : undefined;
     if (action === 'cancel' && (!reason || reason.trim().length < 5)) return;
     try {
       await apiUpdateWorkLifecycle(application._id || (application as any).id || '', action, reason ?? undefined, paymentMode);
-      showToast(paymentMode === 'offline' ? 'Work completed. Both sides can now rate each other.' : paymentMode === 'online' ? 'Online payment selected. Finish payment from the Payments page.' : 'Work status updated and worker notified.', 'success');
+      const paymentLabel = paymentMode === 'direct_upi' ? 'Direct UPI selected. Complete the transfer from the Payments page; the worker must confirm receipt.' : paymentMode === 'cash' || paymentMode === 'offline' ? 'Cash payment selected. Record the handover from the Payments page; the worker must confirm receipt.' : paymentMode === 'online' ? 'PhonePe checkout selected. Continue from the Payments page.' : 'Work status updated and worker notified.';
+      showToast(paymentLabel, 'success');
       await fetchCandidates();
     } catch (error: any) { showToast(error.message || 'Could not update this job.', 'error'); }
   };
@@ -172,15 +173,16 @@ export const EmployerCandidates: React.FC = () => {
                     <div className="mb-4 space-y-2">
                       <p className="text-xs font-semibold text-brand-dark">Choose payment type to finish this job:</p>
                       <div className="flex flex-wrap gap-2">
-                        <button onClick={() => lifecycleAction(cand, 'confirm_completion', 'offline')} className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Offline payment</button>
-                        <button onClick={() => lifecycleAction(cand, 'confirm_completion', 'online')} className="rounded-xl bg-blue-600 text-white px-3 py-2 text-xs font-bold">Online payment</button>
+                        <button onClick={() => lifecycleAction(cand, 'confirm_completion', 'direct_upi')} className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Direct UPI</button>
+                        <button onClick={() => lifecycleAction(cand, 'confirm_completion', 'cash')} className="rounded-xl bg-amber-600 text-white px-3 py-2 text-xs font-bold">Cash</button>
+                        <button onClick={() => lifecycleAction(cand, 'confirm_completion', 'online')} className="rounded-xl bg-blue-600 text-white px-3 py-2 text-xs font-bold">PhonePe gateway</button>
                         <button onClick={() => lifecycleAction(cand, 'cancel')} className="rounded-xl border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Cancel / raise issue</button>
                       </div>
                     </div>
                   )}
                   {cand.status === 'PaymentPending' && (
                     <div className="mb-4 rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs text-blue-900 flex flex-wrap items-center justify-between gap-2">
-                      <span>Online payment selected. The job completes after the worker confirms receipt.</span>
+                      <span>{cand.paymentMode === 'direct_upi' ? 'Direct UPI selected. The worker must confirm the amount reached their account.' : cand.paymentMode === 'cash' ? 'Cash selected. The worker must confirm receipt of cash.' : 'PhonePe payment selected. Gateway collection is verified separately.'}</span>
                       <Link to="/payments" className="rounded-lg bg-blue-600 text-white px-3 py-2 font-bold">Complete online payment</Link>
                     </div>
                   )}

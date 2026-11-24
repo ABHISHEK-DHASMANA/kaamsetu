@@ -202,7 +202,7 @@ export interface Application {
   startedAt?: string;
   completionRequestedAt?: string;
   completedAt?: string;
-  paymentMode?: 'online' | 'offline';
+  paymentMode?: 'online' | 'offline' | 'direct_upi' | 'cash';
   paymentRequestedAt?: string;
   paymentConfirmedAt?: string;
   workerReviewed?: boolean;

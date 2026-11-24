@@ -18,6 +18,10 @@ const workerProfileSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   phone: { type: String, required: true },
   email: { type: String },
+  upiId: { type: String, default: '' },
+  upiVerified: { type: Boolean, default: false },
+  upiVerificationStatus: { type: String, enum: ['verified', 'format_only', 'not_provided'], default: 'not_provided' },
+  upiVerifiedAt: { type: Date, default: null },
   avatar: { type: String, default: '' },
   preferredLanguage: { type: String, default: 'Hindi' },
   workerId: { type: String, unique: true }, // e.g. "KS-W-7842"

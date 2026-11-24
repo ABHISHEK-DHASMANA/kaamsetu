@@ -16,6 +16,7 @@ export const WorkerProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<WorkerProfile | null>(null);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [upiId, setUpiId] = useState('');
   const [primarySkill, setPrimarySkill] = useState('');
   const [bio, setBio] = useState('');
   const [area, setArea] = useState('');
@@ -37,6 +38,7 @@ export const WorkerProfilePage: React.FC = () => {
           setProfile(wp);
           setFullName(wp.fullName);
           setPhone(wp.phone);
+          setUpiId(wp.upiId || '');
           setPrimarySkill(wp.primarySkill);
           setBio(wp.bio || '');
           setArea(wp.location?.area || '');
@@ -62,6 +64,7 @@ export const WorkerProfilePage: React.FC = () => {
       const res = await apiUpdateWorkerProfile({
         fullName,
         phone,
+        upiId: upiId.trim(),
         avatar,
         primarySkill,
         bio,
@@ -124,6 +127,14 @@ export const WorkerProfilePage: React.FC = () => {
               readOnly
               className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-slate-50 focus:bg-white text-brand-dark font-mono"
             />
+          </div>
+
+          <div className="rounded-2xl border border-brand-border bg-slate-50 p-4 space-y-2">
+            <label className="text-xs font-semibold text-brand-dark block" htmlFor="worker-upi-id">UPI ID for direct payments</label>
+            <input id="worker-upi-id" type="text" autoComplete="off" maxLength={100} value={upiId}
+              onChange={(e) => setUpiId(e.target.value)} placeholder="yourname@bank"
+              className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-brand-border bg-white text-brand-dark" />
+            <p className="text-[11px] text-brand-muted">Employers can see this only when a job assigned to you is awaiting direct UPI payment. KaamSetu checks the ID format only; it does not verify bank ownership or confirm transfers.</p>
           </div>
 
           <div>

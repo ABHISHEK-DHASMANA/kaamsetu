@@ -5,26 +5,26 @@ import { useAuth } from '../../context/AuthContext';
 import {
   apiGetEmployerApplications, apiGetMyPayments, apiGetWorkerApplications,
   apiConfirmPaymentReceived, apiDisputePayment, apiGetPhonePeAvailability,
-  apiCreatePhonePeCheckout, apiGetPhonePePaymentStatus, apiGetMyPhonePePayments,
-  apiGetPhonePePaymentQuote
+  apiCreatePayment, apiGetPaymentQuote, apiCreatePhonePeCheckout,
+  apiGetPhonePePaymentStatus, apiGetMyPhonePePayments, apiGetPhonePePaymentQuote
 } from '../../services/api';
 import { Banknote, CheckCircle2, Clock3, IndianRupee, Wallet, RefreshCw, AlertCircle } from 'lucide-react';
 
 type ApplicationOption = {
-  _id: string; status: string;
+  _id: string; status: string; paymentMode?: 'online' | 'offline' | 'direct_upi' | 'cash';
   job?: { title?: string; offeredWage?: number; wageType?: string; workDuration?: string };
   workerProfile?: { fullName?: string };
 };
 type LegacyPayment = {
   _id: string; amount: number; method: string; status: string; jobTitle: string;
   workerName: string; employerName: string; transactionReference?: string;
-  createdAt: string; note?: string;
+  createdAt: string; note?: string; verificationLevel?: string; employerConfirmed?: boolean;
 };
 type PhonePePayment = {
   merchantOrderId: string; applicationId: string; amount: number; currency: string;
   status: 'pending' | 'paid' | 'failed'; payoutStatus?: string; providerState?: string; verifiedAt?: string; createdAt: string;
 };
-type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType: string; duration: string; alreadyCollected?: boolean; directPaymentPending?: boolean; directPaymentStatus?: string | null; payoutStatus?: string | null; checkoutPending?: boolean; checkoutUrl?: string };
+type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType?: string; duration?: string; paymentMode?: 'direct_upi' | 'cash' | 'online'; workerUpiId?: string | null; existingPayment?: { _id: string; status: string; method: string } | null; alreadyCollected?: boolean; directPaymentPending?: boolean; directPaymentStatus?: string | null; payoutStatus?: string | null; checkoutPending?: boolean; checkoutUrl?: string };
 
 const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value || 0);
 
@@ -81,15 +81,19 @@ export const PaymentsPage: React.FC = () => {
   }, [refresh, loadApplications]);
 
   useEffect(() => {
-    if (isWorker || !applicationId) { setQuote(null); return; }
+    const selected = applications.find(a => a._id === applicationId);
+    if (isWorker || !applicationId || !selected) { setQuote(null); return; }
     let active = true;
     setQuoteLoading(true);
-    apiGetPhonePePaymentQuote(applicationId)
-      .then(data => { if (active) setQuote(data.quote); })
+    const quoteRequest = selected.paymentMode === 'direct_upi' || selected.paymentMode === 'cash'
+      ? apiGetPaymentQuote(applicationId)
+      : apiGetPhonePePaymentQuote(applicationId);
+    quoteRequest
+      .then(data => { if (active) setQuote({ ...data.quote, paymentMode: selected.paymentMode === 'direct_upi' || selected.paymentMode === 'cash' ? selected.paymentMode : 'online' }); })
       .catch((e: any) => { if (active) { setQuote(null); setError(e.message || 'Could not calculate the job payment.'); } })
       .finally(() => { if (active) setQuoteLoading(false); });
     return () => { active = false; };
-  }, [applicationId, isWorker]);
+  }, [applicationId, isWorker, applications]);
 
   const syncGatewayStatuses = useCallback(async () => {
     const pending = phonePePayments.filter(p => p.status === 'pending');
@@ -148,6 +152,39 @@ export const PaymentsPage: React.FC = () => {
     [legacyPayments, phonePePayments]
   );
 
+  const selectedApplication = applications.find(a => a._id === applicationId);
+  const isManualPayment = selectedApplication?.paymentMode === 'direct_upi' || selectedApplication?.paymentMode === 'cash';
+  const directUpiLink = quote?.workerUpiId
+    ? `upi://pay?${new URLSearchParams({
+        pa: quote.workerUpiId,
+        pn: quote.workerName || 'KaamSetu Worker',
+        am: Number(quote.amount).toFixed(2),
+        cu: 'INR',
+        tn: `KaamSetu ${quote.jobTitle}`
+      }).toString()}`
+    : '';
+
+  const reportManualPayment = async () => {
+    const method = selectedApplication?.paymentMode;
+    if (!applicationId || (method !== 'direct_upi' && method !== 'cash')) return;
+    const confirmed = window.confirm(method === 'direct_upi'
+      ? 'Only continue after completing the UPI transfer in your UPI app. KaamSetu cannot verify this transfer; the worker must check their own account.'
+      : 'Only continue after you have actually handed the cash to the worker. The worker must confirm receipt.');
+    if (!confirmed) return;
+    setBusy(true); setError(''); setMessage('');
+    try {
+      const result = await apiCreatePayment({ applicationId, method });
+      setMessage(result.message);
+      await refresh();
+      await loadApplications();
+      setQuote(current => current ? { ...current, existingPayment: { _id: result.payment?._id, status: result.payment?.status || 'awaiting_worker_confirmation', method } } : current);
+    } catch (e: any) {
+      setError(e.message || 'Could not save the payment report.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const startCheckout = async () => {
     if (!applicationId || !quote) return;
     setBusy(true); setError(''); setMessage('');
@@ -196,15 +233,15 @@ export const PaymentsPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title={isWorker ? 'My Earnings' : 'Payments'} subtitle={isWorker ? 'Track PhonePe collections and approved worker payouts' : 'Pay through KaamSetu’s secure PhonePe checkout'}>
+    <DashboardLayout title={isWorker ? 'My Earnings' : 'Payments'} subtitle={isWorker ? 'Track direct payments, cash reports and gateway collections' : 'Choose direct UPI, cash or approved PhonePe checkout'}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl border border-brand-border p-4">
-            <div className="text-xs text-brand-muted">Confirmed payment records</div>
+            <div className="text-xs text-brand-muted">Worker-confirmed payment records</div>
             <div className="text-xl font-black text-emerald-600 mt-1">{money(paidTotal)}</div>
           </div>
           <div className="bg-white rounded-2xl border border-brand-border p-4">
-            <div className="text-xs text-brand-muted">Pending verification</div>
+            <div className="text-xs text-brand-muted">Awaiting worker confirmation</div>
             <div className="text-xl font-black text-amber-600 mt-1">{money(pendingTotal)}</div>
           </div>
         </div>
@@ -220,8 +257,8 @@ export const PaymentsPage: React.FC = () => {
             </div>
             <label className="block text-xs font-semibold text-brand-muted">Job awaiting payment
               <select value={applicationId} onChange={e => setApplicationId(e.target.value)} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">
-                <option value="">Select a completed job</option>
-                {applications.map(a => <option key={a._id} value={a._id}>{a.workerProfile?.fullName || 'Worker'} — {a.job?.title || 'Completed job'}</option>)}
+                <option value="">Select a job awaiting payment</option>
+                {applications.map(a => <option key={a._id} value={a._id}>{a.workerProfile?.fullName || 'Worker'} — {a.job?.title || 'Completed job'} ({a.paymentMode === 'direct_upi' ? 'Direct UPI' : a.paymentMode === 'cash' ? 'Cash' : 'PhonePe'})</option>)}
               </select>
             </label>
             {quoteLoading && <div className="text-sm text-brand-muted">Calculating agreed payment…</div>}
@@ -229,23 +266,39 @@ export const PaymentsPage: React.FC = () => {
               <div className="rounded-xl bg-slate-50 border border-brand-border p-4 space-y-2">
                 <div className="text-xs text-brand-muted">Amount due for {quote.jobTitle}</div>
                 <div className="text-3xl font-black text-brand-dark">{money(quote.amount)}</div>
-                <div className="text-xs text-brand-muted">Worker: {quote.workerName} · Based on {quote.wageType} wage · {quote.duration}</div>
+                <div className="text-xs text-brand-muted">Worker: {quote.workerName}{quote.wageType ? ` · Based on ${quote.wageType} wage · ${quote.duration || ''}` : ''}</div>
+                {quote.paymentMode === 'direct_upi' && quote.workerUpiId && (
+                  <div className="mt-3 rounded-xl bg-white border border-brand-border p-3 space-y-2">
+                    <div className="text-xs font-semibold text-brand-dark">Worker's UPI ID</div>
+                    <div className="font-mono text-sm break-all">{quote.workerUpiId}</div>
+                    <a href={directUpiLink} className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-xs font-bold">Pay with any UPI app</a>
+                  </div>
+                )}
+                {isManualPayment && <p className="text-[11px] text-amber-800">Direct UPI and cash are reported by the employer and confirmed by the worker. KaamSetu does not independently verify these transfers.</p>}
+                {quote.existingPayment && <div className="text-xs font-semibold text-amber-800">Payment already reported · {quote.existingPayment.status.replaceAll('_', ' ')}. Do not report or pay again.</div>}
                 {quote.alreadyCollected && <div className="text-xs font-semibold text-amber-700 mt-2">Payment already collected by KaamSetu. Do not pay again. Worker payout is pending approved settlement.</div>}
                 {quote.checkoutPending && <div className="text-xs font-semibold text-blue-700 mt-2">A checkout is already open for this job. Continue it below to avoid creating a duplicate payment.</div>}
                 {quote.directPaymentPending && <div className="text-xs font-semibold text-amber-700 mt-2">A direct UPI payment has already been recorded. Wait for the worker to confirm receipt; do not pay again.</div>}
               </div>
             )}
-            {!available && (
+            {!isManualPayment && !available && (
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 flex gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0"/>
                 <span>Secure checkout is not enabled yet. The authorised KaamSetu business administrator must finish PhonePe merchant onboarding and configure the approved credentials on the backend.</span>
               </div>
             )}
-            {available && !webhookConfigured && <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">PhonePe server notifications are not configured yet. Payment status can still be checked when the payer returns to KaamSetu, but automatic updates while the page is closed require the merchant webhook to be configured by the authorised business administrator.</div>}
-            {environment !== 'production' && available && <div className="text-xs text-amber-700">Sandbox mode: test transactions only. No real money will be transferred.</div>}
-            <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || quote.directPaymentPending || !available || quoteLoading || (quote.checkoutPending && !quote.checkoutUrl)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
-              <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `${quote?.checkoutPending ? 'Resume PhonePe checkout' : 'Continue to secure checkout ' + (quote ? money(quote.amount) : '')}`}
-            </button>
+            {!isManualPayment && available && !webhookConfigured && <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">PhonePe server notifications are not configured yet. Payment status can still be checked when the payer returns to KaamSetu, but automatic updates while the page is closed require the merchant webhook to be configured by the authorised business administrator.</div>}
+            {!isManualPayment && environment !== 'production' && available && <div className="text-xs text-amber-700">Sandbox mode: test transactions only. No real money will be transferred.</div>}
+            {!isManualPayment && (
+              <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || quote.directPaymentPending || !available || quoteLoading || (quote.checkoutPending && !quote.checkoutUrl)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
+                <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `${quote?.checkoutPending ? 'Resume PhonePe checkout' : 'Continue to secure checkout ' + (quote ? money(quote.amount) : '')}`}
+              </button>
+            )}
+            {isManualPayment && (
+              <button type="button" onClick={reportManualPayment} disabled={busy || !applicationId || !quote || Boolean(quote.existingPayment) || quoteLoading || (selectedApplication?.paymentMode === 'direct_upi' && !quote.workerUpiId)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
+                <Wallet className="w-4 h-4"/>{busy ? 'Saving payment report…' : selectedApplication?.paymentMode === 'cash' ? `I've handed over ${quote ? money(quote.amount) : 'cash'}` : `I've sent ${quote ? money(quote.amount) : 'payment'}`}
+              </button>
+            )}
             {quote?.checkoutPending && !quote.checkoutUrl && (
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
                 PhonePe has not returned a checkout link for this order yet. KaamSetu is keeping the order pending so a second charge cannot be started accidentally. Do not make another payment. Refresh the page or contact KaamSetu support if this message remains.
@@ -270,11 +323,11 @@ export const PaymentsPage: React.FC = () => {
         </section>
 
         <section className="bg-white rounded-2xl border border-brand-border overflow-hidden">
-          <div className="p-5 border-b border-brand-border"><h2 className="font-bold text-brand-dark">Previous payment records</h2><p className="text-xs text-brand-muted mt-1">Older direct UPI and cash records are retained for history.</p></div>
-          {legacyPayments.length === 0 ? <div className="p-8 text-center text-sm text-brand-muted">No previous payment records.</div> : <div className="divide-y divide-brand-border">
+          <div className="p-5 border-b border-brand-border"><h2 className="font-bold text-brand-dark">Direct UPI & cash payment records</h2><p className="text-xs text-brand-muted mt-1">These are party-reported records, not independent bank verification.</p></div>
+          {legacyPayments.length === 0 ? <div className="p-8 text-center text-sm text-brand-muted">No direct UPI or cash payment records.</div> : <div className="divide-y divide-brand-border">
             {legacyPayments.map(payment => <div key={payment._id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-xl bg-brand-primary-light text-brand-primary flex items-center justify-center"><Banknote className="w-4 h-4"/></div><div><div className="font-bold text-sm text-brand-dark">{payment.jobTitle}</div><div className="text-xs text-brand-muted mt-1">{isWorker ? payment.employerName : payment.workerName} · {payment.method === 'cash' ? 'Cash' : 'Previous direct UPI'}</div>{payment.transactionReference && <div className="text-[11px] text-brand-muted mt-1">Reference: {payment.transactionReference}</div>}<div className="text-[11px] text-brand-muted mt-1">{new Date(payment.createdAt).toLocaleString('en-IN')}</div></div></div>
-              <div className="flex flex-wrap items-center gap-3"><strong>{money(payment.amount)}</strong><span className="text-xs font-bold">{payment.status === 'paid' ? (payment.method === 'direct_upi' ? 'Worker-confirmed (legacy)' : 'Confirmed') : payment.status === 'disputed' ? 'Disputed' : 'Awaiting worker confirmation'}</span>
+              <div className="flex flex-wrap items-center gap-3"><strong>{money(payment.amount)}</strong><span className="text-xs font-bold">{payment.status === 'paid' ? (payment.verificationLevel === 'party_confirmed' ? 'Worker confirmed · not bank-verified' : payment.method === 'direct_upi' ? 'Worker-confirmed (legacy)' : 'Confirmed') : payment.status === 'disputed' ? 'Disputed' : 'Employer reported · awaiting worker'}</span>
                 {isWorker && payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => confirmLegacyPayment(payment)} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold"><CheckCircle2 className="w-3.5 h-3.5 inline mr-1"/>Confirm received</button>}
                 {payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => disputeLegacyPayment(payment._id)} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Dispute</button>}
               </div>
@@ -282,7 +335,7 @@ export const PaymentsPage: React.FC = () => {
           </div>}
         </section>
 
-        <div className="text-xs text-brand-muted flex items-center gap-2"><Clock3 className="w-4 h-4"/> Online payments are completed only after PhonePe server-side verification. A return to KaamSetu or a payment screenshot alone does not mark an order as paid.</div>
+        <div className="text-xs text-brand-muted flex items-center gap-2"><Clock3 className="w-4 h-4"/> PhonePe payments require server-side provider verification. Direct UPI and cash records require worker confirmation and are not independently bank-verified.</div>
         <div className="text-[11px] text-brand-muted flex items-center gap-2"><IndianRupee className="w-3.5 h-3.5"/> Gateway collection and worker payouts depend on the approved PhonePe merchant and settlement configuration.</div>
       </div>
     </DashboardLayout>

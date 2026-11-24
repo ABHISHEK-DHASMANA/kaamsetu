@@ -175,7 +175,7 @@ export const apiGetEmployerApplications = async (jobId?: string, status?: string
   );
 };
 
-export const apiUpdateWorkLifecycle = async (appId: string, action: 'start_work' | 'request_completion' | 'confirm_completion' | 'cancel', reason?: string, paymentMode?: 'online' | 'offline') => {
+export const apiUpdateWorkLifecycle = async (appId: string, action: 'start_work' | 'request_completion' | 'confirm_completion' | 'cancel', reason?: string, paymentMode?: 'online' | 'offline' | 'direct_upi' | 'cash') => {
   return request<{ success: boolean; message: string; application: Application }>(`/applications/${appId}/lifecycle`, {
     method: 'POST', body: JSON.stringify({ action, reason, paymentMode })
   });
@@ -343,7 +343,11 @@ export const apiGetMyPayments = async () => {
   return request<{ success: boolean; payments: any[]; summary: { paidTotal: number; directUpiTotal: number; cashTotal: number; pendingTotal: number; paidCount: number } }>('/payments/me');
 };
 
-export const apiCreatePayment = async (payload: { applicationId: string; amount: number; method: 'cash' | 'direct_upi'; transactionReference?: string; note?: string }) => {
+export const apiGetPaymentQuote = async (applicationId: string) => {
+  return request<{ success: boolean; quote: { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; paymentMode: 'cash' | 'direct_upi'; workerUpiId?: string | null; existingPayment?: { _id: string; status: string; method: string } | null } }>(`/payments/quote/${encodeURIComponent(applicationId)}`);
+};
+
+export const apiCreatePayment = async (payload: { applicationId: string; method: 'cash' | 'direct_upi' }) => {
   return request<{ success: boolean; message: string; payment: any }>('/payments', {
     method: 'POST', body: JSON.stringify(payload)
   });
