@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { createUserWithEmailAndPassword, deleteUser, sendEmailVerification, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, deleteUser, sendEmailVerification, signOut } from 'firebase/auth';
 import { firebaseAuth } from '../services/firebase';
 import { apiRegister } from '../services/api';
 import { uploadProfileImage } from '../services/imageUpload';
@@ -133,16 +133,29 @@ export const RegisterPage: React.FC = () => {
     }
     setIsSubmitting(true);
     let firebaseUser: any = null;
+    let createdFirebaseUser = false;
     try {
-      // 1. Create or register user in Firebase Authentication
+      // Create a new Firebase identity, or recover an orphaned identity left behind
+      // when a previous KaamSetu profile deletion did not remove Firebase Auth.
       try {
         const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email.trim(), password);
         firebaseUser = userCredential.user;
-        // 2. Send Firebase native email verification
+        createdFirebaseUser = true;
         await sendEmailVerification(firebaseUser);
       } catch (fbErr: any) {
         if (fbErr.code === 'auth/email-already-in-use') {
-          throw new Error('An account with this email already exists in Firebase. Please sign in or use a different email.');
+          try {
+            const existingCredential = await signInWithEmailAndPassword(firebaseAuth, email.trim(), password);
+            firebaseUser = existingCredential.user;
+            // Never delete a pre-existing Firebase identity during rollback.
+            createdFirebaseUser = false;
+            if (!firebaseUser.emailVerified) await sendEmailVerification(firebaseUser);
+          } catch (signInErr: any) {
+            if (signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password' || signInErr.code === 'auth/user-not-found') {
+              throw new Error('This email is still registered with Firebase from an earlier account. Enter the password used for that account, or use Forgot Password on the sign-in page first.');
+            }
+            throw signInErr;
+          }
         } else if (fbErr.code === 'auth/weak-password') {
           throw new Error('Firebase requires a stronger password.');
         } else if (fbErr.code === 'auth/invalid-email') {
@@ -192,14 +205,15 @@ export const RegisterPage: React.FC = () => {
       // If the API rejects registration after Firebase created the identity,
       // remove that just-created identity so the same email can be retried.
       if (firebaseUser) {
-        try {
-          await deleteUser(firebaseUser);
-        } catch (cleanupError: any) {
-          console.error('[Register] Could not roll back the newly-created Firebase identity:', cleanupError);
-          message += ' Firebase also created an account; contact support to remove the incomplete identity before retrying.';
-        } finally {
-          try { await signOut(firebaseAuth); } catch { /* ignore sign-out cleanup errors */ }
+        if (createdFirebaseUser) {
+          try {
+            await deleteUser(firebaseUser);
+          } catch (cleanupError: any) {
+            console.error('[Register] Could not roll back the newly-created Firebase identity:', cleanupError);
+            message += ' Firebase also created an account; contact support to remove the incomplete identity before retrying.';
+          }
         }
+        try { await signOut(firebaseAuth); } catch { /* ignore sign-out cleanup errors */ }
       }
       setErrorMsg(message);
     } finally {
