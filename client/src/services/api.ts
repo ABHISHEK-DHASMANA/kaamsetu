@@ -363,7 +363,7 @@ export const apiApprovePaymentCounter = async (id: string) => {
   return request<{ success: boolean; message: string; payment: any }>(`/payments/${id}/approve-counter`, { method: 'PUT' });
 };
 
-export const apiReportDirectPayment = async (id: string, transactionReference: string) => {
+export const apiReportDirectPayment = async (id: string, transactionReference?: string) => {
   return request<{ success: boolean; message: string; payment: any }>(`/payments/${id}/report-transfer`, {
     method: 'PUT', body: JSON.stringify({ transactionReference })
   });
