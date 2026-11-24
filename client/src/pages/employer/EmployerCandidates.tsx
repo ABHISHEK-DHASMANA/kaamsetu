@@ -183,7 +183,7 @@ export const EmployerCandidates: React.FC = () => {
                   {cand.status === 'PaymentPending' && (
                     <div className="mb-4 rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs text-blue-900 flex flex-wrap items-center justify-between gap-2">
                       <span>{cand.paymentMode === 'direct_upi' ? 'Direct UPI selected. The worker must confirm the amount reached their account.' : cand.paymentMode === 'cash' ? 'Cash selected. The worker must confirm receipt of cash.' : 'PhonePe payment selected. Gateway collection is verified separately.'}</span>
-                      <Link to="/payments" className="rounded-lg bg-blue-600 text-white px-3 py-2 font-bold">Complete online payment</Link>
+                      <Link to="/payments" className="rounded-lg bg-blue-600 text-white px-3 py-2 font-bold">Continue to payment</Link>
                     </div>
                   )}
                   {['Accepted', 'InProgress'].includes(cand.status) && (

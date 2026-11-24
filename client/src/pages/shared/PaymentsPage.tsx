@@ -237,11 +237,11 @@ export const PaymentsPage: React.FC = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl border border-brand-border p-4">
-            <div className="text-xs text-brand-muted">Worker-confirmed payment records</div>
+            <div className="text-xs text-brand-muted">Confirmed payment records</div>
             <div className="text-xl font-black text-emerald-600 mt-1">{money(paidTotal)}</div>
           </div>
           <div className="bg-white rounded-2xl border border-brand-border p-4">
-            <div className="text-xs text-brand-muted">Awaiting worker confirmation</div>
+            <div className="text-xs text-brand-muted">Pending / awaiting confirmation</div>
             <div className="text-xl font-black text-amber-600 mt-1">{money(pendingTotal)}</div>
           </div>
         </div>
