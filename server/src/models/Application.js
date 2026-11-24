@@ -7,7 +7,7 @@ const applicationSchema = new mongoose.Schema({
   
   status: {
     type: String,
-    enum: ['Applied', 'Viewed', 'Shortlisted', 'Accepted', 'Rejected', 'Completed', 'Cancelled'],
+    enum: ['Applied', 'Viewed', 'Shortlisted', 'Accepted', 'InProgress', 'CompletionRequested', 'PaymentPending', 'Rejected', 'Completed', 'Cancelled'],
     default: 'Applied'
   },
 
@@ -25,7 +25,10 @@ const applicationSchema = new mongoose.Schema({
 
   coverNote: { type: String, default: '' },
   employerNotes: { type: String, default: '' },
-  interviewScheduledAt: { type: Date }
+  interviewScheduledAt: { type: Date },
+  paymentMode: { type: String, enum: ['online', 'offline', 'direct_upi', 'cash'] },
+  paymentRequestedAt: { type: Date },
+  paymentConfirmedAt: { type: Date }
 }, {
   timestamps: true
 });
