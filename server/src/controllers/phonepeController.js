@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { randomUUID } from 'node:crypto';
 import { isValidPhonePeWebhookAuthorization } from '../services/phonepeWebhookAuth.js';
 import PaymentIntent from '../models/PaymentIntent.js';
 import { findOne, insert } from '../services/storage.js';
@@ -189,7 +190,7 @@ export const createPhonePePayment = async (req, res) => {
     }
 
     const amountPaisa = Math.round(numericAmount * 100);
-    const merchantOrderId = `KS${Date.now()}${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const merchantOrderId = `KS${randomUUID().replace(/-/g, '').toUpperCase()}`;
     const clientUrl = (process.env.CLIENT_URL || '').replace(/\/$/, '');
     if (!clientUrl) return res.status(503).json({ success: false, message: 'CLIENT_URL is not configured on the server.' });
 
@@ -212,17 +213,24 @@ export const createPhonePePayment = async (req, res) => {
         redirectUrl: `${clientUrl}/payments?merchantOrderId=${encodeURIComponent(merchantOrderId)}`
       });
       if (!checkout.redirectUrl) throw new Error('PhonePe did not return a checkout URL.');
-      intent.phonepeOrderId = checkout.orderId || '';
-      intent.checkoutUrl = checkout.redirectUrl;
-      intent.providerState = checkout.state || 'PENDING';
-      intent.providerResponse = { state: checkout.state || 'PENDING', orderId: checkout.orderId || '' };
-      await intent.save();
+      // Update only checkout metadata. A webhook may have already marked this
+      // order paid while the create-checkout request was completing.
+      await PaymentIntent.updateOne(
+        { _id: intent._id },
+        { $set: {
+          phonepeOrderId: checkout.orderId || '',
+          checkoutUrl: checkout.redirectUrl,
+          providerState: checkout.state || 'PENDING',
+          providerResponse: { state: checkout.state || 'PENDING', orderId: checkout.orderId || '' }
+        } }
+      );
+      const savedIntent = await PaymentIntent.findById(intent._id);
 
       return res.status(201).json({
         success: true,
         message: 'Secure checkout created. Complete payment on PhonePe.',
         checkoutUrl: intent.checkoutUrl,
-        payment: safeStatus(intent)
+        payment: safeStatus(savedIntent || intent)
       });
     } catch (providerError) {
       // A definite 4xx validation/auth rejection means PhonePe did not create an order.
@@ -231,15 +239,19 @@ export const createPhonePePayment = async (req, res) => {
       const providerStatus = Number(providerError.providerStatusCode || 0);
       const definitiveRejection = [400, 401, 403, 422, 429].includes(providerStatus);
       if (definitiveRejection) {
-        intent.status = 'failed';
-        intent.activeApplicationId = undefined;
-        intent.providerState = 'INITIATION_FAILED';
+        // Only release the order lock if no authenticated webhook/status poll has
+        // already completed the payment.
+        await PaymentIntent.updateOne(
+          { _id: intent._id, status: 'pending' },
+          { $set: { providerState: 'INITIATION_FAILED', status: 'failed' }, $unset: { activeApplicationId: 1 } }
+        );
       } else {
-        intent.status = 'pending';
-        intent.providerState = 'INITIATION_UNCERTAIN';
+        await PaymentIntent.updateOne(
+          { _id: intent._id, status: 'pending' },
+          { $set: { providerState: 'INITIATION_UNCERTAIN' } }
+        );
         providerError.paymentInitiationUncertain = true;
       }
-      await intent.save();
       throw providerError;
     }
   } catch (error) {
