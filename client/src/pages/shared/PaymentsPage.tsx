@@ -166,6 +166,13 @@ export const PaymentsPage: React.FC = () => {
       }).toString()}`
     : '';
 
+  // UPI deep links are handled by mobile operating systems, not by a
+  // Windows/macOS browser that has no UPI app registered on that device.
+  const canLaunchUpiApp = typeof navigator !== 'undefined' && (
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
+
   const reportManualPayment = async () => {
     const selectedMode = selectedApplication?.paymentMode;
     const method = selectedMode === 'online' ? 'direct_upi' : selectedMode;
@@ -313,19 +320,25 @@ export const PaymentsPage: React.FC = () => {
                     <div className="flex justify-center rounded-xl bg-white p-3"><QRCodeSVG value={directUpiLink} size={190} level="M" includeMargin /></div>
                     <p className="text-center text-[11px] text-brand-muted">Scan with any UPI app or use the button below</p>
                     <div className="flex flex-wrap items-center justify-center gap-2">
-                      <a
-                        href={directUpiLink}
-                        onClick={() => setMessage('Trying to open a UPI app. If this device does not have a compatible UPI app, scan the QR code with your phone or copy the UPI ID and pay manually. Do not submit a UTR until your UPI app confirms the transfer.')}
-                        className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-xs font-bold"
-                      >
-                        Open UPI app to pay
-                      </a>
+                      {canLaunchUpiApp ? (
+                        <a
+                          href={directUpiLink}
+                          onClick={() => setMessage('Opening your phone’s UPI app. Review the worker UPI ID and amount inside the app before authorising payment.')}
+                          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-xs font-bold"
+                        >
+                          Open UPI app to pay
+                        </a>
+                      ) : (
+                        <div className="w-full rounded-lg bg-blue-50 border border-blue-200 p-3 text-center text-xs text-blue-900">
+                          You are using a computer. It cannot open UPI apps installed on your phone. Scan this QR code with your phone’s UPI app to make the payment.
+                        </div>
+                      )}
                       <button
                         type="button"
                         onClick={async () => {
                           try {
                             await navigator.clipboard.writeText(quote.workerUpiId || '');
-                            setMessage('Worker UPI ID copied. Open your UPI app and pay the agreed amount.');
+                            setMessage('Worker UPI ID copied. Open your UPI app on your phone and pay the agreed amount.');
                           } catch {
                             window.prompt('Copy worker UPI ID:', quote.workerUpiId || '');
                           }
@@ -336,7 +349,7 @@ export const PaymentsPage: React.FC = () => {
                       </button>
                     </div>
                     <p className="text-center text-[11px] text-brand-muted">
-                      UPI apps open only on devices with a compatible app installed. On a computer, scan this QR code with your phone.
+                      On a phone, the button opens a compatible UPI app. On a computer, scan the QR code with your phone instead.
                     </p>
                     <p className="text-center text-[11px] text-amber-800">
                       After your UPI app confirms the transfer, use “I’ve paid — submit UTR” in the payment record below. That step only reports the transfer; the worker must still confirm receipt.
