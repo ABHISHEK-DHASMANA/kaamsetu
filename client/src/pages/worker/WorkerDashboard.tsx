@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
-import { apiGetMatchingJobs, apiGetWorkerApplications, apiApplyJob } from '../../services/api';
+import { apiGetMatchingJobs, apiGetWorkerApplications, apiApplyJob, apiGetMyPayments } from '../../services/api';
 import { Job, Application } from '../../types';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { JobMap } from '../../components/map/JobMap';
@@ -36,7 +36,7 @@ export const WorkerDashboard: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const activeApplications = applications.filter(application => application.status !== 'Completed');
   const completedApplications = applications.filter(application => application.status === 'Completed');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);\n  const [paymentSummary, setPaymentSummary] = useState({ paidTotal: 0, pendingTotal: 0 });
 
   // Modals
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -175,6 +175,19 @@ export const WorkerDashboard: React.FC = () => {
               <Award className="w-5 h-5" />
             </div>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button onClick={() => navigate('/payments')} className="text-left p-5 rounded-3xl bg-white border border-brand-border shadow-sm hover:border-brand-primary/40 transition-all">
+            <div className="text-[11px] font-bold text-brand-muted uppercase tracking-wider">Worker-confirmed earnings</div>
+            <div className="text-2xl font-black text-emerald-600 mt-1">₹{Number(paymentSummary.paidTotal).toLocaleString('en-IN')}</div>
+            <div className="text-[10px] text-brand-muted mt-1">Only worker-confirmed records · View payment history</div>
+          </button>
+          <button onClick={() => navigate('/payments')} className="text-left p-5 rounded-3xl bg-white border border-brand-border shadow-sm hover:border-brand-primary/40 transition-all">
+            <div className="text-[11px] font-bold text-brand-muted uppercase tracking-wider">Payment requests / pending</div>
+            <div className="text-2xl font-black text-amber-600 mt-1">₹{Number(paymentSummary.pendingTotal).toLocaleString('en-IN')}</div>
+            <div className="text-[10px] text-brand-muted mt-1">Review requests, approve amounts and confirm receipts</div>
+          </button>
         </div>
 
         {/* Quick Actions Bar */}
