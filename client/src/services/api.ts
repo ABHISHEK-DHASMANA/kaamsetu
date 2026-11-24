@@ -347,9 +347,25 @@ export const apiGetPaymentQuote = async (applicationId: string) => {
   return request<{ success: boolean; quote: { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; paymentMode: 'cash' | 'direct_upi'; workerUpiId?: string | null; existingPayment?: { _id: string; status: string; method: string } | null } }>(`/payments/quote/${encodeURIComponent(applicationId)}`);
 };
 
-export const apiCreatePayment = async (payload: { applicationId: string; method: 'cash' | 'direct_upi' }) => {
+export const apiCreatePayment = async (payload: { applicationId: string; method: 'cash' | 'direct_upi'; amount: number }) => {
   return request<{ success: boolean; message: string; payment: any }>('/payments', {
     method: 'POST', body: JSON.stringify(payload)
+  });
+};
+
+export const apiRespondToPaymentRequest = async (id: string, payload: { action: 'accept' | 'reject' | 'counter'; amount?: number }) => {
+  return request<{ success: boolean; message: string; payment: any }>(`/payments/${id}/respond`, {
+    method: 'PUT', body: JSON.stringify(payload)
+  });
+};
+
+export const apiApprovePaymentCounter = async (id: string) => {
+  return request<{ success: boolean; message: string; payment: any }>(`/payments/${id}/approve-counter`, { method: 'PUT' });
+};
+
+export const apiReportDirectPayment = async (id: string, transactionReference: string) => {
+  return request<{ success: boolean; message: string; payment: any }>(`/payments/${id}/report-transfer`, {
+    method: 'PUT', body: JSON.stringify({ transactionReference })
   });
 };
 
