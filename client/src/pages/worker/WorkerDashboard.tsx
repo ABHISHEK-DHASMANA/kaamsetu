@@ -36,7 +36,8 @@ export const WorkerDashboard: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const activeApplications = applications.filter(application => application.status !== 'Completed');
   const completedApplications = applications.filter(application => application.status === 'Completed');
-  const [isLoading, setIsLoading] = useState(true);\n  const [paymentSummary, setPaymentSummary] = useState({ paidTotal: 0, pendingTotal: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [paymentSummary, setPaymentSummary] = useState({ paidTotal: 0, pendingTotal: 0 });
 
   // Modals
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
