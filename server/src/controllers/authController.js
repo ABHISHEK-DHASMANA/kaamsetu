@@ -45,12 +45,41 @@ export const firebaseLogin = async (req, res) => {
     let user = null;
     if (hasVerifiedGoogleEmail || hasVerifiedPasswordEmail) {
       const verifiedEmail = String(decoded.email).trim().toLowerCase();
-      // Match by verified email address
+      const configuredAdminEmail = String(process.env.ADMIN_BOOTSTRAP_EMAIL || '').trim().toLowerCase();
+      const isConfiguredAdmin = Boolean(configuredAdminEmail && verifiedEmail === configuredAdminEmail);
+
+      // Match by verified email address.
       user = findOne('users', candidate =>
         String(candidate.email || '').trim().toLowerCase() === verifiedEmail
       );
 
-      // If user exists and email was not marked verified yet, mark it verified
+      // A single explicitly configured, Firebase-verified email may be
+      // provisioned/promoted as the initial administrator. No public request
+      // can choose a different address or assign itself the admin role.
+      if (!user && isConfiguredAdmin) {
+        const randomUnusablePassword = await bcrypt.hash(
+          randomBytes(48).toString('hex'),
+          await bcrypt.genSalt(12)
+        );
+        user = insert('users', {
+          name: String(decoded.name || verifiedEmail.split('@')[0]).trim(),
+          email: verifiedEmail,
+          emailVerified: true,
+          phone: decoded.phone_number || undefined,
+          phoneVerified: false,
+          firebaseUid: decoded.uid,
+          password: randomUnusablePassword,
+          role: 'admin',
+          verificationStatus: 'Email Verified',
+          avatar: decoded.picture || '',
+          isActive: true
+        });
+        console.info('[Auth] Provisioned the configured Firebase-verified administrator account.');
+      } else if (user && isConfiguredAdmin && user.role !== 'admin') {
+        user = update('users', user._id || user.id, { role: 'admin' }) || user;
+      }
+
+      // Keep the application's email-verification state in sync with Firebase.
       if (user && user.emailVerified !== true) {
         update('users', user._id || user.id, {
           emailVerified: true,
