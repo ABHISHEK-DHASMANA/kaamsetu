@@ -36,6 +36,7 @@ const readJson = async response => {
   if (!response.ok) {
     const error = new Error(body.message || 'PhonePe service request failed.');
     error.statusCode = 502;
+    error.providerStatusCode = response.status;
     throw error;
   }
   return body;

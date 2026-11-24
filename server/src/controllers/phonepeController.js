@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { randomUUID } from 'node:crypto';
 import { isValidPhonePeWebhookAuthorization } from '../services/phonepeWebhookAuth.js';
 import PaymentIntent from '../models/PaymentIntent.js';
 import { findOne, insert } from '../services/storage.js';
@@ -48,6 +49,69 @@ const safeStatus = intent => ({
   verifiedAt: intent.verifiedAt,
   createdAt: intent.createdAt
 });
+
+const buildProviderSnapshot = (state, payload = {}, event) => ({
+  ...(event ? { event } : {}),
+  state,
+  amount: Number.isFinite(Number(payload.amount)) ? Number(payload.amount) : null,
+  ...(payload.orderId ? { orderId: String(payload.orderId) } : {}),
+  paymentDetails: Array.isArray(payload.paymentDetails)
+    ? payload.paymentDetails.map(item => ({
+        paymentMode: item.paymentMode,
+        transactionId: item.transactionId,
+        state: item.state,
+        errorCode: item.errorCode,
+        detailedErrorCode: item.detailedErrorCode
+      }))
+    : []
+});
+
+const notifyCollectionVerified = intent => {
+  insert('notifications', {
+    userId: String(intent.workerId),
+    title: 'Employer payment received by KaamSetu',
+    message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Your worker payout is not yet confirmed; KaamSetu will update this status after the approved settlement process completes.',
+    type: 'info', actionUrl: '/payments', isRead: false
+  });
+  insert('notifications', {
+    userId: String(intent.employerId),
+    title: 'Payment collected',
+    message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Worker payout is tracked separately and is not marked complete yet.',
+    type: 'success', actionUrl: '/payments', isRead: false
+  });
+};
+
+// Only the first transition out of pending may win. This makes webhook and
+// status-poll races idempotent and prevents late provider responses reversing
+// a final paid/failed state.
+const applyProviderStateIfPending = async (intent, state, providerResponse) => {
+  const set = { providerState: state, providerResponse };
+  const update = { $set: set };
+  const completed = state === 'COMPLETED';
+  const failed = ['FAILED', 'EXPIRED', 'CANCELLED'].includes(state);
+
+  if (completed) {
+    Object.assign(set, {
+      status: 'paid',
+      payoutStatus: 'pending_provider_settlement',
+      verifiedAt: new Date()
+    });
+  } else if (failed) {
+    set.status = 'failed';
+    update.$unset = { activeApplicationId: 1 };
+  }
+
+  const changed = await PaymentIntent.findOneAndUpdate(
+    { _id: intent._id, status: 'pending' },
+    update,
+    { new: true, runValidators: true }
+  );
+  if (changed) {
+    if (completed) notifyCollectionVerified(changed);
+    return changed;
+  }
+  return await PaymentIntent.findById(intent._id) || intent;
+};
 
 export const getPhonePeAvailability = (req, res) => {
   res.json({
@@ -126,13 +190,14 @@ export const createPhonePePayment = async (req, res) => {
     }
 
     const amountPaisa = Math.round(numericAmount * 100);
-    const merchantOrderId = `KS${Date.now()}${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const merchantOrderId = `KS${randomUUID().replace(/-/g, '').toUpperCase()}`;
     const clientUrl = (process.env.CLIENT_URL || '').replace(/\/$/, '');
     if (!clientUrl) return res.status(503).json({ success: false, message: 'CLIENT_URL is not configured on the server.' });
 
     const intent = await PaymentIntent.create({
       merchantOrderId,
-      applicationId,
+      applicationId: String(application._id || application.id),
+      activeApplicationId: String(application._id || application.id),
       jobId: application.jobId,
       employerId,
       workerId: application.workerId,
@@ -148,27 +213,56 @@ export const createPhonePePayment = async (req, res) => {
         redirectUrl: `${clientUrl}/payments?merchantOrderId=${encodeURIComponent(merchantOrderId)}`
       });
       if (!checkout.redirectUrl) throw new Error('PhonePe did not return a checkout URL.');
-      intent.phonepeOrderId = checkout.orderId || '';
-      intent.checkoutUrl = checkout.redirectUrl;
-      intent.providerState = checkout.state || 'PENDING';
-      intent.providerResponse = { state: checkout.state || 'PENDING', orderId: checkout.orderId || '' };
-      await intent.save();
+      // Update only checkout metadata. A webhook may have already marked this
+      // order paid while the create-checkout request was completing.
+      await PaymentIntent.updateOne(
+        { _id: intent._id },
+        { $set: {
+          phonepeOrderId: checkout.orderId || '',
+          checkoutUrl: checkout.redirectUrl,
+          providerState: checkout.state || 'PENDING',
+          providerResponse: { state: checkout.state || 'PENDING', orderId: checkout.orderId || '' }
+        } }
+      );
+      const savedIntent = await PaymentIntent.findById(intent._id);
 
       return res.status(201).json({
         success: true,
         message: 'Secure checkout created. Complete payment on PhonePe.',
         checkoutUrl: intent.checkoutUrl,
-        payment: safeStatus(intent)
+        payment: safeStatus(savedIntent || intent)
       });
     } catch (providerError) {
-      intent.status = 'failed';
-      intent.providerState = 'INITIATION_FAILED';
-      await intent.save();
+      // A definite 4xx validation/auth rejection means PhonePe did not create an order.
+      // A timeout, network failure, or 5xx is ambiguous: keep this order locked and pending
+      // until the PhonePe status API or support can reconcile it, preventing duplicate charges.
+      const providerStatus = Number(providerError.providerStatusCode || 0);
+      const definitiveRejection = [400, 401, 403, 422, 429].includes(providerStatus);
+      if (definitiveRejection) {
+        // Only release the order lock if no authenticated webhook/status poll has
+        // already completed the payment.
+        await PaymentIntent.updateOne(
+          { _id: intent._id, status: 'pending' },
+          { $set: { providerState: 'INITIATION_FAILED', status: 'failed' }, $unset: { activeApplicationId: 1 } }
+        );
+      } else {
+        await PaymentIntent.updateOne(
+          { _id: intent._id, status: 'pending' },
+          { $set: { providerState: 'INITIATION_UNCERTAIN' } }
+        );
+        providerError.paymentInitiationUncertain = true;
+      }
       throw providerError;
     }
   } catch (error) {
     console.error('[PhonePe] Checkout creation failed:', error.message);
-    res.status(error.statusCode || 502).json({ success: false, message: error.statusCode === 503 ? error.message : 'Unable to start PhonePe checkout. Please try again later.' });
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'A PhonePe checkout already exists for this job. Check its status before paying again.' });
+    }
+    if (error.paymentInitiationUncertain) {
+      return res.status(503).json({ success: false, message: 'PhonePe did not confirm whether checkout was created. This order is being held pending to prevent duplicate charges. Refresh its status or contact KaamSetu support; do not start another payment.' });
+    }
+    return res.status(error.statusCode || 502).json({ success: false, message: error.statusCode === 503 ? error.message : 'Unable to start PhonePe checkout. Please check your payment status before trying again.' });
   }
 };
 
@@ -183,48 +277,26 @@ export const getPhonePePaymentStatus = async (req, res) => {
       return res.status(403).json({ success: false, message: 'You are not authorized to view this payment.' });
     }
 
+    let currentIntent = intent;
     if (intent.status === 'pending') {
       const provider = await fetchPhonePeOrderStatus(intent.merchantOrderId);
       const state = String(provider.state || 'PENDING').toUpperCase();
       const providerAmount = Number(provider.amount);
-      if (state === 'COMPLETED') {
-        if (!Number.isFinite(providerAmount) || providerAmount !== intent.amountPaisa) {
-          return res.status(409).json({ success: false, message: 'Payment amount mismatch. The payment has not been marked as paid; contact support.' });
-        }
-        intent.status = 'paid';
-        intent.verifiedAt = new Date();
-        // PhonePe PG confirms collection into the merchant account; this is NOT proof
-        // that a separate worker payout has happened. Keep payout explicitly pending.
-        intent.payoutStatus = 'pending_provider_settlement';
-        insert('notifications', {
-          userId: String(intent.workerId),
-          title: 'Employer payment received by KaamSetu',
-          message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Your worker payout is not yet confirmed; KaamSetu will update this status after the approved settlement process completes.',
-          type: 'info', actionUrl: '/payments', isRead: false
-        });
-        insert('notifications', {
-          userId: String(intent.employerId),
-          title: 'Payment collected',
-          message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Worker payout is tracked separately and is not marked complete yet.',
-          type: 'success', actionUrl: '/payments', isRead: false
-        });
-      } else if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(state)) {
-        intent.status = 'failed';
+      if (provider.merchantOrderId && String(provider.merchantOrderId) !== String(intent.merchantOrderId)) {
+        return res.status(409).json({ success: false, message: 'PhonePe returned a different merchant order. This payment remains unconfirmed; contact support.' });
       }
-      intent.providerState = state;
-      intent.providerResponse = {
-        state,
-        amount: Number.isFinite(providerAmount) ? providerAmount : null,
-        paymentDetails: Array.isArray(provider.paymentDetails) ? provider.paymentDetails.map(item => ({
-          paymentMode: item.paymentMode,
-          transactionId: item.transactionId,
-          state: item.state
-        })) : []
-      };
-      await intent.save();
+      if (intent.phonepeOrderId && provider.orderId && String(provider.orderId) !== String(intent.phonepeOrderId)) {
+        return res.status(409).json({ success: false, message: 'PhonePe returned a different order ID. This payment remains unconfirmed; contact support.' });
+      }
+      if (state === 'COMPLETED' && (!Number.isFinite(providerAmount) || providerAmount !== intent.amountPaisa)) {
+        return res.status(409).json({ success: false, message: 'Payment amount mismatch. The payment has not been marked as paid; contact support.' });
+      }
+
+      const providerResponse = buildProviderSnapshot(state, provider);
+      currentIntent = await applyProviderStateIfPending(intent, state, providerResponse);
     }
 
-    return res.json({ success: true, payment: safeStatus(intent) });
+    return res.json({ success: true, payment: safeStatus(currentIntent) });
   } catch (error) {
     console.error('[PhonePe] Status verification failed:', error.message);
     res.status(error.statusCode || 502).json({ success: false, message: 'Could not verify payment with PhonePe right now. The payment remains unconfirmed until verification succeeds.' });
@@ -255,52 +327,25 @@ export const receivePhonePeWebhook = async (req, res) => {
 
     const state = String(payload.state || '').toUpperCase();
     const amount = Number(payload.amount);
+    if (intent.phonepeOrderId && payload.orderId && String(payload.orderId) !== String(intent.phonepeOrderId)) {
+      return res.status(409).json({ success: false, message: 'Webhook order ID does not match the stored PhonePe order.' });
+    }
     if (!Number.isFinite(amount) || amount !== intent.amountPaisa) {
       console.error('[PhonePe] Webhook amount mismatch for order:', merchantOrderId);
       return res.status(409).json({ success: false, message: 'Webhook amount does not match the stored order.' });
     }
 
-    const wasPaid = intent.status === 'paid';
-    if (event === 'checkout.order.completed' && state === 'COMPLETED') {
-      if (!wasPaid) {
-        intent.status = 'paid';
-        intent.payoutStatus = 'pending_provider_settlement';
-        intent.verifiedAt = new Date();
-      }
-    } else if (event === 'checkout.order.failed' && state === 'FAILED' && !wasPaid && intent.status === 'pending') {
-      intent.status = 'failed';
-    } else {
+    const isCompletedEvent = event === 'checkout.order.completed' && state === 'COMPLETED';
+    const isFailedEvent = event === 'checkout.order.failed' && state === 'FAILED';
+    if (!isCompletedEvent && !isFailedEvent) {
       return res.status(200).json({ success: true, ignored: true });
     }
 
-    intent.providerState = state;
-    intent.providerResponse = {
-      event,
+    await applyProviderStateIfPending(
+      intent,
       state,
-      amount,
-      orderId: String(payload.orderId || ''),
-      paymentDetails: Array.isArray(payload.paymentDetails) ? payload.paymentDetails.map(item => ({
-        paymentMode: item.paymentMode,
-        transactionId: item.transactionId,
-        state: item.state
-      })) : []
-    };
-    await intent.save();
-
-    if (!wasPaid && intent.status === 'paid') {
-      insert('notifications', {
-        userId: String(intent.workerId),
-        title: 'Employer payment received by KaamSetu',
-        message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Your worker payout is not yet confirmed; KaamSetu will update this status after the approved settlement process completes.',
-        type: 'info', actionUrl: '/payments', isRead: false
-      });
-      insert('notifications', {
-        userId: String(intent.employerId),
-        title: 'Payment collected',
-        message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Worker payout is tracked separately and is not marked complete yet.',
-        type: 'success', actionUrl: '/payments', isRead: false
-      });
-    }
+      buildProviderSnapshot(state, payload, event)
+    );
 
     return res.status(200).json({ success: true, received: true });
   } catch (error) {
