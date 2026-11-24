@@ -9,6 +9,7 @@ import {
   apiGetPhonePePaymentStatus, apiGetMyPhonePePayments, apiGetPhonePePaymentQuote
 } from '../../services/api';
 import { Banknote, CheckCircle2, Clock3, IndianRupee, Wallet, RefreshCw, AlertCircle } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 type ApplicationOption = {
   _id: string; status: string; paymentMode?: 'online' | 'offline' | 'direct_upi' | 'cash';
@@ -85,11 +86,11 @@ export const PaymentsPage: React.FC = () => {
     if (isWorker || !applicationId || !selected) { setQuote(null); return; }
     let active = true;
     setQuoteLoading(true);
-    const quoteRequest = selected.paymentMode === 'direct_upi' || selected.paymentMode === 'cash'
+    const quoteRequest = ['direct_upi', 'cash', 'online'].includes(selected.paymentMode || '')
       ? apiGetPaymentQuote(applicationId)
       : apiGetPhonePePaymentQuote(applicationId);
     quoteRequest
-      .then(data => { if (active) setQuote({ ...data.quote, paymentMode: selected.paymentMode === 'direct_upi' || selected.paymentMode === 'cash' ? selected.paymentMode : 'online' }); })
+      .then(data => { if (active) setQuote({ ...data.quote, paymentMode: selected.paymentMode === 'online' ? 'direct_upi' : selected.paymentMode }); })
       .catch((e: any) => { if (active) { setQuote(null); setError(e.message || 'Could not calculate the job payment.'); } })
       .finally(() => { if (active) setQuoteLoading(false); });
     return () => { active = false; };
@@ -153,7 +154,7 @@ export const PaymentsPage: React.FC = () => {
   );
 
   const selectedApplication = applications.find(a => a._id === applicationId);
-  const isManualPayment = selectedApplication?.paymentMode === 'direct_upi' || selectedApplication?.paymentMode === 'cash';
+  const isManualPayment = ['direct_upi', 'cash', 'online'].includes(selectedApplication?.paymentMode || '');
   const directUpiLink = quote?.workerUpiId
     ? `upi://pay?${new URLSearchParams({
         pa: quote.workerUpiId,
@@ -165,7 +166,8 @@ export const PaymentsPage: React.FC = () => {
     : '';
 
   const reportManualPayment = async () => {
-    const method = selectedApplication?.paymentMode;
+    const selectedMode = selectedApplication?.paymentMode;
+    const method = selectedMode === 'online' ? 'direct_upi' : selectedMode;
     if (!applicationId || (method !== 'direct_upi' && method !== 'cash') || !quote) return;
     const raw = window.prompt('Enter the amount you are proposing to the worker (₹):', String(quote.amount));
     if (raw === null) return;
@@ -269,7 +271,7 @@ export const PaymentsPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout title={isWorker ? 'My Earnings' : 'Payments'} subtitle={isWorker ? 'Track direct payments, cash reports and gateway collections' : 'Choose direct UPI, cash or approved PhonePe checkout'}>
+    <DashboardLayout title={isWorker ? 'My Earnings' : 'Payments'} subtitle={isWorker ? 'Track direct payments, cash reports and gateway collections' : 'Pay workers directly by UPI ID, QR code or cash'}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl border border-brand-border p-4">
@@ -289,12 +291,12 @@ export const PaymentsPage: React.FC = () => {
           <section className="bg-white rounded-2xl border border-brand-border p-5 space-y-4">
             <div>
               <h2 className="font-bold text-brand-dark">Pay for completed work</h2>
-              <p className="text-xs text-brand-muted mt-1">KaamSetu calculates the agreed amount on the server and sends you to PhonePe’s hosted checkout. The payment is collected into KaamSetu’s approved merchant account; worker payout is tracked separately and is not marked paid until it is independently confirmed.</p>
+              <p className="text-xs text-brand-muted mt-1">Pay the worker directly using their UPI ID or QR code, or record a cash handover. Money moves through the payer’s own UPI app; KaamSetu does not collect or hold it.</p>
             </div>
             <label className="block text-xs font-semibold text-brand-muted">Job awaiting payment
               <select value={applicationId} onChange={e => setApplicationId(e.target.value)} className="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm text-brand-dark">
                 <option value="">Select a job awaiting payment</option>
-                {applications.map(a => <option key={a._id} value={a._id}>{a.workerProfile?.fullName || 'Worker'} — {a.job?.title || 'Completed job'} ({a.paymentMode === 'direct_upi' ? 'Direct UPI' : a.paymentMode === 'cash' ? 'Cash' : 'PhonePe'})</option>)}
+                {applications.map(a => <option key={a._id} value={a._id}>{a.workerProfile?.fullName || 'Worker'} — {a.job?.title || 'Completed job'} ({a.paymentMode === 'direct_upi' || a.paymentMode === 'online' ? 'UPI + QR' : 'Cash'})</option>)}
               </select>
             </label>
             {quoteLoading && <div className="text-sm text-brand-muted">Calculating agreed payment…</div>}
@@ -303,10 +305,12 @@ export const PaymentsPage: React.FC = () => {
                 <div className="text-xs text-brand-muted">Amount due for {quote.jobTitle}</div>
                 <div className="text-3xl font-black text-brand-dark">{money(quote.amount)}</div>
                 <div className="text-xs text-brand-muted">Worker: {quote.workerName}{quote.wageType ? ` · Based on ${quote.wageType} wage · ${quote.duration || ''}` : ''}</div>
-                {quote.paymentMode === 'direct_upi' && quote.workerUpiId && (!quote.existingPayment || ['approved_by_worker', 'approved_by_employer'].includes(quote.existingPayment.status)) && (
+                {quote.paymentMode === 'direct_upi' && quote.workerUpiId && quote.existingPayment && ['approved_by_worker', 'approved_by_employer'].includes(quote.existingPayment.status) && (
                   <div className="mt-3 rounded-xl bg-white border border-brand-border p-3 space-y-2">
                     <div className="text-xs font-semibold text-brand-dark">Worker's UPI ID</div>
                     <div className="font-mono text-sm break-all">{quote.workerUpiId}</div>
+                    <div className="flex justify-center rounded-xl bg-white p-3"><QRCodeSVG value={directUpiLink} size={190} level="M" includeMargin /></div>
+                    <p className="text-center text-[11px] text-brand-muted">Scan with any UPI app or use the button below</p>
                     <a href={directUpiLink} className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-xs font-bold">Pay with any UPI app</a>
                   </div>
                 )}
