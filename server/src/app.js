@@ -47,7 +47,14 @@ app.use(cors({
   origin(origin, callback) {
     // Requests without an Origin header (health checks, server-to-server calls)
     // are not browser CORS requests and remain allowed.
-    if (!origin || allowedOrigins.has(origin.replace(/\/+$/, ''))) return callback(null, true);
+    const normalizedOrigin = origin ? origin.replace(/\/+$/, '') : '';
+    // Vercel creates a unique deployment hostname for each production build.
+    // Permit only this project's generated deployment hostnames.
+    const isKaamSetuVercelDeployment = /^https:\/\/kaamsetu-[a-z0-9-]+-codexbuilde\.vercel\.app$/i.test(normalizedOrigin);
+    if (!origin || allowedOrigins.has(normalizedOrigin) || isKaamSetuVercelDeployment) {
+      return callback(null, true);
+    }
+    console.warn('[CORS] Rejected browser origin:', normalizedOrigin);
     return callback(new Error('Origin is not allowed by KaamSetu CORS policy.'));
   },
   credentials: true
