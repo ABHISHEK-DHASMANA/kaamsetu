@@ -132,7 +132,8 @@ export const createPhonePePayment = async (req, res) => {
 
     const intent = await PaymentIntent.create({
       merchantOrderId,
-      applicationId,
+      applicationId: String(application._id || application.id),
+      activeApplicationId: String(application._id || application.id),
       jobId: application.jobId,
       employerId,
       workerId: application.workerId,
@@ -161,14 +162,32 @@ export const createPhonePePayment = async (req, res) => {
         payment: safeStatus(intent)
       });
     } catch (providerError) {
-      intent.status = 'failed';
-      intent.providerState = 'INITIATION_FAILED';
+      // A definite 4xx validation/auth rejection means PhonePe did not create an order.
+      // A timeout, network failure, or 5xx is ambiguous: keep this order locked and pending
+      // until the PhonePe status API or support can reconcile it, preventing duplicate charges.
+      const providerStatus = Number(providerError.providerStatusCode || 0);
+      const definitiveRejection = [400, 401, 403, 422, 429].includes(providerStatus);
+      if (definitiveRejection) {
+        intent.status = 'failed';
+        intent.activeApplicationId = undefined;
+        intent.providerState = 'INITIATION_FAILED';
+      } else {
+        intent.status = 'pending';
+        intent.providerState = 'INITIATION_UNCERTAIN';
+        providerError.paymentInitiationUncertain = true;
+      }
       await intent.save();
       throw providerError;
     }
   } catch (error) {
     console.error('[PhonePe] Checkout creation failed:', error.message);
-    res.status(error.statusCode || 502).json({ success: false, message: error.statusCode === 503 ? error.message : 'Unable to start PhonePe checkout. Please try again later.' });
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'A PhonePe checkout already exists for this job. Check its status before paying again.' });
+    }
+    if (error.paymentInitiationUncertain) {
+      return res.status(503).json({ success: false, message: 'PhonePe did not confirm whether checkout was created. This order is being held pending to prevent duplicate charges. Refresh its status or contact KaamSetu support; do not start another payment.' });
+    }
+    return res.status(error.statusCode || 502).json({ success: false, message: error.statusCode === 503 ? error.message : 'Unable to start PhonePe checkout. Please check your payment status before trying again.' });
   }
 };
 
@@ -187,6 +206,12 @@ export const getPhonePePaymentStatus = async (req, res) => {
       const provider = await fetchPhonePeOrderStatus(intent.merchantOrderId);
       const state = String(provider.state || 'PENDING').toUpperCase();
       const providerAmount = Number(provider.amount);
+      if (provider.merchantOrderId && String(provider.merchantOrderId) !== String(intent.merchantOrderId)) {
+        return res.status(409).json({ success: false, message: 'PhonePe returned a different merchant order. This payment remains unconfirmed; contact support.' });
+      }
+      if (intent.phonepeOrderId && provider.orderId && String(provider.orderId) !== String(intent.phonepeOrderId)) {
+        return res.status(409).json({ success: false, message: 'PhonePe returned a different order ID. This payment remains unconfirmed; contact support.' });
+      }
       if (state === 'COMPLETED') {
         if (!Number.isFinite(providerAmount) || providerAmount !== intent.amountPaisa) {
           return res.status(409).json({ success: false, message: 'Payment amount mismatch. The payment has not been marked as paid; contact support.' });
@@ -210,6 +235,7 @@ export const getPhonePePaymentStatus = async (req, res) => {
         });
       } else if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(state)) {
         intent.status = 'failed';
+        intent.activeApplicationId = undefined;
       }
       intent.providerState = state;
       intent.providerResponse = {
@@ -255,6 +281,9 @@ export const receivePhonePeWebhook = async (req, res) => {
 
     const state = String(payload.state || '').toUpperCase();
     const amount = Number(payload.amount);
+    if (intent.phonepeOrderId && payload.orderId && String(payload.orderId) !== String(intent.phonepeOrderId)) {
+      return res.status(409).json({ success: false, message: 'Webhook order ID does not match the stored PhonePe order.' });
+    }
     if (!Number.isFinite(amount) || amount !== intent.amountPaisa) {
       console.error('[PhonePe] Webhook amount mismatch for order:', merchantOrderId);
       return res.status(409).json({ success: false, message: 'Webhook amount does not match the stored order.' });
@@ -269,6 +298,7 @@ export const receivePhonePeWebhook = async (req, res) => {
       }
     } else if (event === 'checkout.order.failed' && state === 'FAILED' && !wasPaid && intent.status === 'pending') {
       intent.status = 'failed';
+      intent.activeApplicationId = undefined;
     } else {
       return res.status(200).json({ success: true, ignored: true });
     }
