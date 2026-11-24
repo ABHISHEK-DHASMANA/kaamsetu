@@ -49,6 +49,69 @@ const safeStatus = intent => ({
   createdAt: intent.createdAt
 });
 
+const buildProviderSnapshot = (state, payload = {}, event) => ({
+  ...(event ? { event } : {}),
+  state,
+  amount: Number.isFinite(Number(payload.amount)) ? Number(payload.amount) : null,
+  ...(payload.orderId ? { orderId: String(payload.orderId) } : {}),
+  paymentDetails: Array.isArray(payload.paymentDetails)
+    ? payload.paymentDetails.map(item => ({
+        paymentMode: item.paymentMode,
+        transactionId: item.transactionId,
+        state: item.state,
+        errorCode: item.errorCode,
+        detailedErrorCode: item.detailedErrorCode
+      }))
+    : []
+});
+
+const notifyCollectionVerified = intent => {
+  insert('notifications', {
+    userId: String(intent.workerId),
+    title: 'Employer payment received by KaamSetu',
+    message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Your worker payout is not yet confirmed; KaamSetu will update this status after the approved settlement process completes.',
+    type: 'info', actionUrl: '/payments', isRead: false
+  });
+  insert('notifications', {
+    userId: String(intent.employerId),
+    title: 'Payment collected',
+    message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Worker payout is tracked separately and is not marked complete yet.',
+    type: 'success', actionUrl: '/payments', isRead: false
+  });
+};
+
+// Only the first transition out of pending may win. This makes webhook and
+// status-poll races idempotent and prevents late provider responses reversing
+// a final paid/failed state.
+const applyProviderStateIfPending = async (intent, state, providerResponse) => {
+  const set = { providerState: state, providerResponse };
+  const update = { $set: set };
+  const completed = state === 'COMPLETED';
+  const failed = ['FAILED', 'EXPIRED', 'CANCELLED'].includes(state);
+
+  if (completed) {
+    Object.assign(set, {
+      status: 'paid',
+      payoutStatus: 'pending_provider_settlement',
+      verifiedAt: new Date()
+    });
+  } else if (failed) {
+    set.status = 'failed';
+    update.$unset = { activeApplicationId: 1 };
+  }
+
+  const changed = await PaymentIntent.findOneAndUpdate(
+    { _id: intent._id, status: 'pending' },
+    update,
+    { new: true, runValidators: true }
+  );
+  if (changed) {
+    if (completed) notifyCollectionVerified(changed);
+    return changed;
+  }
+  return await PaymentIntent.findById(intent._id) || intent;
+};
+
 export const getPhonePeAvailability = (req, res) => {
   res.json({
     success: true,
@@ -202,6 +265,7 @@ export const getPhonePePaymentStatus = async (req, res) => {
       return res.status(403).json({ success: false, message: 'You are not authorized to view this payment.' });
     }
 
+    let currentIntent = intent;
     if (intent.status === 'pending') {
       const provider = await fetchPhonePeOrderStatus(intent.merchantOrderId);
       const state = String(provider.state || 'PENDING').toUpperCase();
@@ -212,45 +276,15 @@ export const getPhonePePaymentStatus = async (req, res) => {
       if (intent.phonepeOrderId && provider.orderId && String(provider.orderId) !== String(intent.phonepeOrderId)) {
         return res.status(409).json({ success: false, message: 'PhonePe returned a different order ID. This payment remains unconfirmed; contact support.' });
       }
-      if (state === 'COMPLETED') {
-        if (!Number.isFinite(providerAmount) || providerAmount !== intent.amountPaisa) {
-          return res.status(409).json({ success: false, message: 'Payment amount mismatch. The payment has not been marked as paid; contact support.' });
-        }
-        intent.status = 'paid';
-        intent.verifiedAt = new Date();
-        // PhonePe PG confirms collection into the merchant account; this is NOT proof
-        // that a separate worker payout has happened. Keep payout explicitly pending.
-        intent.payoutStatus = 'pending_provider_settlement';
-        insert('notifications', {
-          userId: String(intent.workerId),
-          title: 'Employer payment received by KaamSetu',
-          message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Your worker payout is not yet confirmed; KaamSetu will update this status after the approved settlement process completes.',
-          type: 'info', actionUrl: '/payments', isRead: false
-        });
-        insert('notifications', {
-          userId: String(intent.employerId),
-          title: 'Payment collected',
-          message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Worker payout is tracked separately and is not marked complete yet.',
-          type: 'success', actionUrl: '/payments', isRead: false
-        });
-      } else if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(state)) {
-        intent.status = 'failed';
-        intent.activeApplicationId = undefined;
+      if (state === 'COMPLETED' && (!Number.isFinite(providerAmount) || providerAmount !== intent.amountPaisa)) {
+        return res.status(409).json({ success: false, message: 'Payment amount mismatch. The payment has not been marked as paid; contact support.' });
       }
-      intent.providerState = state;
-      intent.providerResponse = {
-        state,
-        amount: Number.isFinite(providerAmount) ? providerAmount : null,
-        paymentDetails: Array.isArray(provider.paymentDetails) ? provider.paymentDetails.map(item => ({
-          paymentMode: item.paymentMode,
-          transactionId: item.transactionId,
-          state: item.state
-        })) : []
-      };
-      await intent.save();
+
+      const providerResponse = buildProviderSnapshot(state, provider);
+      currentIntent = await applyProviderStateIfPending(intent, state, providerResponse);
     }
 
-    return res.json({ success: true, payment: safeStatus(intent) });
+    return res.json({ success: true, payment: safeStatus(currentIntent) });
   } catch (error) {
     console.error('[PhonePe] Status verification failed:', error.message);
     res.status(error.statusCode || 502).json({ success: false, message: 'Could not verify payment with PhonePe right now. The payment remains unconfirmed until verification succeeds.' });
@@ -289,48 +323,17 @@ export const receivePhonePeWebhook = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Webhook amount does not match the stored order.' });
     }
 
-    const wasPaid = intent.status === 'paid';
-    if (event === 'checkout.order.completed' && state === 'COMPLETED') {
-      if (!wasPaid) {
-        intent.status = 'paid';
-        intent.payoutStatus = 'pending_provider_settlement';
-        intent.verifiedAt = new Date();
-      }
-    } else if (event === 'checkout.order.failed' && state === 'FAILED' && !wasPaid && intent.status === 'pending') {
-      intent.status = 'failed';
-      intent.activeApplicationId = undefined;
-    } else {
+    const isCompletedEvent = event === 'checkout.order.completed' && state === 'COMPLETED';
+    const isFailedEvent = event === 'checkout.order.failed' && state === 'FAILED';
+    if (!isCompletedEvent && !isFailedEvent) {
       return res.status(200).json({ success: true, ignored: true });
     }
 
-    intent.providerState = state;
-    intent.providerResponse = {
-      event,
+    await applyProviderStateIfPending(
+      intent,
       state,
-      amount,
-      orderId: String(payload.orderId || ''),
-      paymentDetails: Array.isArray(payload.paymentDetails) ? payload.paymentDetails.map(item => ({
-        paymentMode: item.paymentMode,
-        transactionId: item.transactionId,
-        state: item.state
-      })) : []
-    };
-    await intent.save();
-
-    if (!wasPaid && intent.status === 'paid') {
-      insert('notifications', {
-        userId: String(intent.workerId),
-        title: 'Employer payment received by KaamSetu',
-        message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Your worker payout is not yet confirmed; KaamSetu will update this status after the approved settlement process completes.',
-        type: 'info', actionUrl: '/payments', isRead: false
-      });
-      insert('notifications', {
-        userId: String(intent.employerId),
-        title: 'Payment collected',
-        message: 'PhonePe confirmed collection of ₹' + intent.amount + '. Worker payout is tracked separately and is not marked complete yet.',
-        type: 'success', actionUrl: '/payments', isRead: false
-      });
-    }
+      buildProviderSnapshot(state, payload, event)
+    );
 
     return res.status(200).json({ success: true, received: true });
   } catch (error) {
