@@ -1,15 +1,2538 @@
 {
-  "users": [],
-  "workerProfiles": [],
-  "employerProfiles": [],
-  "jobs": [],
-  "applications": [],
-  "skills": [],
-  "reviews": [],
-  "notifications": [],
-  "reports": [],
-  "messages": [],
-  "savedJobs": [],
-  "userBlocks": [],
-  "payments": []
+  "users": [
+    {
+      "_id": "usr_admin_01",
+      "name": "KAAMSETU Admin (Vigilance & Ops)",
+      "phone": "9876543210",
+      "email": "admin@kaamsetu.in",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "admin",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+      "isActive": true,
+      "createdAt": "2026-01-10T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_ramesh_kumar",
+      "name": "Ramesh Kumar",
+      "phone": "9811002233",
+      "email": "ramesh.kumar@gmail.com",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-01T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_sharma_services",
+      "name": "Sunil Sharma",
+      "phone": "9811445566",
+      "email": "contact@sharmaelectricals.in",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "employer",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+      "isActive": true,
+      "createdAt": "2026-01-15T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_emp_verma",
+      "name": "Rajeev Verma",
+      "phone": "9811883344",
+      "email": "verma.builders@gmail.com",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "employer",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+      "isActive": true
+    },
+    {
+      "_id": "usr_emp_anand",
+      "name": "Anand Singh",
+      "phone": "9871223344",
+      "email": "anand.plumbing@gmail.com",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "employer",
+      "verificationStatus": "Contact Verified",
+      "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150",
+      "isActive": true
+    },
+    {
+      "_id": "usr_emp_gupta",
+      "name": "Vikas Gupta",
+      "phone": "9891004455",
+      "email": "vikas.decor@gmail.com",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "employer",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150",
+      "isActive": true
+    },
+    {
+      "_id": "usr_emp_mehta",
+      "name": "Pooja Mehta",
+      "phone": "9810998877",
+      "email": "pooja.cleaners@gmail.com",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "employer",
+      "verificationStatus": "Contact Verified",
+      "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150",
+      "isActive": true
+    },
+    {
+      "_id": "usr_worker_2",
+      "name": "Mohammad Imran",
+      "phone": "9811223341",
+      "email": "mohammad.imran0@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1500000000000?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_3",
+      "name": "Suresh Prajapati",
+      "phone": "9811223342",
+      "email": "suresh.prajapati1@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Contact Verified",
+      "avatar": "https://images.unsplash.com/photo-1500012345678?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_4",
+      "name": "Santosh Yadav",
+      "phone": "9811223343",
+      "email": "santosh.yadav2@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1500024691356?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_5",
+      "name": "Manoj Kumar Bind",
+      "phone": "9811223344",
+      "email": "manoj.kumar.bind3@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Contact Verified",
+      "avatar": "https://images.unsplash.com/photo-1500037037034?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_6",
+      "name": "Amit Rawat",
+      "phone": "9811223345",
+      "email": "amit.rawat4@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1500049382712?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_7",
+      "name": "Pappu Sharma",
+      "phone": "9811223346",
+      "email": "pappu.sharma5@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Contact Verified",
+      "avatar": "https://images.unsplash.com/photo-1500061728390?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_8",
+      "name": "Deepak Varma",
+      "phone": "9811223347",
+      "email": "deepak.varma6@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1500074074068?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_9",
+      "name": "Sunita Devi",
+      "phone": "9811223348",
+      "email": "sunita.devi7@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Contact Verified",
+      "avatar": "https://images.unsplash.com/photo-1500086419746?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_10",
+      "name": "Babu Lal",
+      "phone": "9811223349",
+      "email": "babu.lal8@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1500098765424?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_11",
+      "name": "Virender Singh",
+      "phone": "9811223350",
+      "email": "virender.singh9@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Contact Verified",
+      "avatar": "https://images.unsplash.com/photo-1500011111102?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_12",
+      "name": "Kallu Mian",
+      "phone": "9811223351",
+      "email": "kallu.mian10@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1500023456780?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_13",
+      "name": "Radhe Shyam",
+      "phone": "9811223352",
+      "email": "radhe.shyam11@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Contact Verified",
+      "avatar": "https://images.unsplash.com/photo-1500035802458?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_14",
+      "name": "Rani Kumari",
+      "phone": "9811223353",
+      "email": "rani.kumari12@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Identity Verified",
+      "avatar": "https://images.unsplash.com/photo-1500048148136?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "_id": "usr_worker_15",
+      "name": "Gopal Krishna",
+      "phone": "9811223354",
+      "email": "gopal.krishna13@kaamsetu.demo",
+      "password": "$2a$10$j83Wt3Dhl6XiFNx3bn5oV.MT83CoZ6/6kdI8pciR7Gzgu8Mr6.KTe",
+      "role": "worker",
+      "verificationStatus": "Contact Verified",
+      "avatar": "https://images.unsplash.com/photo-1500060493814?w=150",
+      "isActive": true,
+      "createdAt": "2026-02-05T00:00:00.000Z"
+    }
+  ],
+  "workerProfiles": [
+    {
+      "_id": "wp_ramesh_kumar",
+      "userId": "usr_ramesh_kumar",
+      "fullName": "Ramesh Kumar",
+      "phone": "9811002233",
+      "email": "ramesh.kumar@gmail.com",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-6201",
+      "primarySkill": "Electrician",
+      "experienceLevel": "3–5 years",
+      "experienceYearsNum": 3,
+      "skills": [
+        {
+          "skillName": "Electrician",
+          "category": "Electrical",
+          "experienceYears": 3,
+          "verificationStatus": "Employer Confirmed",
+          "endorsementsCount": 8,
+          "evidenceUrl": "https://kaamsetu.in/docs/ramesh_trade_cert.pdf"
+        },
+        {
+          "skillName": "Wireman",
+          "category": "Electrical",
+          "experienceYears": 3,
+          "verificationStatus": "Evidence Submitted",
+          "endorsementsCount": 4,
+          "evidenceUrl": "https://kaamsetu.in/docs/wireman_license.pdf"
+        },
+        {
+          "skillName": "Appliance Repair",
+          "category": "Electrical",
+          "experienceYears": 2,
+          "verificationStatus": "Self-declared",
+          "endorsementsCount": 2,
+          "evidenceUrl": ""
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 62",
+        "pincode": "201309",
+        "coordinates": {
+          "lat": 28.628,
+          "lng": 77.3649
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 800,
+        "expectedMonthlyWage": 22000,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 8
+      },
+      "skillPassport": {
+        "passportId": "KSP-NOIDA-7842",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-NOIDA-7842",
+        "verifiedSkillsCount": 2,
+        "trustScore": 94,
+        "completedJobsCount": 14,
+        "rating": 4.9,
+        "reviewsCount": 11,
+        "badges": [
+          "Top Rated Artisan",
+          "Identity Verified",
+          "Zero Cancellation Record",
+          "Speedy Responder"
+        ],
+        "issueDate": "2026-02-10T00:00:00.000Z"
+      },
+      "bio": "Experienced licensed residential and commercial wireman. Expert in MCB installation, 3-phase wiring, inverter setup, and emergency fault isolation.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_2",
+      "userId": "usr_worker_2",
+      "fullName": "Mohammad Imran",
+      "phone": "9811223341",
+      "email": "mohammad.imran0@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500000000000?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7100",
+      "primarySkill": "Plumber",
+      "experienceLevel": "3–5 years",
+      "experienceYearsNum": 4,
+      "skills": [
+        {
+          "skillName": "Plumber",
+          "category": "Plumbing",
+          "experienceYears": 4,
+          "verificationStatus": "Employer Confirmed"
+        },
+        {
+          "skillName": "Pipe Fitter",
+          "category": "Plumbing",
+          "experienceYears": 3,
+          "verificationStatus": "Evidence Submitted"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Ghaziabad",
+        "area": "Indirapuram",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6415,
+          "lng": 77.3712
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 850,
+        "expectedMonthlyWage": 22100,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-INDIRAPURAM-8000",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-INDIRAPURAM-8000",
+        "verifiedSkillsCount": 1,
+        "trustScore": 92,
+        "completedJobsCount": 19,
+        "rating": 4.8,
+        "reviewsCount": 13,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Plumber. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_3",
+      "userId": "usr_worker_3",
+      "fullName": "Suresh Prajapati",
+      "phone": "9811223342",
+      "email": "suresh.prajapati1@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500012345678?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7101",
+      "primarySkill": "Carpenter",
+      "experienceLevel": "5+ years",
+      "experienceYearsNum": 6,
+      "skills": [
+        {
+          "skillName": "Carpenter",
+          "category": "Woodwork",
+          "experienceYears": 6,
+          "verificationStatus": "Employer Confirmed"
+        },
+        {
+          "skillName": "Furniture Maker",
+          "category": "Woodwork",
+          "experienceYears": 5,
+          "verificationStatus": "Employer Confirmed"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 18",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.5708,
+          "lng": 77.3271
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 950,
+        "expectedMonthlyWage": 24700,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-SECTOR-18-8001",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-SECTOR-18-8001",
+        "verifiedSkillsCount": 2,
+        "trustScore": 96,
+        "completedJobsCount": 32,
+        "rating": 4.9,
+        "reviewsCount": 22,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Carpenter. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_4",
+      "userId": "usr_worker_4",
+      "fullName": "Santosh Yadav",
+      "phone": "9811223343",
+      "email": "santosh.yadav2@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500024691356?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7102",
+      "primarySkill": "Painter",
+      "experienceLevel": "1–3 years",
+      "experienceYearsNum": 2,
+      "skills": [
+        {
+          "skillName": "Painter",
+          "category": "Painting",
+          "experienceYears": 2,
+          "verificationStatus": "Self-declared"
+        },
+        {
+          "skillName": "Wall Putty Worker",
+          "category": "Painting",
+          "experienceYears": 2,
+          "verificationStatus": "Evidence Submitted"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 62",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.628,
+          "lng": 77.3649
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 750,
+        "expectedMonthlyWage": 19500,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-SECTOR-62-8002",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-SECTOR-62-8002",
+        "verifiedSkillsCount": 0,
+        "trustScore": 87,
+        "completedJobsCount": 9,
+        "rating": 4.7,
+        "reviewsCount": 6,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Painter. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_5",
+      "userId": "usr_worker_5",
+      "fullName": "Manoj Kumar Bind",
+      "phone": "9811223344",
+      "email": "manoj.kumar.bind3@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500037037034?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7103",
+      "primarySkill": "Mason",
+      "experienceLevel": "5+ years",
+      "experienceYearsNum": 7,
+      "skills": [
+        {
+          "skillName": "Mason",
+          "category": "Construction",
+          "experienceYears": 7,
+          "verificationStatus": "Employer Confirmed"
+        },
+        {
+          "skillName": "Tile Layer",
+          "category": "Construction",
+          "experienceYears": 5,
+          "verificationStatus": "Employer Confirmed"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Ghaziabad",
+        "area": "Vaishali",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6472,
+          "lng": 77.3398
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 850,
+        "expectedMonthlyWage": 22100,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-VAISHALI-8003",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-VAISHALI-8003",
+        "verifiedSkillsCount": 2,
+        "trustScore": 95,
+        "completedJobsCount": 27,
+        "rating": 4.8,
+        "reviewsCount": 19,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Mason. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_6",
+      "userId": "usr_worker_6",
+      "fullName": "Amit Rawat",
+      "phone": "9811223345",
+      "email": "amit.rawat4@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500049382712?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7104",
+      "primarySkill": "Mechanic",
+      "experienceLevel": "3–5 years",
+      "experienceYearsNum": 4,
+      "skills": [
+        {
+          "skillName": "Mechanic",
+          "category": "Automotive",
+          "experienceYears": 4,
+          "verificationStatus": "Employer Confirmed"
+        },
+        {
+          "skillName": "Two-Wheeler Technician",
+          "category": "Automotive",
+          "experienceYears": 3,
+          "verificationStatus": "Evidence Submitted"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 63",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6271,
+          "lng": 77.382
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 900,
+        "expectedMonthlyWage": 23400,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-SECTOR-63-8004",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-SECTOR-63-8004",
+        "verifiedSkillsCount": 1,
+        "trustScore": 91,
+        "completedJobsCount": 16,
+        "rating": 4.9,
+        "reviewsCount": 11,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Mechanic. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_7",
+      "userId": "usr_worker_7",
+      "fullName": "Pappu Sharma",
+      "phone": "9811223346",
+      "email": "pappu.sharma5@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500061728390?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7105",
+      "primarySkill": "Electrician",
+      "experienceLevel": "1–3 years",
+      "experienceYearsNum": 2,
+      "skills": [
+        {
+          "skillName": "Electrician",
+          "category": "Electrical",
+          "experienceYears": 2,
+          "verificationStatus": "Evidence Submitted"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Greater Noida",
+        "area": "Greater Noida",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.4744,
+          "lng": 77.504
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 750,
+        "expectedMonthlyWage": 19500,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-GREATER-NOIDA-8005",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-GREATER-NOIDA-8005",
+        "verifiedSkillsCount": 0,
+        "trustScore": 84,
+        "completedJobsCount": 8,
+        "rating": 4.6,
+        "reviewsCount": 6,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Electrician. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_8",
+      "userId": "usr_worker_8",
+      "fullName": "Deepak Varma",
+      "phone": "9811223347",
+      "email": "deepak.varma6@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500074074068?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7106",
+      "primarySkill": "Welder",
+      "experienceLevel": "3–5 years",
+      "experienceYearsNum": 3,
+      "skills": [
+        {
+          "skillName": "Welder",
+          "category": "Fabrication",
+          "experienceYears": 3,
+          "verificationStatus": "Employer Confirmed"
+        },
+        {
+          "skillName": "Iron Worker",
+          "category": "Fabrication",
+          "experienceYears": 2,
+          "verificationStatus": "Self-declared"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 63",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6271,
+          "lng": 77.382
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 850,
+        "expectedMonthlyWage": 22100,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-SECTOR-63-8006",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-SECTOR-63-8006",
+        "verifiedSkillsCount": 1,
+        "trustScore": 89,
+        "completedJobsCount": 14,
+        "rating": 4.7,
+        "reviewsCount": 10,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Welder. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_9",
+      "userId": "usr_worker_9",
+      "fullName": "Sunita Devi",
+      "phone": "9811223348",
+      "email": "sunita.devi7@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500086419746?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7107",
+      "primarySkill": "Cleaner",
+      "experienceLevel": "3–5 years",
+      "experienceYearsNum": 4,
+      "skills": [
+        {
+          "skillName": "Cleaner",
+          "category": "Sanitation",
+          "experienceYears": 4,
+          "verificationStatus": "Employer Confirmed"
+        },
+        {
+          "skillName": "Deep Cleaning Specialist",
+          "category": "Sanitation",
+          "experienceYears": 3,
+          "verificationStatus": "Employer Confirmed"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Ghaziabad",
+        "area": "Indirapuram",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6415,
+          "lng": 77.3712
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 650,
+        "expectedMonthlyWage": 16900,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-INDIRAPURAM-8007",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-INDIRAPURAM-8007",
+        "verifiedSkillsCount": 2,
+        "trustScore": 97,
+        "completedJobsCount": 38,
+        "rating": 4.9,
+        "reviewsCount": 27,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Cleaner. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_10",
+      "userId": "usr_worker_10",
+      "fullName": "Babu Lal",
+      "phone": "9811223349",
+      "email": "babu.lal8@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500098765424?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7108",
+      "primarySkill": "Painter",
+      "experienceLevel": "5+ years",
+      "experienceYearsNum": 8,
+      "skills": [
+        {
+          "skillName": "Painter",
+          "category": "Painting",
+          "experienceYears": 8,
+          "verificationStatus": "Employer Confirmed"
+        },
+        {
+          "skillName": "Texture Painter",
+          "category": "Painting",
+          "experienceYears": 6,
+          "verificationStatus": "Evidence Submitted"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 50",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.5818,
+          "lng": 77.3685
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 850,
+        "expectedMonthlyWage": 22100,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-SECTOR-50-8008",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-SECTOR-50-8008",
+        "verifiedSkillsCount": 1,
+        "trustScore": 94,
+        "completedJobsCount": 29,
+        "rating": 4.8,
+        "reviewsCount": 20,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Painter. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_11",
+      "userId": "usr_worker_11",
+      "fullName": "Virender Singh",
+      "phone": "9811223350",
+      "email": "virender.singh9@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500011111102?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7109",
+      "primarySkill": "Delivery",
+      "experienceLevel": "1–3 years",
+      "experienceYearsNum": 2,
+      "skills": [
+        {
+          "skillName": "Delivery",
+          "category": "Logistics",
+          "experienceYears": 2,
+          "verificationStatus": "Employer Confirmed"
+        },
+        {
+          "skillName": "Two-Wheeler Driver",
+          "category": "Logistics",
+          "experienceYears": 3,
+          "verificationStatus": "Evidence Submitted"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 62",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.628,
+          "lng": 77.3649
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 700,
+        "expectedMonthlyWage": 18200,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-SECTOR-62-8009",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-SECTOR-62-8009",
+        "verifiedSkillsCount": 1,
+        "trustScore": 88,
+        "completedJobsCount": 22,
+        "rating": 4.6,
+        "reviewsCount": 15,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Delivery. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_12",
+      "userId": "usr_worker_12",
+      "fullName": "Kallu Mian",
+      "phone": "9811223351",
+      "email": "kallu.mian10@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500023456780?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7110",
+      "primarySkill": "Carpenter",
+      "experienceLevel": "3–5 years",
+      "experienceYearsNum": 4,
+      "skills": [
+        {
+          "skillName": "Carpenter",
+          "category": "Woodwork",
+          "experienceYears": 4,
+          "verificationStatus": "Employer Confirmed"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Ghaziabad",
+        "area": "Vaishali",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6472,
+          "lng": 77.3398
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 900,
+        "expectedMonthlyWage": 23400,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-VAISHALI-8010",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-VAISHALI-8010",
+        "verifiedSkillsCount": 1,
+        "trustScore": 90,
+        "completedJobsCount": 15,
+        "rating": 4.7,
+        "reviewsCount": 11,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Carpenter. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_13",
+      "userId": "usr_worker_13",
+      "fullName": "Radhe Shyam",
+      "phone": "9811223352",
+      "email": "radhe.shyam11@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500035802458?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7111",
+      "primarySkill": "Electrician",
+      "experienceLevel": "5+ years",
+      "experienceYearsNum": 6,
+      "skills": [
+        {
+          "skillName": "Electrician",
+          "category": "Electrical",
+          "experienceYears": 6,
+          "verificationStatus": "Employer Confirmed"
+        },
+        {
+          "skillName": "Industrial Panel Wiring",
+          "category": "Electrical",
+          "experienceYears": 5,
+          "verificationStatus": "Employer Confirmed"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Ghaziabad",
+        "area": "Ghaziabad",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6692,
+          "lng": 77.4538
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 950,
+        "expectedMonthlyWage": 24700,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-GHAZIABAD-8011",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-GHAZIABAD-8011",
+        "verifiedSkillsCount": 2,
+        "trustScore": 98,
+        "completedJobsCount": 41,
+        "rating": 4.9,
+        "reviewsCount": 29,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Electrician. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_14",
+      "userId": "usr_worker_14",
+      "fullName": "Rani Kumari",
+      "phone": "9811223353",
+      "email": "rani.kumari12@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500048148136?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7112",
+      "primarySkill": "Cleaner",
+      "experienceLevel": "1–3 years",
+      "experienceYearsNum": 2,
+      "skills": [
+        {
+          "skillName": "Cleaner",
+          "category": "Sanitation",
+          "experienceYears": 2,
+          "verificationStatus": "Self-declared"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 62",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.628,
+          "lng": 77.3649
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 600,
+        "expectedMonthlyWage": 15600,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-SECTOR-62-8012",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-SECTOR-62-8012",
+        "verifiedSkillsCount": 0,
+        "trustScore": 89,
+        "completedJobsCount": 14,
+        "rating": 4.8,
+        "reviewsCount": 10,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Cleaner. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    },
+    {
+      "_id": "wp_worker_15",
+      "userId": "usr_worker_15",
+      "fullName": "Gopal Krishna",
+      "phone": "9811223354",
+      "email": "gopal.krishna13@kaamsetu.demo",
+      "avatar": "https://images.unsplash.com/photo-1500060493814?w=150",
+      "preferredLanguage": "Hindi",
+      "workerId": "KS-W-7113",
+      "primarySkill": "Mason",
+      "experienceLevel": "3–5 years",
+      "experienceYearsNum": 3,
+      "skills": [
+        {
+          "skillName": "Mason",
+          "category": "Construction",
+          "experienceYears": 3,
+          "verificationStatus": "Evidence Submitted"
+        }
+      ],
+      "location": {
+        "state": "Uttar Pradesh",
+        "city": "Ghaziabad",
+        "area": "Indirapuram",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6415,
+          "lng": 77.3712
+        }
+      },
+      "preferences": {
+        "expectedDailyWage": 800,
+        "expectedMonthlyWage": 20800,
+        "jobType": "Daily Wage",
+        "availableDates": "Immediate",
+        "maxDistanceKm": 12
+      },
+      "skillPassport": {
+        "passportId": "KSP-INDIRAPURAM-8013",
+        "qrCodeString": "https://kaamsetu.in/passport/KSP-INDIRAPURAM-8013",
+        "verifiedSkillsCount": 0,
+        "trustScore": 88,
+        "completedJobsCount": 11,
+        "rating": 4.7,
+        "reviewsCount": 8,
+        "badges": [
+          "Identity Verified",
+          "Local Verified Artisan"
+        ],
+        "issueDate": "2026-02-12T00:00:00.000Z"
+      },
+      "bio": "Skilled professional with practical hands-on experience in Mason. Dedicated to punctual, clean execution.",
+      "isProfileComplete": true
+    }
+  ],
+  "employerProfiles": [
+    {
+      "_id": "ep_sharma_services",
+      "userId": "usr_sharma_services",
+      "companyName": "Sharma Electrical Services",
+      "contactPerson": "Sunil Sharma (Proprietor)",
+      "phone": "9811445566",
+      "email": "contact@sharmaelectricals.in",
+      "industry": "Electrical Contracting & Maintenance",
+      "businessType": "Small Business / Shop",
+      "verificationStatus": "Identity Verified",
+      "gstOrGovtId": "09AAACS1429B1Z8 (GST Verified)",
+      "address": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 63",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6271,
+          "lng": 77.382
+        }
+      },
+      "rating": 4.9,
+      "jobsPostedCount": 9,
+      "activeJobsCount": 2,
+      "hiredWorkersCount": 18,
+      "aboutCompany": "Licensed electrical contractors executing commercial building fitouts, factory panel maintenance, and residential rewiring throughout Noida & Indirapuram."
+    },
+    {
+      "_id": "ep_verma_builders",
+      "userId": "usr_emp_verma",
+      "companyName": "Verma Infrastructure & Masonry",
+      "contactPerson": "Rajeev Verma",
+      "phone": "9811883344",
+      "email": "verma.builders@gmail.com",
+      "industry": "Construction & Civil Works",
+      "businessType": "Individual Contractor",
+      "verificationStatus": "Identity Verified",
+      "gstOrGovtId": "09AABCV2219K1ZA",
+      "address": {
+        "state": "Uttar Pradesh",
+        "city": "Indirapuram",
+        "area": "Vaibhav Khand",
+        "pincode": "201014",
+        "coordinates": {
+          "lat": 28.6415,
+          "lng": 77.3712
+        }
+      },
+      "rating": 4.8,
+      "jobsPostedCount": 6,
+      "activeJobsCount": 3,
+      "hiredWorkersCount": 24,
+      "aboutCompany": "Residential tiling, plastering and masonry projects in Indirapuram & Vaishali."
+    },
+    {
+      "_id": "ep_anand_plumbing",
+      "userId": "usr_emp_anand",
+      "companyName": "Apex Pipe & Sanitary Solutions",
+      "contactPerson": "Anand Singh",
+      "phone": "9871223344",
+      "email": "anand.plumbing@gmail.com",
+      "industry": "Sanitary & Plumbing Services",
+      "businessType": "Small Business / Shop",
+      "verificationStatus": "Contact Verified",
+      "gstOrGovtId": "09BCPSA7721L1Z2",
+      "address": {
+        "state": "Uttar Pradesh",
+        "city": "Ghaziabad",
+        "area": "Raj Nagar Extension",
+        "pincode": "201017",
+        "coordinates": {
+          "lat": 28.6947,
+          "lng": 77.4376
+        }
+      },
+      "rating": 4.7,
+      "jobsPostedCount": 5,
+      "activeJobsCount": 2,
+      "hiredWorkersCount": 12,
+      "aboutCompany": "Commercial high-rise pipeline fitting, CPVC plumbing, pump stations."
+    },
+    {
+      "_id": "ep_gupta_decor",
+      "userId": "usr_emp_gupta",
+      "companyName": "Gupta Home Decor & Woodcraft",
+      "contactPerson": "Vikas Gupta",
+      "phone": "9891004455",
+      "email": "vikas.decor@gmail.com",
+      "industry": "Woodworking & Interiors",
+      "businessType": "Small Business / Shop",
+      "verificationStatus": "Identity Verified",
+      "gstOrGovtId": "09AAAFG8831P1ZP",
+      "address": {
+        "state": "Uttar Pradesh",
+        "city": "Noida",
+        "area": "Sector 18",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.5708,
+          "lng": 77.3271
+        }
+      },
+      "rating": 4.9,
+      "jobsPostedCount": 8,
+      "activeJobsCount": 2,
+      "hiredWorkersCount": 15,
+      "aboutCompany": "Modular kitchens, wooden wardrobe installations, and luxury finishes."
+    },
+    {
+      "_id": "ep_clean_express",
+      "userId": "usr_emp_mehta",
+      "companyName": "Express Facility & Deep Cleaning",
+      "contactPerson": "Pooja Mehta",
+      "phone": "9810998877",
+      "email": "pooja.cleaners@gmail.com",
+      "industry": "Facility Management & Sanitation",
+      "businessType": "Small Business / Shop",
+      "verificationStatus": "Contact Verified",
+      "gstOrGovtId": "09AABCE3321D1ZN",
+      "address": {
+        "state": "Uttar Pradesh",
+        "city": "Vaishali",
+        "area": "Sector 4",
+        "pincode": "201010",
+        "coordinates": {
+          "lat": 28.6472,
+          "lng": 77.3398
+        }
+      },
+      "rating": 4.6,
+      "jobsPostedCount": 7,
+      "activeJobsCount": 3,
+      "hiredWorkersCount": 20,
+      "aboutCompany": "Corporate office sanitization, post-construction cleaning, and residential deep scrub."
+    }
+  ],
+  "jobs": [
+    {
+      "_id": "job_sharma_elec_01",
+      "employerId": "usr_sharma_services",
+      "employerProfileId": "ep_sharma_services",
+      "companyName": "Sharma Electrical Services",
+      "title": "Commercial Electrician Required for Office Rewiring",
+      "category": "Electrician",
+      "requiredSkills": [
+        "Electrician",
+        "Wireman"
+      ],
+      "description": "Need an experienced electrician for 3-phase wiring, DB dressing, and LED fixture installations in a newly leased corporate floor at H-Block Sector 63 Noida. Tools provided on site.",
+      "requiredExperience": "1–3 years",
+      "vacancies": 2,
+      "filledVacancies": 0,
+      "offeredWage": 900,
+      "wageType": "daily",
+      "workDuration": "5 Days (extendable)",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "Direct UPI or Cash disbursement at 6:00 PM daily. Zero deduction.",
+      "deductions": "None. Full ₹900 paid in hand daily.",
+      "overtimeTerms": "₹140/hour overtime compensation for any work beyond 8 hours.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Plot H-14, Ground Floor, Sector 63",
+        "area": "Sector 63",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6271,
+          "lng": 77.382
+        }
+      },
+      "startDate": "2026-02-22T00:00:00.000Z",
+      "endDate": "2026-02-27T00:00:00.000Z",
+      "workTimings": "9:00 AM - 6:00 PM (1 hr lunch)",
+      "employerContact": {
+        "phone": "9811445566",
+        "personName": "Sunil Sharma"
+      },
+      "status": "active",
+      "applicantsCount": 1,
+      "shortlistedCount": 0,
+      "isReported": false,
+      "reportCount": 0,
+      "createdAt": "2026-02-20T00:00:00.000Z"
+    },
+    {
+      "_id": "job_indirapuram_plumb_02",
+      "employerId": "usr_emp_anand",
+      "employerProfileId": "ep_anand_plumbing",
+      "companyName": "Apex Pipe & Sanitary Solutions",
+      "title": "Master Plumber for High-Rise Sanitary Fitouts",
+      "category": "Plumber",
+      "requiredSkills": [
+        "Plumber",
+        "Pipe Fitter"
+      ],
+      "description": "Urgent requirement for sanitary pipe fitting, CPVC concealed lines, and bathroom fixture installation in Indirapuram society.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 3,
+      "filledVacancies": 1,
+      "offeredWage": 900,
+      "wageType": "daily",
+      "workDuration": "10 Days",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "Same day payment via cash/UPI upon engineer checklist sign-off.",
+      "deductions": "No deductions.",
+      "overtimeTerms": "₹120/hr overtime.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Tower B, Ahinsa Khand 2",
+        "area": "Indirapuram",
+        "city": "Ghaziabad",
+        "state": "Uttar Pradesh",
+        "pincode": "201014",
+        "coordinates": {
+          "lat": 28.6415,
+          "lng": 77.3712
+        }
+      },
+      "startDate": "2026-02-23T00:00:00.000Z",
+      "workTimings": "9:30 AM - 6:30 PM",
+      "employerContact": {
+        "phone": "9871223344",
+        "personName": "Anand Singh"
+      },
+      "status": "active",
+      "applicantsCount": 2,
+      "shortlistedCount": 1,
+      "isReported": false
+    },
+    {
+      "_id": "job_gupta_carpenter_03",
+      "employerId": "usr_emp_gupta",
+      "employerProfileId": "ep_gupta_decor",
+      "companyName": "Gupta Home Decor & Woodcraft",
+      "title": "Skilled Carpenter for Modular Kitchen Assembly",
+      "category": "Carpenter",
+      "requiredSkills": [
+        "Carpenter",
+        "Furniture Maker"
+      ],
+      "description": "Assembling pre-laminated marine ply kitchen carcass, soft-close hinges, and hydraulic channels.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 2,
+      "filledVacancies": 0,
+      "offeredWage": 1000,
+      "wageType": "daily",
+      "workDuration": "7 Days",
+      "paymentFrequency": "Weekly every Saturday",
+      "paymentTerms": "Weekly bank transfer/UPI with advance tea allowance provided daily.",
+      "deductions": "None.",
+      "overtimeTerms": "₹150/hr overtime.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Atta Market, Sector 18",
+        "area": "Sector 18",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.5708,
+          "lng": 77.3271
+        }
+      },
+      "startDate": "2026-02-24T00:00:00.000Z",
+      "workTimings": "10:00 AM - 7:00 PM",
+      "employerContact": {
+        "phone": "9891004455",
+        "personName": "Vikas Gupta"
+      },
+      "status": "active",
+      "applicantsCount": 1
+    },
+    {
+      "_id": "job_verma_mason_04",
+      "employerId": "usr_emp_verma",
+      "employerProfileId": "ep_verma_builders",
+      "companyName": "Verma Infrastructure & Masonry",
+      "title": "Tile Layer & Brick Mason Required",
+      "category": "Mason",
+      "requiredSkills": [
+        "Mason",
+        "Tile Layer"
+      ],
+      "description": "Laying 2x2 vitrified floor tiles and skirting for duplex renovation. Precision laser level provided.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 4,
+      "filledVacancies": 1,
+      "offeredWage": 850,
+      "wageType": "daily",
+      "workDuration": "14 Days",
+      "paymentFrequency": "Weekly every Saturday",
+      "paymentTerms": "Saturday cash payout with signed voucher.",
+      "deductions": "None.",
+      "overtimeTerms": "₹100/hr overtime.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Sector 4, Near Metro Station",
+        "area": "Vaishali",
+        "city": "Ghaziabad",
+        "state": "Uttar Pradesh",
+        "pincode": "201010",
+        "coordinates": {
+          "lat": 28.6472,
+          "lng": 77.3398
+        }
+      },
+      "startDate": "2026-02-22T00:00:00.000Z",
+      "workTimings": "8:30 AM - 5:30 PM",
+      "employerContact": {
+        "phone": "9811883344",
+        "personName": "Rajeev Verma"
+      },
+      "status": "active",
+      "applicantsCount": 3
+    },
+    {
+      "_id": "job_painter_sec62_05",
+      "employerId": "usr_sharma_services",
+      "employerProfileId": "ep_sharma_services",
+      "companyName": "Sharma Electrical Services",
+      "title": "Interior Wall Painter & Putty Specialist",
+      "category": "Painter",
+      "requiredSkills": [
+        "Painter",
+        "Wall Putty Worker"
+      ],
+      "description": "Applying double coat acrylic emulsion and Birla putty smoothing for newly partitioned office cabins in Sector 62.",
+      "requiredExperience": "1–3 years",
+      "vacancies": 2,
+      "filledVacancies": 0,
+      "offeredWage": 800,
+      "wageType": "daily",
+      "workDuration": "4 Days",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "Daily UPI transfer right at site exit.",
+      "deductions": "None.",
+      "overtimeTerms": "₹110/hr overtime.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "C-Block, Electronic City, Sector 62",
+        "area": "Sector 62",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201309",
+        "coordinates": {
+          "lat": 28.628,
+          "lng": 77.3649
+        }
+      },
+      "startDate": "2026-02-23T00:00:00.000Z",
+      "workTimings": "9:00 AM - 6:00 PM",
+      "employerContact": {
+        "phone": "9811445566",
+        "personName": "Sunil Sharma"
+      },
+      "status": "active",
+      "applicantsCount": 1
+    },
+    {
+      "_id": "job_cleaner_vaishali_06",
+      "employerId": "usr_emp_mehta",
+      "employerProfileId": "ep_clean_express",
+      "companyName": "Express Facility & Deep Cleaning",
+      "title": "Commercial Floor Cleaner & Sanitation Worker",
+      "category": "Cleaner",
+      "requiredSkills": [
+        "Cleaner",
+        "Deep Cleaning Specialist"
+      ],
+      "description": "Machine scrubbing, glass cleaning, and washroom sanitation for newly opened healthcare clinic.",
+      "requiredExperience": "Fresher",
+      "vacancies": 3,
+      "filledVacancies": 0,
+      "offeredWage": 700,
+      "wageType": "daily",
+      "workDuration": "3 Days",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "Immediate cash payment after supervisor check.",
+      "deductions": "None.",
+      "overtimeTerms": "₹100/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Sector 3",
+        "area": "Vaishali",
+        "city": "Ghaziabad",
+        "state": "Uttar Pradesh",
+        "pincode": "201010",
+        "coordinates": {
+          "lat": 28.6472,
+          "lng": 77.3398
+        }
+      },
+      "startDate": "2026-02-22T00:00:00.000Z",
+      "workTimings": "8:00 AM - 5:00 PM",
+      "employerContact": {
+        "phone": "9810998877",
+        "personName": "Pooja Mehta"
+      },
+      "status": "active",
+      "applicantsCount": 2
+    },
+    {
+      "_id": "job_mechanic_sec63_07",
+      "employerId": "usr_sharma_services",
+      "employerProfileId": "ep_sharma_services",
+      "companyName": "Sharma Electrical Services",
+      "title": "Diesel Generator & Motor Mechanic",
+      "category": "Mechanic",
+      "requiredSkills": [
+        "Mechanic",
+        "Motor Winding"
+      ],
+      "description": "Servicing standby 125kVA generator, fuel line cleaning, belt tensioning and pump calibration.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 1,
+      "filledVacancies": 0,
+      "offeredWage": 950,
+      "wageType": "daily",
+      "workDuration": "2 Days",
+      "paymentFrequency": "Upon Job Completion",
+      "paymentTerms": "Direct UPI upon DG test run clearance.",
+      "deductions": "None.",
+      "overtimeTerms": "₹150/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "B-Block, Sector 63",
+        "area": "Sector 63",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6271,
+          "lng": 77.382
+        }
+      },
+      "startDate": "2026-02-23T00:00:00.000Z",
+      "workTimings": "9:30 AM - 6:30 PM",
+      "employerContact": {
+        "phone": "9811445566",
+        "personName": "Sunil Sharma"
+      },
+      "status": "active",
+      "applicantsCount": 1
+    },
+    {
+      "_id": "job_welder_sec63_08",
+      "employerId": "usr_emp_verma",
+      "employerProfileId": "ep_verma_builders",
+      "companyName": "Verma Infrastructure & Masonry",
+      "title": "Arc Welder for Shed Fabrication",
+      "category": "Welder",
+      "requiredSkills": [
+        "Welder",
+        "Iron Worker"
+      ],
+      "description": "MIG/ARC welding for MS hollow pipes, roof trusses, and staircase railing.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 2,
+      "filledVacancies": 0,
+      "offeredWage": 900,
+      "wageType": "daily",
+      "workDuration": "6 Days",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "Cash or UPI daily.",
+      "deductions": "None.",
+      "overtimeTerms": "₹130/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "D-Block Industrial Area, Sector 63",
+        "area": "Sector 63",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6271,
+          "lng": 77.382
+        }
+      },
+      "startDate": "2026-02-24T00:00:00.000Z",
+      "workTimings": "9:00 AM - 6:00 PM",
+      "employerContact": {
+        "phone": "9811883344",
+        "personName": "Rajeev Verma"
+      },
+      "status": "active",
+      "applicantsCount": 0
+    },
+    {
+      "_id": "job_delivery_sec62_09",
+      "employerId": "usr_emp_mehta",
+      "employerProfileId": "ep_clean_express",
+      "companyName": "Express Facility & Deep Cleaning",
+      "title": "Local Hyperlocal Material Runner & Delivery Worker",
+      "category": "Delivery",
+      "requiredSkills": [
+        "Delivery",
+        "Two-Wheeler Driver"
+      ],
+      "description": "Delivering cleaning supplies and light machinery parts between Sector 62 and Indirapuram job sites. Two-wheeler petrol reimbursed at ₹3.5/km.",
+      "requiredExperience": "Fresher",
+      "vacancies": 2,
+      "filledVacancies": 0,
+      "offeredWage": 750,
+      "wageType": "daily",
+      "workDuration": "30 Days",
+      "paymentFrequency": "Weekly every Saturday",
+      "paymentTerms": "Weekly UPI transfer + Daily fuel reimbursement.",
+      "deductions": "None.",
+      "overtimeTerms": "₹100/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Sector 62 Metro Hub",
+        "area": "Sector 62",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201309",
+        "coordinates": {
+          "lat": 28.628,
+          "lng": 77.3649
+        }
+      },
+      "startDate": "2026-02-22T00:00:00.000Z",
+      "workTimings": "9:00 AM - 6:00 PM",
+      "employerContact": {
+        "phone": "9810998877",
+        "personName": "Pooja Mehta"
+      },
+      "status": "active",
+      "applicantsCount": 1
+    },
+    {
+      "_id": "job_warning_demo_10",
+      "employerId": "usr_emp_anand",
+      "employerProfileId": "ep_anand_plumbing",
+      "companyName": "Apex Pipe & Sanitary Solutions",
+      "title": "Plumber Assistant Needed (Urgent Help)",
+      "category": "Plumber",
+      "requiredSkills": [
+        "Plumber"
+      ],
+      "description": "Need helping hand for digging trench and lifting heavy GI pipes. Payment details to be negotiated on site after work.",
+      "requiredExperience": "Any",
+      "vacancies": 1,
+      "filledVacancies": 0,
+      "offeredWage": 500,
+      "wageType": "daily",
+      "workDuration": "1 Day",
+      "paymentFrequency": "Upon Job Completion",
+      "paymentTerms": "Payment discussed after work",
+      "deductions": "Unknown / Not specified by employer",
+      "overtimeTerms": "No overtime specified",
+      "wageTransparencyWarnings": [
+        "Wage (₹500) is significantly below the minimum local trade baseline (₹700).",
+        "Payment terms are unspecified: \"Payment discussed after work\" represents payment risk.",
+        "No clear overtime or meal terms provided."
+      ],
+      "location": {
+        "address": "Near Old Bus Stand",
+        "area": "Ghaziabad",
+        "city": "Ghaziabad",
+        "state": "Uttar Pradesh",
+        "pincode": "201001",
+        "coordinates": {
+          "lat": 28.6692,
+          "lng": 77.4538
+        }
+      },
+      "startDate": "2026-02-23T00:00:00.000Z",
+      "workTimings": "8:00 AM - 7:00 PM",
+      "employerContact": {
+        "phone": "9871223344",
+        "personName": "Anand Singh"
+      },
+      "status": "active",
+      "applicantsCount": 0,
+      "isReported": true,
+      "reportCount": 1
+    },
+    {
+      "_id": "job_elec_grnoida_11",
+      "employerId": "usr_sharma_services",
+      "employerProfileId": "ep_sharma_services",
+      "companyName": "Sharma Electrical Services",
+      "title": "Solar Panel Inverter Wireman",
+      "category": "Electrician",
+      "requiredSkills": [
+        "Electrician",
+        "Solar Installer"
+      ],
+      "description": "DC cable pulling and inverter junction box mounting for rooftop solar system in Greater Noida Knowledge Park.",
+      "requiredExperience": "1–3 years",
+      "vacancies": 2,
+      "filledVacancies": 0,
+      "offeredWage": 950,
+      "wageType": "daily",
+      "workDuration": "7 Days",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "UPI payment daily at 6:00 PM.",
+      "deductions": "None.",
+      "overtimeTerms": "₹140/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Knowledge Park III",
+        "area": "Greater Noida",
+        "city": "Greater Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201310",
+        "coordinates": {
+          "lat": 28.4744,
+          "lng": 77.504
+        }
+      },
+      "startDate": "2026-02-24T00:00:00.000Z",
+      "workTimings": "9:00 AM - 6:00 PM",
+      "employerContact": {
+        "phone": "9811445566",
+        "personName": "Sunil Sharma"
+      },
+      "status": "active",
+      "applicantsCount": 0
+    },
+    {
+      "_id": "job_carpenter_sec50_12",
+      "employerId": "usr_emp_gupta",
+      "employerProfileId": "ep_gupta_decor",
+      "companyName": "Gupta Home Decor & Woodcraft",
+      "title": "Door & Window Frame Polish Worker",
+      "category": "Carpenter",
+      "requiredSkills": [
+        "Carpenter",
+        "Wood Polisher"
+      ],
+      "description": "Melamine and PU spray polishing for solid teak main doors and window frames.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 1,
+      "filledVacancies": 0,
+      "offeredWage": 900,
+      "wageType": "daily",
+      "workDuration": "4 Days",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "Direct cash daily.",
+      "deductions": "None.",
+      "overtimeTerms": "₹130/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Sector 50",
+        "area": "Sector 50",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.5818,
+          "lng": 77.3685
+        }
+      },
+      "startDate": "2026-02-25T00:00:00.000Z",
+      "workTimings": "9:30 AM - 6:00 PM",
+      "employerContact": {
+        "phone": "9891004455",
+        "personName": "Vikas Gupta"
+      },
+      "status": "active",
+      "applicantsCount": 0
+    },
+    {
+      "_id": "job_clean_sec62_13",
+      "employerId": "usr_emp_mehta",
+      "employerProfileId": "ep_clean_express",
+      "companyName": "Express Facility & Deep Cleaning",
+      "title": "Post-Construction Deep Cleaning Crew",
+      "category": "Cleaner",
+      "requiredSkills": [
+        "Cleaner",
+        "Deep Cleaning Specialist"
+      ],
+      "description": "Removing cement stains, window glue, and buffing marble flooring for newly handed-over software office.",
+      "requiredExperience": "Less than 1 year",
+      "vacancies": 4,
+      "filledVacancies": 2,
+      "offeredWage": 750,
+      "wageType": "daily",
+      "workDuration": "3 Days",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "Cash upon shift end.",
+      "deductions": "None.",
+      "overtimeTerms": "₹110/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Block B, Sector 62",
+        "area": "Sector 62",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201309",
+        "coordinates": {
+          "lat": 28.628,
+          "lng": 77.3649
+        }
+      },
+      "startDate": "2026-02-23T00:00:00.000Z",
+      "workTimings": "9:00 AM - 6:00 PM",
+      "employerContact": {
+        "phone": "9810998877",
+        "personName": "Pooja Mehta"
+      },
+      "status": "active",
+      "applicantsCount": 2
+    },
+    {
+      "_id": "job_mason_indirapuram_14",
+      "employerId": "usr_emp_verma",
+      "employerProfileId": "ep_verma_builders",
+      "companyName": "Verma Infrastructure & Masonry",
+      "title": "Boundary Wall Bricklayer & Plasterer",
+      "category": "Mason",
+      "requiredSkills": [
+        "Mason",
+        "Plaster Worker"
+      ],
+      "description": "Constructing 9-inch brick wall with sand-cement plaster finish.",
+      "requiredExperience": "1–3 years",
+      "vacancies": 2,
+      "filledVacancies": 0,
+      "offeredWage": 850,
+      "wageType": "daily",
+      "workDuration": "8 Days",
+      "paymentFrequency": "Weekly every Saturday",
+      "paymentTerms": "Saturday cash payout with signed voucher.",
+      "deductions": "None.",
+      "overtimeTerms": "₹120/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Gyan Khand 1",
+        "area": "Indirapuram",
+        "city": "Ghaziabad",
+        "state": "Uttar Pradesh",
+        "pincode": "201014",
+        "coordinates": {
+          "lat": 28.6415,
+          "lng": 77.3712
+        }
+      },
+      "startDate": "2026-02-24T00:00:00.000Z",
+      "workTimings": "8:30 AM - 5:30 PM",
+      "employerContact": {
+        "phone": "9811883344",
+        "personName": "Rajeev Verma"
+      },
+      "status": "active",
+      "applicantsCount": 1
+    },
+    {
+      "_id": "job_painter_vaishali_15",
+      "employerId": "usr_emp_gupta",
+      "employerProfileId": "ep_gupta_decor",
+      "companyName": "Gupta Home Decor & Woodcraft",
+      "title": "Waterproofing & Exterior Texture Painter",
+      "category": "Painter",
+      "requiredSkills": [
+        "Painter",
+        "Waterproofing Technician"
+      ],
+      "description": "Applying Dr. Fixit damp-proof coating and exterior weather-shield paint on terrace wall parapets.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 2,
+      "filledVacancies": 0,
+      "offeredWage": 850,
+      "wageType": "daily",
+      "workDuration": "5 Days",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "Daily UPI transfer at 6:00 PM.",
+      "deductions": "None.",
+      "overtimeTerms": "₹120/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Sector 1",
+        "area": "Vaishali",
+        "city": "Ghaziabad",
+        "state": "Uttar Pradesh",
+        "pincode": "201010",
+        "coordinates": {
+          "lat": 28.6472,
+          "lng": 77.3398
+        }
+      },
+      "startDate": "2026-02-25T00:00:00.000Z",
+      "workTimings": "9:00 AM - 5:30 PM",
+      "employerContact": {
+        "phone": "9891004455",
+        "personName": "Vikas Gupta"
+      },
+      "status": "active",
+      "applicantsCount": 0
+    },
+    {
+      "_id": "job_elec_indirapuram_16",
+      "employerId": "usr_emp_anand",
+      "employerProfileId": "ep_anand_plumbing",
+      "companyName": "Apex Pipe & Sanitary Solutions",
+      "title": "Pump Panel & Submersible Wiring Electrician",
+      "category": "Electrician",
+      "requiredSkills": [
+        "Electrician",
+        "Motor Winding"
+      ],
+      "description": "Installing automatic water-level controller sensors, starter relays, and 3-phase pump cable connections.",
+      "requiredExperience": "1–3 years",
+      "vacancies": 1,
+      "filledVacancies": 0,
+      "offeredWage": 850,
+      "wageType": "daily",
+      "workDuration": "2 Days",
+      "paymentFrequency": "Upon Job Completion",
+      "paymentTerms": "UPI payment immediately upon successful sensor commissioning.",
+      "deductions": "None.",
+      "overtimeTerms": "₹130/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Niti Khand 2",
+        "area": "Indirapuram",
+        "city": "Ghaziabad",
+        "state": "Uttar Pradesh",
+        "pincode": "201014",
+        "coordinates": {
+          "lat": 28.6415,
+          "lng": 77.3712
+        }
+      },
+      "startDate": "2026-02-23T00:00:00.000Z",
+      "workTimings": "10:00 AM - 6:00 PM",
+      "employerContact": {
+        "phone": "9871223344",
+        "personName": "Anand Singh"
+      },
+      "status": "active",
+      "applicantsCount": 1
+    },
+    {
+      "_id": "job_monthly_carpenter_17",
+      "employerId": "usr_emp_gupta",
+      "employerProfileId": "ep_gupta_decor",
+      "companyName": "Gupta Home Decor & Woodcraft",
+      "title": "Workshop Carpenter (Monthly Position)",
+      "category": "Carpenter",
+      "requiredSkills": [
+        "Carpenter",
+        "Wood Craftsman"
+      ],
+      "description": "Full-time monthly craftsman for custom furniture fabrication, laminate pressing, and edge-banding in factory.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 2,
+      "filledVacancies": 1,
+      "offeredWage": 24000,
+      "wageType": "monthly",
+      "workDuration": "Full-time permanent",
+      "paymentFrequency": "Monthly on 1st",
+      "paymentTerms": "Direct NEFT/IMPS bank transfer on the 1st of every month. PF & ESI included.",
+      "deductions": "Standard statutory PF deduction matching employer contribution.",
+      "overtimeTerms": "₹120/hr overtime.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Sector 10",
+        "area": "Noida",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.5912,
+          "lng": 77.319
+        }
+      },
+      "startDate": "2026-03-01T00:00:00.000Z",
+      "workTimings": "9:30 AM - 6:30 PM (Mon-Sat)",
+      "employerContact": {
+        "phone": "9891004455",
+        "personName": "Vikas Gupta"
+      },
+      "status": "active",
+      "applicantsCount": 2
+    },
+    {
+      "_id": "job_delivery_express_18",
+      "employerId": "usr_emp_mehta",
+      "employerProfileId": "ep_clean_express",
+      "companyName": "Express Facility & Deep Cleaning",
+      "title": "Equipment Van Driver",
+      "category": "Driver",
+      "requiredSkills": [
+        "Driver",
+        "Delivery Driver"
+      ],
+      "description": "Driving Tata Ace delivery van carrying scrubbers and vacuums to commercial client facilities across NCR.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 1,
+      "filledVacancies": 0,
+      "offeredWage": 850,
+      "wageType": "daily",
+      "workDuration": "15 Days",
+      "paymentFrequency": "Weekly every Saturday",
+      "paymentTerms": "Weekly bank payment + daily food allowance of ₹100.",
+      "deductions": "None.",
+      "overtimeTerms": "₹120/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Sector 62",
+        "area": "Sector 62",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201309",
+        "coordinates": {
+          "lat": 28.628,
+          "lng": 77.3649
+        }
+      },
+      "startDate": "2026-02-23T00:00:00.000Z",
+      "workTimings": "8:00 AM - 5:00 PM",
+      "employerContact": {
+        "phone": "9810998877",
+        "personName": "Pooja Mehta"
+      },
+      "status": "active",
+      "applicantsCount": 1
+    },
+    {
+      "_id": "job_mechanic_bike_19",
+      "employerId": "usr_sharma_services",
+      "employerProfileId": "ep_sharma_services",
+      "companyName": "Sharma Electrical Services",
+      "title": "Fleet Scooter & Bike Mechanic",
+      "category": "Mechanic",
+      "requiredSkills": [
+        "Mechanic",
+        "Two-Wheeler Technician"
+      ],
+      "description": "Tune up, brake shoe replacement, oil change, and electrical wiring inspection for company field technicians fleet of 12 motorcycles.",
+      "requiredExperience": "1–3 years",
+      "vacancies": 1,
+      "filledVacancies": 0,
+      "offeredWage": 900,
+      "wageType": "daily",
+      "workDuration": "3 Days",
+      "paymentFrequency": "Daily at shift end",
+      "paymentTerms": "Direct cash daily.",
+      "deductions": "None.",
+      "overtimeTerms": "₹120/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "C-Block, Sector 63",
+        "area": "Sector 63",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201301",
+        "coordinates": {
+          "lat": 28.6271,
+          "lng": 77.382
+        }
+      },
+      "startDate": "2026-02-24T00:00:00.000Z",
+      "workTimings": "9:00 AM - 6:00 PM",
+      "employerContact": {
+        "phone": "9811445566",
+        "personName": "Sunil Sharma"
+      },
+      "status": "active",
+      "applicantsCount": 1
+    },
+    {
+      "_id": "job_completed_demo_20",
+      "employerId": "usr_sharma_services",
+      "employerProfileId": "ep_sharma_services",
+      "companyName": "Sharma Electrical Services",
+      "title": "Emergency Generator Line Repair (Completed Work)",
+      "category": "Electrician",
+      "requiredSkills": [
+        "Electrician"
+      ],
+      "description": "Restoration of severed feeder cable during metro road expansion.",
+      "requiredExperience": "3–5 years",
+      "vacancies": 1,
+      "filledVacancies": 1,
+      "offeredWage": 1200,
+      "wageType": "daily",
+      "workDuration": "1 Day",
+      "paymentFrequency": "Upon Job Completion",
+      "paymentTerms": "Immediate cash payment on completion.",
+      "deductions": "None.",
+      "overtimeTerms": "₹200/hr.",
+      "wageTransparencyWarnings": [],
+      "location": {
+        "address": "Sector 62 Metro Roundabout",
+        "area": "Sector 62",
+        "city": "Noida",
+        "state": "Uttar Pradesh",
+        "pincode": "201309",
+        "coordinates": {
+          "lat": 28.628,
+          "lng": 77.3649
+        }
+      },
+      "startDate": "2026-02-15T00:00:00.000Z",
+      "workTimings": "8:00 AM - 4:00 PM",
+      "employerContact": {
+        "phone": "9811445566",
+        "personName": "Sunil Sharma"
+      },
+      "status": "completed",
+      "acceptedWorkerId": "usr_ramesh_kumar",
+      "applicantsCount": 1,
+      "shortlistedCount": 1
+    }
+  ],
+  "applications": [
+    {
+      "_id": "app_ramesh_sharma_01",
+      "jobId": "job_sharma_elec_01",
+      "workerId": "usr_ramesh_kumar",
+      "employerId": "usr_sharma_services",
+      "status": "Applied",
+      "matchScore": {
+        "total": 92,
+        "breakdown": {
+          "skillScore": 95,
+          "locationScore": 90,
+          "wageScore": 100,
+          "availabilityScore": 100
+        },
+        "distanceKm": 2.1,
+        "explanations": [
+          "Direct skill match for Electrician, Wireman.",
+          "Job site is 2.1 km away from your base location (Sector 62 to Sector 63).",
+          "Offered wage ₹900/daily (₹100 above your expected wage!).",
+          "Your immediate availability matches employer timeline perfectly."
+        ]
+      },
+      "coverNote": "Namaste Sharma ji, I live in Sector 62, have 3 years experience in office 3-phase wiring and have all safety tools ready. Available immediately.",
+      "employerNotes": "",
+      "createdAt": "2026-02-21T03:00:00.000Z"
+    },
+    {
+      "_id": "app_imran_plumb_02",
+      "jobId": "job_indirapuram_plumb_02",
+      "workerId": "usr_worker_2",
+      "employerId": "usr_emp_anand",
+      "status": "Shortlisted",
+      "matchScore": {
+        "total": 94,
+        "breakdown": {
+          "skillScore": 100,
+          "locationScore": 100,
+          "wageScore": 100,
+          "availabilityScore": 90
+        },
+        "distanceKm": 0.8,
+        "explanations": [
+          "Direct skill match for Plumber, Pipe Fitter.",
+          "Job is in your exact neighbourhood (Indirapuram).",
+          "Offered wage ₹900 meets your rate.",
+          "Available as requested."
+        ]
+      },
+      "coverNote": "Local plumber with 4 years experience in high rise flats.",
+      "createdAt": "2026-02-20T05:30:00.000Z"
+    },
+    {
+      "_id": "app_suresh_gupta_03",
+      "jobId": "job_gupta_carpenter_03",
+      "workerId": "usr_worker_3",
+      "employerId": "usr_emp_gupta",
+      "status": "Viewed",
+      "matchScore": {
+        "total": 95,
+        "breakdown": {
+          "skillScore": 100,
+          "locationScore": 100,
+          "wageScore": 100,
+          "availabilityScore": 85
+        },
+        "distanceKm": 0.5,
+        "explanations": [
+          "Direct skill match for Carpenter.",
+          "Within walking distance in Sector 18."
+        ]
+      },
+      "createdAt": "2026-02-20T08:45:00.000Z"
+    },
+    {
+      "_id": "app_santosh_painter_04",
+      "jobId": "job_painter_sec62_05",
+      "workerId": "usr_worker_4",
+      "employerId": "usr_sharma_services",
+      "status": "Applied",
+      "matchScore": {
+        "total": 90,
+        "breakdown": {
+          "skillScore": 90,
+          "locationScore": 100,
+          "wageScore": 100,
+          "availabilityScore": 85
+        },
+        "distanceKm": 0.3,
+        "explanations": [
+          "Direct skill match for Painter.",
+          "Located in Sector 62."
+        ]
+      },
+      "createdAt": "2026-02-21T03:40:00.000Z"
+    },
+    {
+      "_id": "app_manoj_mason_05",
+      "jobId": "job_verma_mason_04",
+      "workerId": "usr_worker_5",
+      "employerId": "usr_emp_verma",
+      "status": "Accepted",
+      "matchScore": {
+        "total": 93,
+        "breakdown": {
+          "skillScore": 100,
+          "locationScore": 100,
+          "wageScore": 100,
+          "availabilityScore": 85
+        },
+        "distanceKm": 0.6,
+        "explanations": [
+          "Direct skill match for Mason, Tile Layer."
+        ]
+      },
+      "createdAt": "2026-02-19T04:30:00.000Z"
+    },
+    {
+      "_id": "app_amit_mech_06",
+      "jobId": "job_mechanic_sec63_07",
+      "workerId": "usr_worker_6",
+      "employerId": "usr_sharma_services",
+      "status": "Viewed",
+      "matchScore": {
+        "total": 89,
+        "breakdown": {
+          "skillScore": 95,
+          "locationScore": 100,
+          "wageScore": 100,
+          "availabilityScore": 75
+        },
+        "distanceKm": 1.1,
+        "explanations": [
+          "Direct skill match for Mechanic."
+        ]
+      },
+      "createdAt": "2026-02-20T11:00:00.000Z"
+    },
+    {
+      "_id": "app_deepak_welder_07",
+      "jobId": "job_welder_sec63_08",
+      "workerId": "usr_worker_8",
+      "employerId": "usr_emp_verma",
+      "status": "Applied",
+      "matchScore": {
+        "total": 91,
+        "breakdown": {
+          "skillScore": 100,
+          "locationScore": 95,
+          "wageScore": 100,
+          "availabilityScore": 80
+        },
+        "distanceKm": 1.5,
+        "explanations": [
+          "Direct skill match for Welder."
+        ]
+      },
+      "createdAt": "2026-02-21T01:50:00.000Z"
+    },
+    {
+      "_id": "app_sunita_clean_08",
+      "jobId": "job_cleaner_vaishali_06",
+      "workerId": "usr_worker_9",
+      "employerId": "usr_emp_mehta",
+      "status": "Accepted",
+      "matchScore": {
+        "total": 92,
+        "breakdown": {
+          "skillScore": 100,
+          "locationScore": 90,
+          "wageScore": 100,
+          "availabilityScore": 90
+        },
+        "distanceKm": 2.3,
+        "explanations": [
+          "Direct skill match for Cleaner."
+        ]
+      },
+      "createdAt": "2026-02-19T06:30:00.000Z"
+    },
+    {
+      "_id": "app_virender_del_09",
+      "jobId": "job_delivery_sec62_09",
+      "workerId": "usr_worker_11",
+      "employerId": "usr_emp_mehta",
+      "status": "Shortlisted",
+      "matchScore": {
+        "total": 88,
+        "breakdown": {
+          "skillScore": 90,
+          "locationScore": 100,
+          "wageScore": 100,
+          "availabilityScore": 80
+        },
+        "distanceKm": 0.4,
+        "explanations": [
+          "Direct skill match for Delivery."
+        ]
+      },
+      "createdAt": "2026-02-20T05:15:00.000Z"
+    },
+    {
+      "_id": "app_ramesh_completed_10",
+      "jobId": "job_completed_demo_20",
+      "workerId": "usr_ramesh_kumar",
+      "employerId": "usr_sharma_services",
+      "status": "Completed",
+      "matchScore": {
+        "total": 96,
+        "breakdown": {
+          "skillScore": 100,
+          "locationScore": 100,
+          "wageScore": 100,
+          "availabilityScore": 95
+        },
+        "distanceKm": 0.2,
+        "explanations": [
+          "Emergency generator repair executed on time."
+        ]
+      },
+      "coverNote": "Executed emergency restoration.",
+      "createdAt": "2026-02-15T02:30:00.000Z"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Electrician",
+      "category": "Electrical",
+      "benchmarkWageMin": 750,
+      "benchmarkWageMax": 1100,
+      "demandLevel": "Very High",
+      "icon": "Zap"
+    },
+    {
+      "name": "Wireman",
+      "category": "Electrical",
+      "benchmarkWageMin": 700,
+      "benchmarkWageMax": 1000,
+      "demandLevel": "High",
+      "icon": "Zap"
+    },
+    {
+      "name": "Plumber",
+      "category": "Plumbing",
+      "benchmarkWageMin": 700,
+      "benchmarkWageMax": 1100,
+      "demandLevel": "High",
+      "icon": "Wrench"
+    },
+    {
+      "name": "Pipe Fitter",
+      "category": "Plumbing",
+      "benchmarkWageMin": 750,
+      "benchmarkWageMax": 1150,
+      "demandLevel": "High",
+      "icon": "Wrench"
+    },
+    {
+      "name": "Carpenter",
+      "category": "Woodwork",
+      "benchmarkWageMin": 800,
+      "benchmarkWageMax": 1250,
+      "demandLevel": "High",
+      "icon": "Hammer"
+    },
+    {
+      "name": "Painter",
+      "category": "Painting",
+      "benchmarkWageMin": 650,
+      "benchmarkWageMax": 950,
+      "demandLevel": "Very High",
+      "icon": "Paintbrush"
+    },
+    {
+      "name": "Mason",
+      "category": "Construction",
+      "benchmarkWageMin": 750,
+      "benchmarkWageMax": 1050,
+      "demandLevel": "High",
+      "icon": "HardHat"
+    },
+    {
+      "name": "Mechanic",
+      "category": "Automotive",
+      "benchmarkWageMin": 800,
+      "benchmarkWageMax": 1200,
+      "demandLevel": "Moderate",
+      "icon": "Settings"
+    },
+    {
+      "name": "Welder",
+      "category": "Fabrication",
+      "benchmarkWageMin": 800,
+      "benchmarkWageMax": 1150,
+      "demandLevel": "Moderate",
+      "icon": "Flame"
+    },
+    {
+      "name": "Cleaner",
+      "category": "Sanitation",
+      "benchmarkWageMin": 550,
+      "benchmarkWageMax": 800,
+      "demandLevel": "Very High",
+      "icon": "Sparkles"
+    },
+    {
+      "name": "Delivery",
+      "category": "Logistics",
+      "benchmarkWageMin": 650,
+      "benchmarkWageMax": 900,
+      "demandLevel": "Very High",
+      "icon": "Truck"
+    }
+  ],
+  "reviews": [
+    {
+      "_id": "rev_sharma_to_ramesh",
+      "jobId": "job_completed_demo_20",
+      "fromUserId": "usr_sharma_services",
+      "toUserId": "usr_ramesh_kumar",
+      "fromRole": "employer",
+      "rating": 5,
+      "punctualityScore": 5,
+      "workQualityScore": 5,
+      "communicationScore": 5,
+      "reviewText": "Ramesh is an exceptional wireman. Arrived within 20 minutes for our emergency line fault, restored the feeder cable safely and with zero hassles. Strongly recommended!",
+      "isVerifiedWork": true,
+      "createdAt": "2026-02-15T12:30:00.000Z"
+    },
+    {
+      "_id": "rev_ramesh_to_sharma",
+      "jobId": "job_completed_demo_20",
+      "fromUserId": "usr_ramesh_kumar",
+      "toUserId": "usr_sharma_services",
+      "fromRole": "worker",
+      "rating": 5,
+      "punctualityScore": 5,
+      "workQualityScore": 5,
+      "communicationScore": 5,
+      "reviewText": "Sunil Sharma ji gave clear site instructions, provided proper safety boots and paid full ₹1200 immediately via UPI upon completion. Genuine employer.",
+      "isVerifiedWork": true,
+      "createdAt": "2026-02-15T13:00:00.000Z"
+    }
+  ],
+  "notifications": [
+    {
+      "_id": "notif_ramesh_01",
+      "userId": "usr_ramesh_kumar",
+      "title": "Nearby Job Match Found (92%)",
+      "message": "Sharma Electrical Services posted \"Commercial Electrician Required\" in Sector 63 (2.1 km away).",
+      "type": "info",
+      "actionUrl": "/worker/find-jobs",
+      "isRead": false,
+      "createdAt": "2026-02-21T02:30:00.000Z"
+    },
+    {
+      "_id": "notif_sharma_01",
+      "userId": "usr_sharma_services",
+      "title": "New Candidate Applied!",
+      "message": "Ramesh Kumar (Electrician, 3 yrs exp, 94 Trust Score) applied for your Sector 63 job.",
+      "type": "success",
+      "actionUrl": "/employer/candidates",
+      "isRead": false,
+      "createdAt": "2026-02-21T03:01:00.000Z"
+    }
+  ],
+  "reports": [
+    {
+      "_id": "rep_demo_01",
+      "reportedBy": "usr_worker_2",
+      "targetType": "job",
+      "targetId": "job_warning_demo_10",
+      "targetName": "Plumber Assistant Needed (Urgent Help)",
+      "reason": "Wage Fraud / Unpaid",
+      "details": "Employer stated payment would be negotiated on site after 11 hours of hard manual digging. Wage stated ₹500 is way below trade safety guidelines.",
+      "evidenceUrls": [],
+      "status": "Pending",
+      "adminNotes": "",
+      "actionTaken": "Flagged for moderation",
+      "createdAt": "2026-02-21T03:30:00.000Z"
+    }
+  ]
 }

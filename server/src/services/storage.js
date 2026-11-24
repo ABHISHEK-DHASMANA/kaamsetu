@@ -127,6 +127,7 @@ export const flushStorage = async () => {
 
 export const saveStorage = () => {
   if (mongoCollection) return;
+  if (process.env.NODE_ENV === 'test' || process.argv.includes('--test') || process.execArgv.includes('--test')) return;
   try {
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
     fs.writeFileSync(DATA_FILE, JSON.stringify(inMemoryDb, null, 2), 'utf-8');
