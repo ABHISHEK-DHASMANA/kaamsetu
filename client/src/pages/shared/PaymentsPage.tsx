@@ -312,7 +312,35 @@ export const PaymentsPage: React.FC = () => {
                     <div className="font-mono text-sm break-all">{quote.workerUpiId}</div>
                     <div className="flex justify-center rounded-xl bg-white p-3"><QRCodeSVG value={directUpiLink} size={190} level="M" includeMargin /></div>
                     <p className="text-center text-[11px] text-brand-muted">Scan with any UPI app or use the button below</p>
-                    <a href={directUpiLink} className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-xs font-bold">Pay with any UPI app</a>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <a
+                        href={directUpiLink}
+                        onClick={() => setMessage('Trying to open a UPI app. If this device does not have a compatible UPI app, scan the QR code with your phone or copy the UPI ID and pay manually. Do not submit a UTR until your UPI app confirms the transfer.')}
+                        className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-xs font-bold"
+                      >
+                        Open UPI app to pay
+                      </a>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(quote.workerUpiId || '');
+                            setMessage('Worker UPI ID copied. Open your UPI app and pay the agreed amount.');
+                          } catch {
+                            window.prompt('Copy worker UPI ID:', quote.workerUpiId || '');
+                          }
+                        }}
+                        className="inline-flex items-center justify-center rounded-lg border border-brand-border px-4 py-2 text-xs font-bold text-brand-dark"
+                      >
+                        Copy UPI ID
+                      </button>
+                    </div>
+                    <p className="text-center text-[11px] text-brand-muted">
+                      UPI apps open only on devices with a compatible app installed. On a computer, scan this QR code with your phone.
+                    </p>
+                    <p className="text-center text-[11px] text-amber-800">
+                      After your UPI app confirms the transfer, use “I’ve paid — submit UTR” in the payment record below. That step only reports the transfer; the worker must still confirm receipt.
+                    </p>
                   </div>
                 )}
                 {isManualPayment && <p className="text-[11px] text-amber-800">First the worker must approve the proposed amount. After agreement, the employer transfers via UPI and records the UPI reference. The worker confirms only after checking their account; this is not bank verification.</p>}
@@ -371,7 +399,7 @@ export const PaymentsPage: React.FC = () => {
               <div className="flex flex-wrap items-center gap-3"><strong>{money(payment.amount)}</strong><span className="text-xs font-bold">{payment.status === 'paid' ? (payment.verificationLevel === 'party_confirmed' ? 'Worker confirmed · not bank-verified' : payment.method === 'direct_upi' ? 'Worker-confirmed (legacy)' : 'Confirmed') : payment.status === 'disputed' ? 'Disputed' : payment.status === 'requested_by_worker' ? 'Amount request · awaiting worker' : payment.status === 'countered_by_worker' ? 'Worker suggested amount · awaiting employer' : ['approved_by_worker', 'approved_by_employer'].includes(payment.status) ? 'Amount agreed · awaiting UPI transfer' : 'Employer reported · awaiting worker'}</span>
                 {isWorker && payment.status === 'requested_by_worker' && <div className="flex flex-wrap gap-2"><button disabled={busy} onClick={() => respondToRequest(payment, 'accept')} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Accept amount</button><button disabled={busy} onClick={() => respondToRequest(payment, 'counter')} className="rounded-lg border border-brand-primary text-brand-primary px-3 py-2 text-xs font-bold">Suggest amount</button><button disabled={busy} onClick={() => respondToRequest(payment, 'reject')} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Reject</button></div>}
                 {!isWorker && payment.status === 'countered_by_worker' && <button disabled={busy} onClick={() => approveCounter(payment)} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Approve revised amount</button>}
-                {!isWorker && ['approved_by_worker', 'approved_by_employer'].includes(payment.status) && <button disabled={busy} onClick={() => reportTransfer(payment)} className="rounded-lg bg-brand-primary text-white px-3 py-2 text-xs font-bold">{payment.method === 'cash' ? 'Cash handed over' : 'UPI paid · add reference'}</button>}
+                {!isWorker && ['approved_by_worker', 'approved_by_employer'].includes(payment.status) && <button disabled={busy} onClick={() => reportTransfer(payment)} className="rounded-lg bg-brand-primary text-white px-3 py-2 text-xs font-bold">{payment.method === 'cash' ? 'Cash handed over' : 'I’ve paid — submit UTR'}</button>}
                 {isWorker && payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => confirmLegacyPayment(payment)} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold"><CheckCircle2 className="w-3.5 h-3.5 inline mr-1"/>Confirm received</button>}
                 {payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => disputeLegacyPayment(payment._id)} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Dispute</button>}
               </div>
