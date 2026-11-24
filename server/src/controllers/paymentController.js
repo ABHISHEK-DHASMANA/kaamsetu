@@ -37,7 +37,7 @@ export const listMyPayments = (req, res) => {
   ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(hydratePayment);
 
   const paid = own.filter(p => p.status === 'paid');
-  const pending = own.filter(p => p.status === 'awaiting_worker_confirmation');
+  const pending = own.filter(p => ['awaiting_worker_confirmation', 'requested_by_worker', 'countered_by_worker', 'approved_by_worker', 'approved_by_employer'].includes(p.status));
   res.json({
     success: true,
     payments: own,
@@ -211,6 +211,7 @@ export const reportDirectPayment = async (req, res) => {
     const payment = findOne('payments', p => idOf(p._id || p.id) === idOf(req.params.id));
     if (!payment) return res.status(404).json({ success: false, message: 'Payment request not found.' });
     if (idOf(payment.employerId) !== employerId) return res.status(403).json({ success: false, message: 'Only the requesting employer can report payment.' });
+    if (payment.method !== 'direct_upi') return res.status(409).json({ success: false, message: 'This transfer-report action is only for direct UPI payments.' });
     if (!['approved_by_worker', 'approved_by_employer'].includes(payment.status)) return res.status(409).json({ success: false, message: 'Both parties must agree on the amount before payment can be reported.' });
     const reference = String(req.body?.transactionReference || '').trim();
     if (reference.length < 4 || reference.length > 100) return res.status(400).json({ success: false, message: 'Enter the UPI transaction reference (4–100 characters).' });
