@@ -23,18 +23,12 @@ const getConfig = () => {
   };
 };
 
-// PhonePe PG V2 Standard Checkout: leave the UPI app allowlist unset so
-// every UPI app enabled for this merchant/device can be offered. INTENT is
-// suited to supported mobile apps; QR also supports desktop-to-phone payment.
+// Use PhonePe's default PG V2 Standard Checkout payment configuration.
+// This restores the previously working request shape and lets the merchant's
+// approved payment methods be selected by PhonePe at checkout.
 export const buildPhonePePaymentFlow = redirectUrl => ({
   type: 'PG_CHECKOUT',
-  merchantUrls: { redirectUrl },
-  paymentModeConfig: {
-    version: 'V2',
-    enabledPaymentModes: [
-      { type: 'UPI', flows: ['INTENT', 'QR'] }
-    ]
-  }
+  merchantUrls: { redirectUrl }
 });
 
 const readJson = async response => {
