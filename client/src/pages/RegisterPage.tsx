@@ -184,8 +184,8 @@ export const RegisterPage: React.FC = () => {
       const result = await apiRegister(payload);
       if (!result.success) throw new Error(result.message || 'KaamSetu could not save your account.');
       // Keep the Firebase session only until the KaamSetu profile is saved.
-      await signOut(firebaseAuth);
       firebaseUser = null;
+      await signOut(firebaseAuth);
       navigate('/login?registered=email');
     } catch (err: any) {
       let message = err.message || 'Registration failed.';
