@@ -81,7 +81,7 @@ export const getPaymentQuote = async (req, res) => {
     if (!application || idOf(application.employerId) !== employerId) {
       return res.status(404).json({ success: false, message: 'Job application not found for this employer.' });
     }
-    if (application.status !== 'PaymentPending' || !['direct_upi', 'cash'].includes(application.paymentMode)) {
+    if (application.status !== 'PaymentPending' || !['direct_upi', 'cash', 'online'].includes(application.paymentMode)) {
       return res.status(409).json({ success: false, message: 'This job is not awaiting direct UPI or cash payment.' });
     }
     const job = findOne('jobs', j => idOf(j._id || j.id) === idOf(application.jobId));
@@ -91,8 +91,8 @@ export const getPaymentQuote = async (req, res) => {
       return res.status(422).json({ success: false, message: 'The agreed payment cannot be calculated safely. Please contact support.' });
     }
     const worker = findOne('workerProfiles', p => idOf(p.userId) === idOf(application.workerId));
-    const workerUpiId = application.paymentMode === 'direct_upi' ? String(worker?.upiId || '').trim() : null;
-    if (application.paymentMode === 'direct_upi' && (!workerUpiId || !/^[\w.\-]{2,256}@[\w]{2,64}$/.test(workerUpiId))) {
+    const workerUpiId = ['direct_upi', 'online'].includes(application.paymentMode) ? String(worker?.upiId || '').trim() : null;
+    if (['direct_upi', 'online'].includes(application.paymentMode) && (!workerUpiId || !/^[\w.\-]{2,256}@[\w]{2,64}$/.test(workerUpiId))) {
       return res.status(422).json({ success: false, message: 'The worker has not added a valid UPI ID yet. Ask them to save it in Worker Profile before proceeding.' });
     }
     const existing = findOne('payments', p => idOf(p.applicationId) === idOf(application._id || application.id) && !['cancelled', 'rejected'].includes(p.status));
@@ -128,7 +128,8 @@ export const createPayment = async (req, res) => {
     }
     const application = findOne('applications', a => idOf(a._id || a.id) === String(applicationId));
     if (!application || idOf(application.employerId) !== employerId) return res.status(404).json({ success: false, message: 'Job application not found for this employer.' });
-    if (application.status !== 'PaymentPending' || application.paymentMode !== method) return res.status(409).json({ success: false, message: 'The selected job is not awaiting this payment method.' });
+    const compatibleMode = application.paymentMode === method || (method === 'direct_upi' && application.paymentMode === 'online');
+    if (application.status !== 'PaymentPending' || !compatibleMode) return res.status(409).json({ success: false, message: 'The selected job is not awaiting this payment method.' });
     const existing = findOne('payments', p => idOf(p.applicationId) === String(applicationId) && !['cancelled', 'rejected'].includes(p.status));
     if (existing) return res.status(409).json({ success: false, message: 'A payment request already exists for this job. Review its status below.' });
     if (method === 'direct_upi') {
@@ -212,7 +213,8 @@ export const reportDirectPayment = async (req, res) => {
     if (!payment) return res.status(404).json({ success: false, message: 'Payment request not found.' });
     if (idOf(payment.employerId) !== employerId) return res.status(403).json({ success: false, message: 'Only the requesting employer can report payment.' });
     const application = findOne('applications', a => idOf(a._id || a.id) === idOf(payment.applicationId));
-    if (!application || application.status !== 'PaymentPending' || application.paymentMode !== payment.method) return res.status(409).json({ success: false, message: 'This job is no longer awaiting this payment. Refresh before continuing.' });
+    const compatibleMode = application && (application.paymentMode === payment.method || (payment.method === 'direct_upi' && application.paymentMode === 'online'));
+    if (!application || application.status !== 'PaymentPending' || !compatibleMode) return res.status(409).json({ success: false, message: 'This job is no longer awaiting this payment. Refresh before continuing.' });
     if (!['direct_upi', 'cash'].includes(payment.method)) return res.status(409).json({ success: false, message: 'This payment method cannot be reported here.' });
     if (!['approved_by_worker', 'approved_by_employer'].includes(payment.status)) return res.status(409).json({ success: false, message: 'Both parties must agree on the amount before payment can be reported.' });
     const reference = String(req.body?.transactionReference || '').trim();
