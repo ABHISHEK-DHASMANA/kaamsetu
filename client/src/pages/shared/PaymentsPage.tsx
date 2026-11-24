@@ -212,11 +212,12 @@ export const PaymentsPage: React.FC = () => {
   };
 
   const reportTransfer = async (payment: LegacyPayment) => {
-    const reference = window.prompt('Enter the UPI transaction reference from your UPI app:');
-    if (!reference) return;
+    const reference = payment.method === 'direct_upi' ? window.prompt('Enter the UPI transaction reference from your UPI app:') : '';
+    if (payment.method === 'direct_upi' && !reference) return;
+    if (payment.method === 'cash' && !window.confirm(`Confirm that you have actually handed over ${money(payment.amount)} in cash to the worker.`)) return;
     setBusy(true); setError(''); setMessage('');
-    try { const result = await apiReportDirectPayment(payment._id, reference.trim()); setMessage(result.message); await refresh(); }
-    catch (e: any) { setError(e.message || 'Could not report the UPI transfer.'); }
+    try { const result = await apiReportDirectPayment(payment._id, reference?.trim()); setMessage(result.message); await refresh(); }
+    catch (e: any) { setError(e.message || 'Could not report the payment.'); }
     finally { setBusy(false); }
   };
 
@@ -365,7 +366,7 @@ export const PaymentsPage: React.FC = () => {
               <div className="flex flex-wrap items-center gap-3"><strong>{money(payment.amount)}</strong><span className="text-xs font-bold">{payment.status === 'paid' ? (payment.verificationLevel === 'party_confirmed' ? 'Worker confirmed · not bank-verified' : payment.method === 'direct_upi' ? 'Worker-confirmed (legacy)' : 'Confirmed') : payment.status === 'disputed' ? 'Disputed' : payment.status === 'requested_by_worker' ? 'Amount request · awaiting worker' : payment.status === 'countered_by_worker' ? 'Worker suggested amount · awaiting employer' : ['approved_by_worker', 'approved_by_employer'].includes(payment.status) ? 'Amount agreed · awaiting UPI transfer' : 'Employer reported · awaiting worker'}</span>
                 {isWorker && payment.status === 'requested_by_worker' && <div className="flex flex-wrap gap-2"><button disabled={busy} onClick={() => respondToRequest(payment, 'accept')} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Accept amount</button><button disabled={busy} onClick={() => respondToRequest(payment, 'counter')} className="rounded-lg border border-brand-primary text-brand-primary px-3 py-2 text-xs font-bold">Suggest amount</button><button disabled={busy} onClick={() => respondToRequest(payment, 'reject')} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Reject</button></div>}
                 {!isWorker && payment.status === 'countered_by_worker' && <button disabled={busy} onClick={() => approveCounter(payment)} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold">Approve revised amount</button>}
-                {!isWorker && ['approved_by_worker', 'approved_by_employer'].includes(payment.status) && payment.method === 'direct_upi' && <button disabled={busy} onClick={() => reportTransfer(payment)} className="rounded-lg bg-brand-primary text-white px-3 py-2 text-xs font-bold">I've paid · add UPI reference</button>}
+                {!isWorker && ['approved_by_worker', 'approved_by_employer'].includes(payment.status) && <button disabled={busy} onClick={() => reportTransfer(payment)} className="rounded-lg bg-brand-primary text-white px-3 py-2 text-xs font-bold">{payment.method === 'cash' ? 'Cash handed over' : 'UPI paid · add reference'}</button>}
                 {isWorker && payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => confirmLegacyPayment(payment)} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold"><CheckCircle2 className="w-3.5 h-3.5 inline mr-1"/>Confirm received</button>}
                 {payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => disputeLegacyPayment(payment._id)} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Dispute</button>}
               </div>
