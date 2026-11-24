@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser, sendEmailVerification, signOut } from 'firebase/auth';
 import { firebaseAuth } from '../services/firebase';
 import { apiRegister } from '../services/api';
 import { uploadProfileImage } from '../services/imageUpload';
@@ -140,8 +140,6 @@ export const RegisterPage: React.FC = () => {
         firebaseUser = userCredential.user;
         // 2. Send Firebase native email verification
         await sendEmailVerification(firebaseUser);
-        // Ensure user is signed out until verified
-        await signOut(firebaseAuth);
       } catch (fbErr: any) {
         if (fbErr.code === 'auth/email-already-in-use') {
           throw new Error('An account with this email already exists in Firebase. Please sign in or use a different email.');
@@ -184,11 +182,26 @@ export const RegisterPage: React.FC = () => {
         payload.aboutCompany = aboutCompany;
       }
       const result = await apiRegister(payload);
-      if (result.success) {
-        navigate('/login?registered=email');
-      }
+      if (!result.success) throw new Error(result.message || 'KaamSetu could not save your account.');
+      // Keep the Firebase session only until the KaamSetu profile is saved.
+      await signOut(firebaseAuth);
+      firebaseUser = null;
+      navigate('/login?registered=email');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Registration failed.');
+      let message = err.message || 'Registration failed.';
+      // If the API rejects registration after Firebase created the identity,
+      // remove that just-created identity so the same email can be retried.
+      if (firebaseUser) {
+        try {
+          await deleteUser(firebaseUser);
+        } catch (cleanupError: any) {
+          console.error('[Register] Could not roll back the newly-created Firebase identity:', cleanupError);
+          message += ' Firebase also created an account; contact support to remove the incomplete identity before retrying.';
+        } finally {
+          try { await signOut(firebaseAuth); } catch { /* ignore sign-out cleanup errors */ }
+        }
+      }
+      setErrorMsg(message);
     } finally {
       setIsSubmitting(false);
     }
