@@ -142,7 +142,6 @@ export const PaymentsPage: React.FC = () => {
     [legacyPayments, phonePePayments]
   );
 
-  const selectedApplication = applications.find(a => a._id === applicationId);
   const startCheckout = async () => {
     if (!applicationId || !quote) return;
     setBusy(true); setError(''); setMessage('');
@@ -187,7 +186,7 @@ export const PaymentsPage: React.FC = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl border border-brand-border p-4">
-            <div className="text-xs text-brand-muted">{isWorker ? 'Payouts completed' : 'Payments collected'}</div>
+            <div className="text-xs text-brand-muted">{isWorker ? 'Worker payouts confirmed' : 'Payments collected by KaamSetu'}</div>
             <div className="text-xl font-black text-emerald-600 mt-1">{money(paidTotal)}</div>
           </div>
           <div className="bg-white rounded-2xl border border-brand-border p-4">
@@ -231,7 +230,7 @@ export const PaymentsPage: React.FC = () => {
             {available && !webhookConfigured && <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">PhonePe server notifications are not configured yet. Payment status can still be checked when the payer returns to KaamSetu, but automatic updates while the page is closed require the merchant webhook to be configured by the authorised business administrator.</div>}
             {environment !== 'production' && available && <div className="text-xs text-amber-700">Sandbox mode: test transactions only. No real money will be transferred.</div>}
             <button type="button" onClick={startCheckout} disabled={busy || !applicationId || !quote || quote.alreadyCollected || quote.directPaymentPending || !available || quoteLoading || (quote.checkoutPending && !quote.checkoutUrl)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
-              <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `${quote?.checkoutPending ? 'Resume UPI checkout' : 'Continue to UPI checkout ' + (quote ? money(quote.amount) : '')}`}
+              <Wallet className="w-4 h-4"/>{busy ? 'Opening secure checkout…' : `${quote?.checkoutPending ? 'Resume PhonePe checkout' : 'Continue to secure checkout ' + (quote ? money(quote.amount) : '')}`}
             </button>
             {quote?.checkoutPending && !quote.checkoutUrl && (
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
@@ -261,7 +260,7 @@ export const PaymentsPage: React.FC = () => {
           {legacyPayments.length === 0 ? <div className="p-8 text-center text-sm text-brand-muted">No previous payment records.</div> : <div className="divide-y divide-brand-border">
             {legacyPayments.map(payment => <div key={payment._id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-xl bg-brand-primary-light text-brand-primary flex items-center justify-center"><Banknote className="w-4 h-4"/></div><div><div className="font-bold text-sm text-brand-dark">{payment.jobTitle}</div><div className="text-xs text-brand-muted mt-1">{isWorker ? payment.employerName : payment.workerName} · {payment.method === 'cash' ? 'Cash' : 'Previous direct UPI'}</div>{payment.transactionReference && <div className="text-[11px] text-brand-muted mt-1">Reference: {payment.transactionReference}</div>}<div className="text-[11px] text-brand-muted mt-1">{new Date(payment.createdAt).toLocaleString('en-IN')}</div></div></div>
-              <div className="flex flex-wrap items-center gap-3"><strong>{money(payment.amount)}</strong><span className="text-xs font-bold">{payment.status === 'paid' ? 'Confirmed' : payment.status === 'disputed' ? 'Disputed' : 'Awaiting worker confirmation'}</span>
+              <div className="flex flex-wrap items-center gap-3"><strong>{money(payment.amount)}</strong><span className="text-xs font-bold">{payment.status === 'paid' ? (payment.method === 'direct_upi' ? 'Worker-confirmed (legacy)' : 'Confirmed') : payment.status === 'disputed' ? 'Disputed' : 'Awaiting worker confirmation'}</span>
                 {isWorker && payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => confirmLegacyPayment(payment)} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-xs font-bold"><CheckCircle2 className="w-3.5 h-3.5 inline mr-1"/>Confirm received</button>}
                 {payment.status === 'awaiting_worker_confirmation' && <button disabled={busy} onClick={() => disputeLegacyPayment(payment._id)} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs font-bold">Dispute</button>}
               </div>
