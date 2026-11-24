@@ -46,9 +46,10 @@ export const WorkerDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [jobsRes, appsRes] = await Promise.all([
+      const [jobsRes, appsRes, paymentsRes] = await Promise.all([
         apiGetMatchingJobs(),
-        apiGetWorkerApplications()
+        apiGetWorkerApplications(),
+        apiGetMyPayments()
       ]);
 
       if (jobsRes.success) {
@@ -56,6 +57,9 @@ export const WorkerDashboard: React.FC = () => {
       }
       if (appsRes.success) {
         setApplications(appsRes.applications);
+      }
+      if (paymentsRes.success) {
+        setPaymentSummary({ paidTotal: paymentsRes.summary?.paidTotal || 0, pendingTotal: paymentsRes.summary?.pendingTotal || 0 });
       }
     } catch (err) {
       console.error(err);
