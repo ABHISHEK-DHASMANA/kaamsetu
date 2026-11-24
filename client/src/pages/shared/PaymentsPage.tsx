@@ -267,7 +267,7 @@ export const PaymentsPage: React.FC = () => {
                 <div className="text-xs text-brand-muted">Amount due for {quote.jobTitle}</div>
                 <div className="text-3xl font-black text-brand-dark">{money(quote.amount)}</div>
                 <div className="text-xs text-brand-muted">Worker: {quote.workerName}{quote.wageType ? ` · Based on ${quote.wageType} wage · ${quote.duration || ''}` : ''}</div>
-                {quote.paymentMode === 'direct_upi' && quote.workerUpiId && (
+                {quote.paymentMode === 'direct_upi' && quote.workerUpiId && !quote.existingPayment && (
                   <div className="mt-3 rounded-xl bg-white border border-brand-border p-3 space-y-2">
                     <div className="text-xs font-semibold text-brand-dark">Worker's UPI ID</div>
                     <div className="font-mono text-sm break-all">{quote.workerUpiId}</div>
