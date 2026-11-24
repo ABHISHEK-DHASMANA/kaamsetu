@@ -133,7 +133,7 @@ export const createPayment = async (req, res) => {
     if (existing) return res.status(409).json({ success: false, message: 'A payment request already exists for this job. Review its status below.' });
     if (method === 'direct_upi') {
       const worker = findOne('workerProfiles', p => idOf(p.userId) === idOf(application.workerId));
-      if (!/^[\\w.\\-]{2,256}@[\\w]{2,64}$/.test(String(worker?.upiId || '').trim())) {
+      if (!/^[\w.\-]{2,256}@[\w]{2,64}$/.test(String(worker?.upiId || '').trim())) {
         return res.status(422).json({ success: false, message: 'The worker must add a valid UPI ID before a UPI request can be sent.' });
       }
     }
