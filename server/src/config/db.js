@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import PaymentIntent from '../models/PaymentIntent.js';
 import { initializeStorage, enableMongoPersistence, flushStorage, getDb, setDb } from '../services/storage.js';
 import { generateSeedData } from '../seeds/seedData.js';
 
@@ -34,8 +35,12 @@ export const connectDB = async () => {
     }
 
     const conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 });
+    // Ensure the unique active-checkout index exists before the HTTP server starts
+    // accepting payment requests. Without this index duplicate protection is not safe.
+    await PaymentIntent.init();
     isMongooseConnected = true;
     console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
+    console.log('[Database] PhonePe payment-order indexes are ready.');
 
     const recordsCollection = mongoose.connection.collection('kaamsetu_records');
     await enableMongoPersistence(recordsCollection);
