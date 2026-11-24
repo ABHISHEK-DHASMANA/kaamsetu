@@ -189,10 +189,10 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number.' });
     }
 
-    if (contactPhone && findOne('users', u => normalizePhone(u.phone) === contactPhone)) {
+    if (contactPhone && findOne('users', u => !u.deletedAt && u.isActive !== false && normalizePhone(u.phone) === contactPhone)) {
       return res.status(409).json({ success: false, message: 'This mobile number is already saved on another account.' });
     }
-    if (cleanEmail && findOne('users', u => String(u.email || '').trim().toLowerCase() === cleanEmail)) {
+    if (cleanEmail && findOne('users', u => !u.deletedAt && u.isActive !== false && String(u.email || '').trim().toLowerCase() === cleanEmail)) {
       return res.status(409).json({ success: false, message: 'An account with this email already exists. Use another email or sign in.' });
     }
 
