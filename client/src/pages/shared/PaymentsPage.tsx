@@ -155,6 +155,7 @@ export const PaymentsPage: React.FC = () => {
 
   const selectedApplication = applications.find(a => a._id === applicationId);
   const isManualPayment = ['direct_upi', 'cash', 'online'].includes(selectedApplication?.paymentMode || '');
+  const selectedPaymentStatus = legacyPayments.find(p => p.applicationId === applicationId && !['rejected', 'cancelled'].includes(p.status))?.status || quote?.existingPayment?.status;
   const directUpiLink = quote?.workerUpiId
     ? `upi://pay?${new URLSearchParams({
         pa: quote.workerUpiId,
@@ -305,7 +306,7 @@ export const PaymentsPage: React.FC = () => {
                 <div className="text-xs text-brand-muted">Amount due for {quote.jobTitle}</div>
                 <div className="text-3xl font-black text-brand-dark">{money(quote.amount)}</div>
                 <div className="text-xs text-brand-muted">Worker: {quote.workerName}{quote.wageType ? ` · Based on ${quote.wageType} wage · ${quote.duration || ''}` : ''}</div>
-                {quote.paymentMode === 'direct_upi' && quote.workerUpiId && quote.existingPayment && ['approved_by_worker', 'approved_by_employer'].includes(quote.existingPayment.status) && (
+                {quote.paymentMode === 'direct_upi' && quote.workerUpiId && ['approved_by_worker', 'approved_by_employer'].includes(selectedPaymentStatus || '') && (
                   <div className="mt-3 rounded-xl bg-white border border-brand-border p-3 space-y-2">
                     <div className="text-xs font-semibold text-brand-dark">Worker's UPI ID</div>
                     <div className="font-mono text-sm break-all">{quote.workerUpiId}</div>
@@ -335,7 +336,7 @@ export const PaymentsPage: React.FC = () => {
               </button>
             )}
             {isManualPayment && (
-              <button type="button" onClick={reportManualPayment} disabled={busy || !applicationId || !quote || Boolean(quote.existingPayment && !['rejected', 'cancelled'].includes(quote.existingPayment.status)) || quoteLoading || (selectedApplication?.paymentMode === 'direct_upi' && !quote.workerUpiId)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
+              <button type="button" onClick={reportManualPayment} disabled={busy || !applicationId || !quote || Boolean(quote.existingPayment && !['rejected', 'cancelled'].includes(quote.existingPayment.status)) || quoteLoading || (['direct_upi', 'online'].includes(selectedApplication?.paymentMode || '') && !quote.workerUpiId)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary text-white px-5 py-3 text-sm font-bold disabled:opacity-50">
                 <Wallet className="w-4 h-4"/>{busy ? 'Sending request…' : `Send ${quote ? money(quote.amount) : 'payment amount'} for worker approval`}
               </button>
             )}
