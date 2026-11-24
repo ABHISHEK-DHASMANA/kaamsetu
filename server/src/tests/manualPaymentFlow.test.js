@@ -71,6 +71,29 @@ test('worker can counter employer amount, employer approves, UPI reference is re
   assert.equal(getDb().workerProfiles[0].skillPassport.completedJobsCount, 1);
 });
 
+
+test('legacy online payment mode uses direct UPI quote and accepts direct UPI request', async () => {
+  resetDb();
+  getDb().applications[0].paymentMode = 'online';
+  const quote = response();
+  await getPaymentQuote({ user: { _id: 'employer-1', role: 'employer' }, params: { applicationId: 'application-1' } }, quote);
+  assert.equal(quote.statusCode, 200);
+  assert.equal(quote.body.quote.workerUpiId, 'worker@okaxis');
+
+  const created = response();
+  await createPayment({ user: { _id: 'employer-1', role: 'employer' }, body: { applicationId: 'application-1', method: 'direct_upi', amount: 600 } }, created);
+  assert.equal(created.statusCode, 201);
+  assert.equal(created.body.payment.method, 'direct_upi');
+
+  const accepted = response();
+  await respondToPaymentRequest({ user: { _id: 'worker-1', role: 'worker' }, params: { id: created.body.payment._id }, body: { action: 'accept' } }, accepted);
+  assert.equal(accepted.statusCode, 200);
+
+  const reported = response();
+  await reportDirectPayment({ user: { _id: 'employer-1', role: 'employer' }, params: { id: created.body.payment._id }, body: { transactionReference: 'UPI123456789' } }, reported);
+  assert.equal(reported.statusCode, 200);
+});
+
 test('worker can accept the employer amount without a counter-offer', async () => {
   resetDb();
   const created = response();
