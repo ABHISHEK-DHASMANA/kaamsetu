@@ -211,13 +211,14 @@ export const reportDirectPayment = async (req, res) => {
     const payment = findOne('payments', p => idOf(p._id || p.id) === idOf(req.params.id));
     if (!payment) return res.status(404).json({ success: false, message: 'Payment request not found.' });
     if (idOf(payment.employerId) !== employerId) return res.status(403).json({ success: false, message: 'Only the requesting employer can report payment.' });
-    if (payment.method !== 'direct_upi') return res.status(409).json({ success: false, message: 'This transfer-report action is only for direct UPI payments.' });
+    if (!['direct_upi', 'cash'].includes(payment.method)) return res.status(409).json({ success: false, message: 'This payment method cannot be reported here.' });
     if (!['approved_by_worker', 'approved_by_employer'].includes(payment.status)) return res.status(409).json({ success: false, message: 'Both parties must agree on the amount before payment can be reported.' });
     const reference = String(req.body?.transactionReference || '').trim();
-    if (reference.length < 4 || reference.length > 100) return res.status(400).json({ success: false, message: 'Enter the UPI transaction reference (4–100 characters).' });
+    if (payment.method === 'direct_upi' && (reference.length < 4 || reference.length > 100)) return res.status(400).json({ success: false, message: 'Enter the UPI transaction reference (4–100 characters).' });
+    if (payment.method === 'cash' && reference.length > 100) return res.status(400).json({ success: false, message: 'Cash note must be 100 characters or fewer.' });
     const now = new Date().toISOString();
-    const updated = update('payments', idOf(payment._id || payment.id), { transactionReference: reference, employerConfirmed: true, status: 'awaiting_worker_confirmation', paymentReportedAt: now, verificationLevel: 'employer_reported', events: [...(payment.events || []), { type: 'employer_reported_upi_transfer', actorId: employerId, at: now, reference }] });
-    notify(payment.workerId, 'Employer reported a UPI transfer', `The employer reported a UPI transfer of ₹${payment.amount}. Check your own bank/UPI app and confirm only if it arrived. Reference: ${reference}`, 'info');
+    const updated = update('payments', idOf(payment._id || payment.id), { transactionReference: reference || undefined, employerConfirmed: true, status: 'awaiting_worker_confirmation', paymentReportedAt: now, verificationLevel: 'employer_reported', events: [...(payment.events || []), { type: payment.method === 'cash' ? 'employer_reported_cash_handover' : 'employer_reported_upi_transfer', actorId: employerId, at: now, reference }] });
+    notify(payment.workerId, payment.method === 'cash' ? 'Employer reported cash handover' : 'Employer reported a UPI transfer', payment.method === 'cash' ? `The employer reported handing over ₹${payment.amount} in cash. Confirm only after you have actually received it.` : `The employer reported a UPI transfer of ₹${payment.amount}. Check your own bank/UPI app and confirm only if it arrived. Reference: ${reference}`, 'info');
     if (!await persistOrFail(res)) return;
     return res.json({ success: true, message: 'UPI transfer report saved. It is not bank-verified; the worker must confirm actual receipt.', payment: hydratePayment(updated) });
   } catch (error) {
