@@ -16,7 +16,7 @@ type ApplicationOption = {
   workerProfile?: { fullName?: string };
 };
 type LegacyPayment = {
-  _id: string; amount: number; method: string; status: string; jobTitle: string;
+  _id: string; applicationId?: string; amount: number; method: string; status: string; jobTitle: string;
   workerName: string; employerName: string; transactionReference?: string;
   createdAt: string; note?: string; verificationLevel?: string; employerConfirmed?: boolean;
 };
@@ -147,7 +147,7 @@ export const PaymentsPage: React.FC = () => {
     [legacyPayments, phonePePayments]
   );
   const pendingTotal = useMemo(
-    () => legacyPayments.filter(p => p.status === 'awaiting_worker_confirmation').reduce((sum, p) => sum + Number(p.amount || 0), 0)
+    () => legacyPayments.filter(p => ['awaiting_worker_confirmation', 'requested_by_worker', 'countered_by_worker', 'approved_by_worker', 'approved_by_employer'].includes(p.status)).reduce((sum, p) => sum + Number(p.amount || 0), 0)
       + phonePePayments.filter(p => p.status === 'pending' || (isWorker && p.status === 'paid' && p.payoutStatus !== 'paid')).reduce((sum, p) => sum + Number(p.amount || 0), 0),
     [legacyPayments, phonePePayments]
   );
