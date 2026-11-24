@@ -25,7 +25,7 @@ type PhonePePayment = {
   merchantOrderId: string; applicationId: string; amount: number; currency: string;
   status: 'pending' | 'paid' | 'failed'; payoutStatus?: string; providerState?: string; verifiedAt?: string; createdAt: string;
 };
-type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType?: string; duration?: string; paymentMode?: 'direct_upi' | 'cash' | 'online'; workerUpiId?: string | null; existingPayment?: { _id: string; status: string; method: string } | null; alreadyCollected?: boolean; directPaymentPending?: boolean; directPaymentStatus?: string | null; payoutStatus?: string | null; checkoutPending?: boolean; checkoutUrl?: string };
+type Quote = { applicationId: string; jobTitle: string; workerName: string; amount: number; currency: string; wageType?: string; duration?: string; paymentMode?: 'direct_upi' | 'cash' | 'online' | 'offline'; workerUpiId?: string | null; existingPayment?: { _id: string; status: string; method: string } | null; alreadyCollected?: boolean; directPaymentPending?: boolean; directPaymentStatus?: string | null; payoutStatus?: string | null; checkoutPending?: boolean; checkoutUrl?: string };
 
 const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value || 0);
 
